@@ -1,0 +1,7 @@
+.wrap .about,
+.wrap .about * {font-size:12px;}
+.wrap .about th {font-weight:bold;}
+.wrap ul {list-style-type:circle; margin-left:14px; margin-top:5px;}
+.wrap ul li {list-style-type:circle;}
+.wrap dl dt {font-weight:bold; margin-bottom:8px; margin-top:12px;}
+.wrap dl dd {margin-left:14px; margin-top:5px;}
