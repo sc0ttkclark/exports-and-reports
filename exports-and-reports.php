@@ -3,7 +3,7 @@
 Plugin Name: Exports and Reports
 Plugin URI: http://scottkclark.com/wordpress/exports-and-reports/
 Description: Define custom exports / reports for users by creating each export / report and defining the fields as well as custom MySQL queries to run.
-Version: 0.7.3
+Version: 0.7.4
 Author: Scott Kingsley Clark
 Author URI: http://scottkclark.com/
 */
@@ -11,7 +11,7 @@ Author URI: http://scottkclark.com/
 global $wpdb;
 
 define( 'EXPORTS_REPORTS_TBL', $wpdb->prefix . 'exportsreports_' );
-define( 'EXPORTS_REPORTS_VERSION', '073' );
+define( 'EXPORTS_REPORTS_VERSION', '074' );
 define( 'EXPORTS_REPORTS_URL', plugin_dir_url( __FILE__ ) );
 define( 'EXPORTS_REPORTS_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -1296,7 +1296,7 @@ function exports_reports_view( $group_id = false ) {
 				foreach ( $selectable_reports as $report_id => $report ) {
 					?>
 					<option value="<?php echo esc_attr( $admin->var_update( array(
-						'page'   => absint( $_GET['page'] ),
+						'page'   => sanitize_text_field( $_GET['page'] ),
 						'report' => absint( $report_id ),
 					), false, false, true ) ); ?>"<?php selected( $current_report, $report ); ?>><?php echo esc_html( $report['name'] ); ?></option>
 					<?php

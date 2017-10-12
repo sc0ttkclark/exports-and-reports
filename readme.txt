@@ -4,7 +4,7 @@ Donate link: https://www.scottkclark.com
 Tags: exports, reports, reporting, exporting, csv, tab, xml, json
 Requires at least: 3.8
 Tested up to: 4.8.2
-Stable tag: 0.7.3
+Stable tag: 0.7.4
 
 Define custom exports / reports for users, based off of any custom MySQL SELECT query you define.
 
@@ -13,6 +13,8 @@ Define custom exports / reports for users, based off of any custom MySQL SELECT 
 Define custom exports / reports for users, based off of any MySQL SELECT query you create. This plugin interacts with your SELECT query and does all the hard work for you: exporting, pagination, ordering, searching/filtering, and display formatting for you.
 
 All you do is install the plugin, create your Groups, create your Reports, and hand it off to your clients. Exportable reports in CSV, TSV, XML, JSON, and custom delimiter separated formats.
+
+Please submit bug reports or contribute your own enhancements/fixes on [GitHub](https://github.com/sc0ttkclark/exports-and-reports).
 
 == Frequently Asked Questions ==
 
@@ -65,6 +67,9 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 * Get paginated / full data from a report in JSON format
 
 == Changelog ==
+
+= 0.7.4 =
+* Fix for report dropdown link problem introduced in 0.7.3 (props @andrewgosali)
 
 = 0.7.3 =
 * Added ability to set the ID field for a related table field (default was `id`, now you can customize it)
