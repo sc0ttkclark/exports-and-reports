@@ -1619,9 +1619,9 @@ class WP_Admin_UI
                         if(isset($selects[$date_ongoing]))
                             $date_ongoing = $selects[$date_ongoing];
                         if($this->search_columns[$filter]['group_related']!==false)
-                            $having_sql[] = "(($filterfield <= '$start' OR ($filterfield >= '$start' AND $filterfield <= '$end')) AND ($date_ongoing >= '$start' OR ($date_ongoing >= '$start' AND $date_ongoing <= '$end')))";
+                            $having_sql[$filterfield] = "(($filterfield <= '$start' OR ($filterfield >= '$start' AND $filterfield <= '$end')) AND ($date_ongoing >= '$start' OR ($date_ongoing >= '$start' AND $date_ongoing <= '$end')))";
                         else
-                            $other_sql[] = "(($filterfield <= '$start' OR ($filterfield >= '$start' AND $filterfield <= '$end')) AND ($date_ongoing >= '$start' OR ($date_ongoing >= '$start' AND $date_ongoing <= '$end')))";
+                            $other_sql[$filterfield] = "(($filterfield <= '$start' OR ($filterfield >= '$start' AND $filterfield <= '$end')) AND ($date_ongoing >= '$start' OR ($date_ongoing >= '$start' AND $date_ongoing <= '$end')))";
                     }
                     else
                     {
