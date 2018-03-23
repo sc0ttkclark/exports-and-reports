@@ -457,6 +457,7 @@ function exports_reports_reports() {
 
 	$columns = array(
 		'name',
+		
 		'group'    => array(
 			'label'   => 'Group',
 			'type'    => 'related',

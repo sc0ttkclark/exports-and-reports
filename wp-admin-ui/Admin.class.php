@@ -162,7 +162,7 @@ class WP_Admin_UI
             if(!is_array($options))
                 parse_str($options,$options);
             foreach($options as $option=>$value)
-                $this->$option = $value;
+                $this->{$option} = $value;
         }
         if(false!==$this->readonly)
             $this->add = $this->edit = $this->delete = $this->save = $this->reorder = false;
@@ -345,7 +345,7 @@ class WP_Admin_UI
     {
         if(null===$columns)
         {
-            $columns = $this->$which;
+            $columns = $this->{$which};
             if($which=='columns')
                 $init = true;
         }
@@ -715,7 +715,8 @@ class WP_Admin_UI
                 elseif($attributes['type']=='related'&&false!==$attributes['related'])
                 {
                     if(!is_array($attributes['related']))
-                    {
+                    {                       
+
                         $related = $wpdb->get_results('SELECT id,`'.$this->sanitize( (string) $attributes['related_field'] ).'` FROM '.(string) $attributes['related'].(!empty($attributes['related_sql'])?' '.(string) $attributes['related_sql']:''));
 ?>
             <select name="<?php echo esc_attr( $column ); ?><?php echo (false!==$attributes['related_multiple']?'[]':''); ?>" id="admin_ui_<?php echo esc_attr( $column ); ?>"<?php echo (false!==$attributes['related_multiple']?' size="10" style="height:auto;" MULTIPLE':''); ?>>
@@ -724,7 +725,7 @@ class WP_Admin_UI
                         foreach($related as $option)
                         {
 ?>
-                <option value="<?php echo esc_attr( $option->id ); ?>"<?php echo (in_array($option->id,$selected_options)?' SELECTED':''); ?>><?php echo esc_html( $option->$attributes['related_field'] ); ?></option>
+                <option value="<?php echo esc_attr( $option->id ); ?>"<?php echo (in_array($option->id,$selected_options)?' SELECTED':''); ?>><?php echo esc_html( $option->{$attributes['related_field']} ); ?></option>
 <?php
                         }
 ?>
@@ -734,6 +735,7 @@ class WP_Admin_UI
                     else
                     {
                         $related = $attributes['related'];
+
 ?>
             <select name="<?php echo esc_attr( $column ); ?><?php echo (false!==$attributes['related_multiple']?'[]':''); ?>" id="admin_ui_<?php echo esc_attr( $column ); ?>"<?php echo (false!==$attributes['related_multiple']?' size="10" style="height:auto;" MULTIPLE':''); ?>>
 <?php
@@ -844,7 +846,7 @@ class WP_Admin_UI
                         $related = $wpdb->get_results('SELECT `id`,`'.$this->sanitize( (string) $attributes['related_field'] ).'` FROM '.(string) $attributes['related'].' WHERE `id` IN ('.$this->sanitize( (string) $old_value ).')'.(!empty($attributes['related_sql'])?' '.(string) $attributes['related_sql']:''));
                         foreach($related as $option)
                         {
-                            $this->row[$column][] = esc_html( $option->$attributes['related_field'] );
+                            $this->row[$column][] = esc_html( $option->{$attributes['related_field']} );
                         }
                     }
                     else
@@ -2158,7 +2160,7 @@ table.widefat.fixed tbody.sortable tr { height:50px; }
         $column_index = 'columns';
         if($reorder==1)
             $column_index = 'reorder_columns';
-        if(false===$this->$column_index||empty($this->$column_index))
+        if(false===$this->{$column_index}||empty($this->{$column_index}))
             return $this->error('<strong>Error:</strong> Invalid Configuration - Missing "columns" definition.');
 ?>
 <table class="widefat page fixed admin_ui_table wp-list-table" cellspacing="0"<?php echo ($reorder==1&&$this->reorder?' id="admin_ui_reorder"':''); ?>>
@@ -2167,7 +2169,7 @@ table.widefat.fixed tbody.sortable tr { height:50px; }
 <?php
         $name_column = false;
         $columns = array();
-        if(!empty($this->$column_index)) foreach($this->columns as $column=>$attributes)
+        if(!empty($this->{$column_index})) foreach($this->columns as $column=>$attributes)
         {
             if(!is_array($attributes)) {
                 $column = $attributes;
