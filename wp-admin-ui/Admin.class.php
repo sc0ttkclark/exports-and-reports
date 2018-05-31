@@ -1467,8 +1467,16 @@ class WP_Admin_UI
 
 	    return $row;
     }
+    /**
+     * Executes query
+     * @TODO separete string logic from data filtering, add do_action and apply_filter for input and output data.
+     * @param boolean $full make full run
+     * @return void
+     */
     function get_data ($full=false)
     {
+
+        $replace_varibles = [];
         if(isset($this->custom['data'])&&function_exists("{$this->custom['data']}"))
             return call_user_func( $this->custom['data'],$this);
         if(false===$this->table&&false===$this->sql)
@@ -1611,16 +1619,16 @@ class WP_Admin_UI
                         if(isset($selects[$date_ongoing]))
                             $date_ongoing = $selects[$date_ongoing];
                         if($this->search_columns[$filter]['group_related']!==false)
-                            $having_sql[] = "(($filterfield <= '$start' OR ($filterfield >= '$start' AND $filterfield <= '$end')) AND ($date_ongoing >= '$start' OR ($date_ongoing >= '$start' AND $date_ongoing <= '$end')))";
+                            $having_sql[$filterfield] = "(($filterfield <= '$start' OR ($filterfield >= '$start' AND $filterfield <= '$end')) AND ($date_ongoing >= '$start' OR ($date_ongoing >= '$start' AND $date_ongoing <= '$end')))";
                         else
-                            $other_sql[] = "(($filterfield <= '$start' OR ($filterfield >= '$start' AND $filterfield <= '$end')) AND ($date_ongoing >= '$start' OR ($date_ongoing >= '$start' AND $date_ongoing <= '$end')))";
+                            $other_sql[$filterfield] = "(($filterfield <= '$start' OR ($filterfield >= '$start' AND $filterfield <= '$end')) AND ($date_ongoing >= '$start' OR ($date_ongoing >= '$start' AND $date_ongoing <= '$end')))";
                     }
                     else
                     {
                         if($this->search_columns[$filter]['group_related']!==false)
-                            $having_sql[] = "($filterfield BETWEEN '$start' AND '$end')";
+                            $having_sql[$filterfield] = "($filterfield BETWEEN '$start' AND '$end')";
                         else
-                            $other_sql[] = "($filterfield BETWEEN '$start' AND '$end')";
+                            $other_sql[$filterfield] = "($filterfield BETWEEN '$start' AND '$end')";
                     }
                 }
                 elseif(0<strlen($this->get_var('filter_'.$filter,$this->search_columns[$filter]['filter_default']))&&'related'==$this->search_columns[$filter]['type']&&false!==$this->search_columns[$filter]['related'])
@@ -1660,6 +1668,12 @@ class WP_Admin_UI
             }
             if(!empty($other_sql))
             {
+                foreach($other_sql as $key=>$value){
+                    if(false !== stripos($sql,'%%'.$key.'%%')){
+                        $replace_varibles[$key] = $value;
+                        unset($other_sql[$key]);
+                    }
+                }
                 if(false===stripos($sql,' WHERE '))
                     $wheresql .= ' WHERE ('.implode(' AND ',$other_sql).') ';
                 elseif(false!==stripos($sql,' WHERE %%WHERE%% ') || false===stripos($sql,' %%WHERE%% '))
@@ -1700,6 +1714,8 @@ class WP_Admin_UI
         }
         else
             $sql = str_replace (' LIMIT %%LIMIT%% ','',$sql);
+
+      
         if(stripos($sql,'%%WHERE%%')===false&&stripos($sql,' WHERE ')===false)
         {
             if(stripos($sql,' GROUP BY ')!==false)
@@ -1737,6 +1753,10 @@ class WP_Admin_UI
             $sql .= ' LIMIT %%LIMIT%% ';
         elseif(stripos($sql,'%%LIMIT%%')===false)
             $sql = str_replace(' LIMIT ',' LIMIT %%LIMIT%% ',$sql);
+
+        foreach($replace_varibles as $k=>$v){
+             $sql = str_replace("%%$k%%",$v,$sql);
+        }        
         $sql = str_replace('%%WHERE%%',$wheresql,$sql);
         $sql = str_replace('%%HAVING%%',$havingsql,$sql);
         $sql = str_replace('%%ORDERBY%%',$ordersql,$sql);
