@@ -21,6 +21,7 @@ CREATE TABLE `wp_exportsreports_reports` (
   `role_access` mediumtext NOT NULL,
   `sql_query` longtext NOT NULL,
   `sql_query_count` longtext NOT NULL,
+  `page_orientation` MEDIUMTEXT,
   `field_data` longtext NOT NULL,
   `weight` int(10) NOT NULL,
   `created` datetime NOT NULL,
