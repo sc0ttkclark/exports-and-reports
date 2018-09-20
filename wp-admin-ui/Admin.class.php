@@ -54,7 +54,7 @@ if ( isset( $_GET['exports_and_reports_download'] ) && isset( $_GET['_wpnonce'] 
  *
  * @package Admin UI for Plugins
  *
- * @version 1.11
+ * @version 1.11.1
  * @author  Scott Kingsley Clark
  * @link    https://www.scottkclark.com/
  *
@@ -1750,10 +1750,13 @@ class WP_Admin_UI {
 					if ( $attributes['real_name'] !== false ) {
 						$columnfield = $attributes['real_name'];
 					}
+
+					$filter_field_key = str_replace( '`', '', $columnfield );
+
 					if ( $attributes['group_related'] !== false ) {
-						$having_sql[] = "$columnfield LIKE '%" . $this->sanitize( $this->search_query ) . "%'";
+						$having_sql[ $filter_field_key ] = "$columnfield LIKE '%" . $this->sanitize( $this->search_query ) . "%'";
 					} else {
-						$other_sql[] = "$columnfield LIKE '%" . $this->sanitize( $this->search_query ) . "%'";
+						$other_sql[ $filter_field_key ] = "$columnfield LIKE '%" . $this->sanitize( $this->search_query ) . "%'";
 					}
 				}
 				if ( ! empty( $other_sql ) ) {
@@ -1831,10 +1834,22 @@ class WP_Admin_UI {
 				if ( $filter_sql ) {
 					$filter_sql = apply_filters( 'wp_admin_ui_data_filter_sql', $filter_sql, $filter, $filter_column, $filterfield, $related_filterfield, $search_value, $this );
 
+					$filter_field_key = str_replace( '`', '', $filterfield );
+
 					if ( $filter_column['group_related'] !== false ) {
-						$having_sql[] = $filter_sql;
+						$having_sql[ $filter_field_key ] = $filter_sql;
 					} else {
-						$other_sql[] = $filter_sql;
+						$other_sql[ $filter_field_key ] = $filter_sql;
+					}
+				}
+			}
+			$replace_varibles = array();
+			if ( ! empty( $other_sql ) ) {
+				foreach ( $other_sql as $key => $value ) {
+					if ( false !== stripos( $sql, '%%' . $key . '%%' ) ) {
+						$replace_varibles[ $key ] = $value;
+
+						unset( $other_sql[ $key ] );
 					}
 				}
 			}
@@ -1845,6 +1860,15 @@ class WP_Admin_UI {
 					$wheresql .= ' (' . implode( ' AND ', $other_sql ) . ') AND ';
 				} else {
 					$wheresql .= ' AND (' . implode( ' AND ', $other_sql ) . ') ';
+				}
+			}
+			if ( ! empty( $having_sql ) ) {
+				foreach ( $having_sql as $key => $value ) {
+					if ( false !== stripos( $sql, '%%' . $key . '%%' ) ) {
+						$replace_varibles[ $key ] = $value;
+
+						unset( $having_sql[ $key ] );
+					}
 				}
 			}
 			if ( ! empty( $having_sql ) ) {
@@ -1917,6 +1941,9 @@ class WP_Admin_UI {
 			$sql .= ' LIMIT %%LIMIT%% ';
 		} elseif ( stripos( $sql, '%%LIMIT%%' ) === false ) {
 			$sql = str_replace( ' LIMIT ', ' LIMIT %%LIMIT%% ', $sql );
+		}
+		foreach ( $replace_varibles as $k => $v ) {
+			$sql = str_ireplace( '%%' . $k . '%%', $v, $sql );
 		}
 		$sql = str_replace( '%%WHERE%%', $wheresql, $sql );
 		$sql = str_replace( '%%HAVING%%', $havingsql, $sql );
