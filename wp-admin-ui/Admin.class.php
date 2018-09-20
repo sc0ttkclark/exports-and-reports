@@ -1703,7 +1703,7 @@ class WP_Admin_UI {
 		}
 		$sql       = preg_replace( '/ SELECT /i', " SELECT {$calc_found_sql} ", preg_replace( '/ SELECT SQL_CALC_FOUND_ROWS /i', ' SELECT ', $sql, 1 ), 1 );
 		$wheresql  = $havingsql = $ordersql = $limitsql = '';
-		$other_sql = $having_sql = array();
+		$other_sql = $having_sql = $replace_varibles = array();
 		if ( $full || false !== $this->sql_count ) {
 			preg_match( '/SELECT (.*) FROM/i', $sql, $selectmatches );
 		} else {
@@ -1760,7 +1760,25 @@ class WP_Admin_UI {
 					}
 				}
 				if ( ! empty( $other_sql ) ) {
+					foreach ( $other_sql as $key => $value ) {
+						if ( false !== stripos( $sql, '%%' . $key . '%%' ) ) {
+							$replace_varibles[ $key ] = $value;
+
+							unset( $other_sql[ $key ] );
+						}
+					}
+				}
+				if ( ! empty( $other_sql ) ) {
 					$other_sql = array( '(' . implode( ' OR ', $other_sql ) . ')' );
+				}
+				if ( ! empty( $having_sql ) ) {
+					foreach ( $having_sql as $key => $value ) {
+						if ( false !== stripos( $sql, '%%' . $key . '%%' ) ) {
+							$replace_varibles[ $key ] = $value;
+
+							unset( $having_sql[ $key ] );
+						}
+					}
 				}
 				if ( ! empty( $having_sql ) ) {
 					$having_sql = array( '(' . implode( ' OR ', $having_sql ) . ')' );
@@ -1837,13 +1855,12 @@ class WP_Admin_UI {
 					$filter_field_key = str_replace( '`', '', $filterfield );
 
 					if ( $filter_column['group_related'] !== false ) {
-						$having_sql[ $filter_field_key ] = $filter_sql;
+						$having_sql[ $filter ] = $filter_sql;
 					} else {
-						$other_sql[ $filter_field_key ] = $filter_sql;
+						$other_sql[ $filter ] = $filter_sql;
 					}
 				}
 			}
-			$replace_varibles = array();
 			if ( ! empty( $other_sql ) ) {
 				foreach ( $other_sql as $key => $value ) {
 					if ( false !== stripos( $sql, '%%' . $key . '%%' ) ) {
