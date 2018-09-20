@@ -1048,7 +1048,7 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 	/** @var wpdb $wpdb */
 	global $wpdb;
 
-	wp_enqueue_script( 'exports-reports-view', plugins_url( 'exports-and-reports/wp-admin-ui/assets/js/exports-reports-view.js' ), array( 'jquery' ), '1.0' );
+	wp_enqueue_script( 'exports-reports-admin', plugins_url( 'exports-and-reports/assets/admin.js' ), array( 'jquery' ), EXPORTS_REPORTS_VERSION );
 
 	if ( null === $has_full_access ) {
 		$has_full_access = exports_reports_current_user_can_any( 'exports_reports_full_access' );
