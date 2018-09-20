@@ -1,17 +1,18 @@
 <?php
 /*
 Plugin Name: Exports and Reports
-Plugin URI: http://scottkclark.com/wordpress/exports-and-reports/
+Plugin URI: https://www.scottkclark.com/
 Description: Define custom exports / reports for users by creating each export / report and defining the fields as well as custom MySQL queries to run.
-Version: 0.7.4
+Version: 0.8.0
 Author: Scott Kingsley Clark
-Author URI: http://scottkclark.com/
+Author URI: https://www.scottkclark.com/
 */
 
+/** @var wpdb $wpdb */
 global $wpdb;
 
 define( 'EXPORTS_REPORTS_TBL', $wpdb->prefix . 'exportsreports_' );
-define( 'EXPORTS_REPORTS_VERSION', '074' );
+define( 'EXPORTS_REPORTS_VERSION', '080' );
 define( 'EXPORTS_REPORTS_URL', plugin_dir_url( __FILE__ ) );
 define( 'EXPORTS_REPORTS_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -45,6 +46,7 @@ function exports_reports_wp_admin_ui_export() {
  */
 function exports_reports_reset() {
 
+	/** @var wpdb $wpdb */
 	global $wpdb;
 
 	$sql = file_get_contents( EXPORTS_REPORTS_DIR . 'assets/dump.sql' );
@@ -100,7 +102,7 @@ function exports_reports_init() {
 
 	if ( empty( $version ) ) {
 		exports_reports_reset();
-	} elseif ( $version != EXPORTS_REPORTS_VERSION ) {
+	} elseif ( $version !== EXPORTS_REPORTS_VERSION ) {
 		$version = absint( $version );
 
 		if ( $version < 32 ) {
@@ -122,6 +124,10 @@ function exports_reports_init() {
 		if ( $version < 60 ) {
 			$token = md5( microtime() . wp_generate_password( 20, true ) );
 			update_option( 'exports_reports_token', $token );
+		}
+
+		if ( $version < 80 ) {
+			$wpdb->query( 'ALTER TABLE `' . EXPORTS_REPORTS_TBL . 'reports` ADD COLUMN `page_orientation` MEDIUMTEXT NOT NULL AFTER `disabled`' );
 		}
 
 		delete_option( 'exports_reports_version' );
@@ -193,6 +199,7 @@ function exports_reports_admin_menu() {
  */
 function exports_reports_menu() {
 
+	/** @var wpdb $wpdb */
 	global $wpdb;
 
 	if ( defined( 'EXPORTS_REPORTS_DISABLE_MENU' ) ) {
@@ -300,22 +307,23 @@ function exports_reports_settings() {
 		<h2>Exports and Reports - Settings</h2>
 
 		<?php
-			if ( ! empty( $_POST['clear'] ) || ! empty( $_POST['reset'] ) ) {
-				exports_reports_cleanup( true );
-		?>
+		if ( ! empty( $_POST['clear'] ) || ! empty( $_POST['reset'] ) ) {
+			exports_reports_cleanup( true );
+			?>
 			<div id="message" class="updated fade">
 				<p>Your Exports directory has been cleaned up and all export files have been removed.</p>
 			</div>
-		<?php
-			}
-			if ( ! empty( $_POST['reset'] ) ) {
-				exports_reports_reset();
-		?>
+			<?php
+		}
+
+		if ( ! empty( $_POST['reset'] ) ) {
+			exports_reports_reset();
+			?>
 			<div id="message" class="updated fade">
 				<p>Your Settings have been reset.</p>
 			</div>
-		<?php
-			}
+			<?php
+		}
 		?>
 
 		<div style="height:20px;"></div>
@@ -405,9 +413,9 @@ function exports_reports_groups() {
 
 	unset( $form_columns['id'] );
 
-	$roles                                           = exports_reports_get_roles();
+	$roles = exports_reports_get_roles();
 
-	$form_columns['role_access']                     = array(
+	$form_columns['role_access'] = array(
 		'label'            => 'WP Roles with Access',
 		'comments'         => 'Add the exports_reports_full_access capability to a role for full access to reports, exports_reports_settings for only access to settings, exports_reports_view for access to view all reports, exports_reports_view_group_{ID} for access to view a group and all of the reports within, or exports_reports_view_report_{ID} for access to view a single report',
 		'type'             => 'related',
@@ -457,7 +465,6 @@ function exports_reports_reports() {
 
 	$columns = array(
 		'name',
-		
 		'group'    => array(
 			'label'   => 'Group',
 			'type'    => 'related',
@@ -500,6 +507,15 @@ function exports_reports_reports() {
 		'label'    => 'Default to No Results?',
 		'type'     => 'bool',
 		'comments' => 'On = Show no results and require search; Off (default) = Show all results',
+	);
+
+	$form_columns['page_orientation'] = array(
+		'label'   => 'PDF Report Page Orientation',
+		'type'    => 'related',
+		'related' => array(
+			'L' => 'Landscape',
+			'P' => 'Portrait',
+		),
 	);
 
 	$form_columns['created']['date_touch_on_create'] = true;
@@ -715,9 +731,11 @@ function exports_reports_report_field( $column, $attributes, $obj ) {
 						</tr>
 						<tr>
 							<td>
+								<div>Width</div>
+								<input type="text" name="width[0]" value="" class="medium-text" /></td>
+							<td>
 								<div>Related ID Field (if related type)</div>
 								<input type="text" name="field_related_id[0]" value="" class="medium-text" /></td>
-							<td></td>
 							<td></td>
 						</tr>
 						</tbody>
@@ -847,9 +865,13 @@ function exports_reports_report_field( $column, $attributes, $obj ) {
 								</tr>
 								<tr>
 									<td>
+										<div>Width</div>
+										<input type="text" name="width[<?php echo esc_attr( $count ); ?>]" value="<?php echo esc_attr( $field['width'] ); ?>" class="medium-text" />
+									</td>
+									<td>
 										<div>Related ID Field (if related type)</div>
-										<input type="text" name="field_related_id[<?php echo esc_attr( $count ); ?>]" value="<?php echo esc_attr( $field['related_id'] ); ?>" class="medium-text" /></td>
-									<td></td>
+										<input type="text" name="field_related_id[<?php echo esc_attr( $count ); ?>]" value="<?php echo esc_attr( $field['related_id'] ); ?>" class="medium-text" />
+									</td>
 									<td></td>
 								</tr>
 								</tbody>
@@ -899,7 +921,8 @@ function exports_reports_report_field( $column, $attributes, $obj ) {
 
 		jQuery( function () {
 			exports_reports_reset_alt();
-			jQuery( ".sortable" ).sortable( {axis                    : "y",
+			jQuery( ".sortable" ).sortable( {
+												axis                 : "y",
 												handle               : ".dragme",
 												forcePlaceholderSize : true,
 												forceHelperSize      : true,
@@ -951,6 +974,7 @@ function exports_reports_report_field_save( $value, $column, $attributes, $obj )
 				'group_related'          => $_POST['field_group_related'][ $key ],
 				'custom_display'         => $_POST['field_custom_display'][ $key ],
 				'type'                   => $_POST['field_type'][ $key ],
+				'width'                  => $_POST['width'][ $key ],
 				'search'                 => absint( $_POST['field_search'][ $key ] ),
 				'filter'                 => absint( $_POST['field_filter'][ $key ] ),
 				'filter_default'         => $_POST['field_filter_default'][ $key ],
@@ -990,6 +1014,7 @@ function exports_reports_field_defaults( $field = null ) {
 		'group_related'          => '',
 		'custom_display'         => '',
 		'type'                   => '',
+		'width'                  => '',
 		'search'                 => '',
 		'filter'                 => '',
 		'filter_default'         => '',
@@ -1009,22 +1034,28 @@ function exports_reports_field_defaults( $field = null ) {
 }
 
 /**
- * @param bool $group_id
+ * @param bool      $has_full_access
+ * @param bool|null $group_id
  *
  * @return bool
  */
-function exports_reports_view( $group_id = false ) {
+function exports_reports_view( $group_id = false, $has_full_access = null ) {
 
 	if ( empty( $_GET['page'] ) ) {
 		return false;
 	}
 
+	/** @var wpdb $wpdb */
 	global $wpdb;
 
-	$has_full_access = exports_reports_current_user_can_any( 'exports_reports_full_access' );
+	wp_enqueue_script( 'exports-reports-admin', plugins_url( 'exports-and-reports/assets/admin.js' ), array( 'jquery' ), EXPORTS_REPORTS_VERSION );
 
-	if ( is_super_admin() || ( ! $has_full_access && exports_reports_has_role( 'administrator' ) ) ) {
-		$has_full_access = true;
+	if ( null === $has_full_access ) {
+		$has_full_access = exports_reports_current_user_can_any( 'exports_reports_full_access' );
+
+		if ( is_super_admin() || ( ! $has_full_access && exports_reports_has_role( 'administrator' ) ) ) {
+			$has_full_access = true;
+		}
 	}
 
 	if ( 'exports-reports' !== $_GET['page'] && false !== strpos( $_GET['page'], 'exports-reports-group-' ) ) {
@@ -1125,16 +1156,18 @@ function exports_reports_view( $group_id = false ) {
 	foreach ( $reports as $report ) {
 		if ( $has_full_access || exports_reports_current_user_can_any( 'exports_reports_view' ) || exports_reports_current_user_can_any( 'exports_reports_view_group_' . $group_id ) || exports_reports_current_user_can_any( 'exports_reports_view_report_' . $report->id ) ) {
 			if ( false === $current_report ) {
-				$current_report = $report->id;
+				$current_report = absint( $report->id );
 			}
 
-			$selectable_reports[ $report->id ]                    = array();
-			$selectable_reports[ $report->id ]['name']            = $report->name;
-			$selectable_reports[ $report->id ]['sql_query']       = $report->sql_query;
-			$selectable_reports[ $report->id ]['sql_query_count'] = $report->sql_query_count;
-			$selectable_reports[ $report->id ]['default_none']    = $report->default_none;
-			$selectable_reports[ $report->id ]['export']          = ( 0 == $report->disable_export ? true : false );
-			$selectable_reports[ $report->id ]['field_data']      = $report->field_data;
+			$selectable_reports[ $report->id ] = array(
+				'name'             => $report->name,
+				'sql_query'        => $report->sql_query,
+				'sql_query_count'  => $report->sql_query_count,
+				'default_none'     => $report->default_none,
+				'export'           => ( 0 === (int) $report->disable_export ? true : false ),
+				'field_data'       => $report->field_data,
+				'page_orientation' => $report->page_orientation,
+			);
 
 			continue;
 		}
@@ -1148,16 +1181,17 @@ function exports_reports_view( $group_id = false ) {
 		foreach ( $roles as $role ) {
 			if ( exports_reports_has_role( $role ) ) {
 				if ( false === $current_report ) {
-					$current_report = $report->id;
+					$current_report = absint( $report->id );
 				}
 
-				$selectable_reports[ $report->id ]                    = array();
-				$selectable_reports[ $report->id ]['name']            = $report->name;
-				$selectable_reports[ $report->id ]['sql_query']       = $report->sql_query;
-				$selectable_reports[ $report->id ]['sql_query_count'] = $report->sql_query_count;
-				$selectable_reports[ $report->id ]['default_none']    = $report->default_none;
-				$selectable_reports[ $report->id ]['export']          = ( 0 == $report->disable_export ? true : false );
-				$selectable_reports[ $report->id ]['field_data']      = $report->field_data;
+				$selectable_reports[ $report->id ] = array(
+					'name'            => $report->name,
+					'sql_query'       => $report->sql_query,
+					'sql_query_count' => $report->sql_query_count,
+					'default_none'    => $report->default_none,
+					'export'          => ( 0 === (int) $report->disable_export ? true : false ),
+					'field_data'      => $report->field_data,
+				);
 			}
 		}
 	}
@@ -1174,12 +1208,14 @@ function exports_reports_view( $group_id = false ) {
 
 	$options = array();
 
-	$options['css']          = EXPORTS_REPORTS_URL . 'assets/admin.css';
-	$options['readonly']     = true;
-	$options['identifier']   = true;
+	$options['css']      = EXPORTS_REPORTS_URL . 'assets/admin.css';
+	$options['readonly'] = true;
+
+	//$options['identifier']   = true;
+
 	$options['export']       = $selectable_reports[ $current_report ]['export'];
 	$options['search']       = ( strlen( $selectable_reports[ $current_report ]['field_data'] ) > 0 ? true : false );
-	$options['default_none'] = ( 1 == $selectable_reports[ $current_report ]['default_none'] ? true : false );
+	$options['default_none'] = ( 1 === (int) $selectable_reports[ $current_report ]['default_none'] ? true : false );
 	$options['sql']          = trim( $selectable_reports[ $current_report ]['sql_query'] );
 	$options['sql_count']    = trim( $selectable_reports[ $current_report ]['sql_query_count'] );
 
@@ -1187,9 +1223,13 @@ function exports_reports_view( $group_id = false ) {
 		unset( $options['sql_count'] );
 	}
 
-	$options['item']    = $options['items'] = $selectable_reports[ $current_report ]['name'];
-	$options['icon']    = EXPORTS_REPORTS_URL . 'assets/icons/32.png';
-	$options['heading'] = array( 'manage' => 'View Report:' );
+	$options['page_orientation'] = $selectable_reports[ $current_report ]['page_orientation'];
+	$options['item']             = 'item';
+	$options['items']            = $selectable_reports[ $current_report ]['name'];
+	$options['icon']             = EXPORTS_REPORTS_URL . 'assets/icons/32.png';
+	$options['heading']          = array(
+		'manage' => 'View Report:',
+	);
 
 	$field_data = @json_decode( $selectable_reports[ $current_report ]['field_data'], true );
 
@@ -1221,25 +1261,27 @@ function exports_reports_view( $group_id = false ) {
 				$options['columns'][ $field['name'] ]['type'] = $field['type'];
 			}
 
-			if ( 1 == $field['hide_report'] ) {
+			if ( 0 < strlen( $field['width'] ) ) {
+				$options['columns'][ $field['name'] ]['width'] = $field['width'];
+			}
+
+			if ( 1 === (int) $field['hide_report'] ) {
 				$options['columns'][ $field['name'] ]['display'] = false;
 			}
 
-			if ( 1 == $field['hide_export'] ) {
+			if ( 1 === (int) $field['hide_export'] ) {
 				$options['columns'][ $field['name'] ]['export'] = false;
 			}
 
-			if ( 1 == $field['search'] || 1 == $field['hide_report'] ) {
+			if ( 1 === (int) $field['search'] || 1 === (int) $field['hide_report'] ) {
 				$options['columns'][ $field['name'] ]['search'] = false;
 			} else {
 				$options['columns'][ $field['name'] ]['search'] = true;
 			}
 
-			if ( 1 == $field['filter'] ) {
+			if ( 1 === (int) $field['filter'] ) {
 				$options['columns'][ $field['name'] ]['filter'] = true;
-			}
 
-			if ( 1 == $field['filter'] ) {
 				if ( 0 < strlen( $field['filter_default'] ) ) {
 					$options['columns'][ $field['name'] ]['filter_default'] = $field['filter_default'];
 				}
@@ -1253,11 +1295,11 @@ function exports_reports_view( $group_id = false ) {
 				}
 			}
 
-			if ( 1 == $field['total_field'] ) {
+			if ( 1 === (int) $field['total_field'] ) {
 				$options['columns'][ $field['name'] ]['total_field'] = true;
 			}
 
-			if ( 1 == $field['group_related'] ) {
+			if ( 1 === (int) $field['group_related'] ) {
 				$options['columns'][ $field['name'] ]['group_related'] = true;
 			}
 
@@ -1299,7 +1341,7 @@ function exports_reports_view( $group_id = false ) {
 					<option value="<?php echo esc_attr( $admin->var_update( array(
 						'page'   => sanitize_text_field( $_GET['page'] ),
 						'report' => absint( $report_id ),
-					), false, false, true ) ); ?>"<?php selected( $current_report, $report ); ?>><?php echo esc_html( $report['name'] ); ?></option>
+					), false, false, true ) ); ?>"<?php selected( $current_report, $report_id ); ?>><?php echo esc_html( $report['name'] ); ?></option>
 					<?php
 				}
 				?>
@@ -1323,23 +1365,20 @@ add_action( 'wp_admin_ui_post_remove_export', 'exports_reports_delete_log', 10, 
  */
 function exports_reports_log( $args, $obj ) {
 
+	/** @var wpdb $wpdb */
 	global $wpdb;
 
 	$filename = $args[1];
 
-	$result = $wpdb->insert(
-		EXPORTS_REPORTS_TBL . 'log',
-		array(
-			'report_id' => $obj[0]->report_id,
-			'filename'  => $filename,
-			'created'   => date_i18n( 'Y-m-d H:i:s' ),
-		),
-		array(
-			'%d',
-			'%s',
-			'%s',
-		)
-	);
+	$result = $wpdb->insert( EXPORTS_REPORTS_TBL . 'log', array(
+		'report_id' => $obj[0]->report_id,
+		'filename'  => $filename,
+		'created'   => date_i18n( 'Y-m-d H:i:s' ),
+	), array(
+		'%d',
+		'%s',
+		'%s',
+	) );
 
 	return $result;
 
@@ -1353,28 +1392,28 @@ function exports_reports_log( $args, $obj ) {
  */
 function exports_reports_delete_log( $args, $obj ) {
 
+	/** @var wpdb $wpdb */
 	global $wpdb;
 
 	$filename = $args[1];
 
 	if ( false !== $args[2] ) {
-		$sql = $wpdb->prepare(
-			'
-				DELETE FROM `' . EXPORTS_REPORTS_TBL . 'log`
-				WHERE `report_id` = %d AND `filename` = %s
-			',
-			array(
-				$obj[0]->report_id,
-				$filename
-			)
-		);
+		$sql = '
+			DELETE FROM `' . EXPORTS_REPORTS_TBL . 'log`
+			WHERE `report_id` = %d AND `filename` = %s
+		';
+
+		$sql = $wpdb->prepare( $sql, array(
+			$obj[0]->report_id,
+			$filename
+		) );
 
 		$result = $wpdb->query( $sql );
 
 		return $result;
-	} else {
-		return false;
 	}
+
+	return false;
 
 }
 
@@ -1386,7 +1425,7 @@ function exports_reports_schedule_cleanup() {
 	$schedules = _get_cron_array();
 	$timestamp = false;
 
-	$key       = md5( serialize( array() ) );
+	$key = md5( serialize( array() ) );
 
 	foreach ( $schedules as $ts => $schedule ) {
 		if ( isset( $schedule['exports_reports_cleanup'] ) && isset( $schedule['exports_reports_cleanup'][ $key ] ) ) {
@@ -1407,38 +1446,64 @@ function exports_reports_schedule_cleanup() {
 }
 
 /**
+ * Delete all files in a directory
+ *
+ * @param string|null $directory
+ */
+function exports_reports_delete_dir_files( $directory ) {
+
+	require_once( ABSPATH . 'wp-admin/includes/file.php' );
+
+	/**
+	 * @var $wp_filesystem WP_Filesystem_Base
+	 */
+	global $wp_filesystem;
+
+	WP_Filesystem();
+
+	if ( ! $wp_filesystem ) {
+		return;
+	}
+
+	if ( ! $wp_filesystem->is_dir( $directory ) ) {
+		return;
+	}
+
+	$file_list = $wp_filesystem->dirlist( $directory, false );
+
+	foreach ( $file_list as $file ) {
+		$file_path = $directory . DIRECTORY_SEPARATOR . $file['name'];
+
+		// d = folder, f = file
+		if ( 'd' === $file['type'] ) {
+			// Delete folder
+			$wp_filesystem->rmdir( $file_path, true );
+		} else {
+			// Delete file
+			$wp_filesystem->delete( $file_path );
+		}
+	}
+
+	if ( WP_ADMIN_UI_EXPORT_DIR !== $directory ) {
+		$wp_filesystem->rmdir( $directory, true );
+	}
+}
+
+
+/**
  * @param bool $full
  *
  * @return bool
  */
 function exports_reports_cleanup( $full = false ) {
 
+	/** @var wpdb $wpdb */
 	global $wpdb;
 
 	if ( $full ) {
 		$wpdb->query( 'TRUNCATE ' . EXPORTS_REPORTS_TBL . 'log' );
 
-		global $wp_filesystem;
-
-		$directory = WP_ADMIN_UI_EXPORT_DIR;
-
-		if ( $dir = opendir( $directory ) ) {
-			while ( false !== ( $file = readdir( $dir ) ) ) {
-				if ( in_array( $file, array( '.', '..' ) ) ) {
-					continue;
-				}
-
-				$file_path = $directory . DIRECTORY_SEPARATOR . $file;
-
-				if ( $wp_filesystem->is_file( $file_path ) ) {
-					$wp_filesystem->delete( $file_path );
-				} elseif ( $wp_filesystem->is_dir( $file_path ) ) {
-					$this->delete_files_in_directory( $file_path );
-				}
-			}
-
-			closedir( $dir );
-		}
+		exports_reports_delete_dir_files( WP_ADMIN_UI_EXPORT_DIR );
 	} else {
 		$purge_age = 1; // day(s) in age to purge
 
@@ -1450,11 +1515,24 @@ function exports_reports_cleanup( $full = false ) {
 
 		$sql = $wpdb->prepare( $sql, array( $purge_age ) );
 
-		$cleanup   = $wpdb->get_results( $sql );
+		$cleanup = $wpdb->get_results( $sql );
 
 		if ( false !== $cleanup && ! empty( $cleanup ) ) {
+			require_once( ABSPATH . 'wp-admin/includes/file.php' );
+
+			/**
+			 * @var $wp_filesystem WP_Filesystem_Base
+			 */
+			global $wp_filesystem;
+
+			WP_Filesystem();
+
 			foreach ( $cleanup as $export ) {
-				@unlink( WP_ADMIN_UI_EXPORT_DIR . '/' . str_replace( array( '/', '..' ), '', $export->filename ) );
+				if ( $wp_filesystem ) {
+					$file = WP_ADMIN_UI_EXPORT_DIR . '/' . str_replace( array( '/', '..' ), '', $export->filename );
+
+					$wp_filesystem->delete( $file );
+				}
 
 				$sql = '
 					DELETE FROM `' . EXPORTS_REPORTS_TBL . 'log`
@@ -1556,6 +1634,7 @@ function exports_reports_current_user_can_which( $caps ) {
  */
 function exports_reports_get_roles() {
 
+	/** @var WP_Roles $wp_roles */
 	global $wp_roles;
 
 	if ( ! isset( $wp_roles ) ) {

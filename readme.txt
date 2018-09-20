@@ -1,10 +1,10 @@
 === Exports and Reports ===
 Contributors: sc0ttkclark
-Donate link: https://www.scottkclark.com
-Tags: exports, reports, reporting, exporting, csv, tab, xml, json
+Donate link: https://www.scottkclark.com/
+Tags: exports, reports, reporting, exporting, csv, xlsx, pdf, xml, json
 Requires at least: 3.8
-Tested up to: 4.8.2
-Stable tag: 0.7.4
+Tested up to: 4.9.8
+Stable tag: 0.8.0
 
 Define custom exports / reports for users, based off of any custom MySQL SELECT query you define.
 
@@ -58,15 +58,26 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 = Exporting =
 * CSV - Comma-separated Values (w/ Excel support)
 * TSV - Tab-separated Values (w/ Excel support)
+* TXT - Pipe-separated Values (w/ Excel support)
+* XLSX - Excel format, using [PHP_XLSXWriter](https://github.com/mk-j/PHP_XLSXWriter)
 * XML - XML 1.0 UTF-8 data
-* JSON - JSON for use in Javascript and PHP5+
-* Custom - Custom delimiter separated Values
+* JSON - JSON format
+* PDF - PDF printer friendly views, using [TCPDF](https://tcpdf.org/)
+* Custom - Custom delimiter separated Values (Update the report screen URL parameters to `&action=export&export_type=custom&export_delimiter=#` and change # to whatever delimiter you want)
 
 = Cronjob / JSON API =
 * Run the Export action for a specific report to any supported export type
 * Get paginated / full data from a report in JSON format
 
 == Changelog ==
+
+= 0.8.0 =
+* Added ability to export to TXT file (pipe-delimited)
+* Added ability to export to XLSX file
+* Added ability to export to PDF file
+* Lots of escaping improvements
+* PHPCS fixes and formatting
+* Other miscelaneous fixes and improvements to code quality
 
 = 0.7.4 =
 * Fix for report dropdown link problem introduced in 0.7.3 (props @andrewgosali)
