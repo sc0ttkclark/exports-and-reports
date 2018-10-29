@@ -118,7 +118,7 @@ else {
 			if ( 1 == $field[ 'hide_export' ] ) {
 				$options[ 'columns' ][ $field[ 'name' ] ][ 'export' ] = false;
 			}
-			if ( 1 == $field[ 'search' ] || 1 == $field[ 'hide_report' ] ) {
+			if ( 1 == $field[ 'search'] ) {
 				$options[ 'columns' ][ $field[ 'name' ] ][ 'search' ] = false;
 			}
 			else {
