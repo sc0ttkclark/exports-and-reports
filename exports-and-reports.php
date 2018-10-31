@@ -25,7 +25,7 @@ if ( ! defined( 'WP_ADMIN_UI_EXPORT_DIR' ) ) {
 	define( 'WP_ADMIN_UI_EXPORT_DIR', WP_CONTENT_DIR . '/exports' );
 }
 
-register_activation_hook( __FILE__, 'exports_reports_install' );
+register_activation_hook( __FILE__, 'exports_reports_install_upgrade' );
 
 add_action( 'admin_init', 'exports_reports_init' );
 add_action( 'admin_menu', 'exports_reports_menu' );
@@ -47,7 +47,7 @@ function exports_reports_wp_admin_ui_export() {
 /**
  *
  */
-function exports_reports_reset() {
+function exports_reports_sql_install( $upgrade = false ) {
 
 	/** @var wpdb $wpdb */
 	global $wpdb;
@@ -78,6 +78,10 @@ function exports_reports_reset() {
 		}
 
 		if ( 0 !== stripos( $query, 'CREATE TABLE' ) ) {
+			if ( $upgrade ) {
+				continue;
+			}
+
 			$wpdb->query( $query );
 
 			continue;
@@ -91,9 +95,11 @@ function exports_reports_reset() {
 	delete_option( 'exports_reports_version' );
 	add_option( 'exports_reports_version', EXPORTS_REPORTS_VERSION );
 
-	$token = md5( microtime() . wp_generate_password( 20, true ) );
+	if ( ! $upgrade ) {
+		$token = md5( microtime() . wp_generate_password( 20, true ) );
 
-	update_option( 'exports_reports_token', $token );
+		update_option( 'exports_reports_token', $token );
+	}
 
 	exports_reports_schedule_cleanup();
 
@@ -102,7 +108,7 @@ function exports_reports_reset() {
 /**
  *
  */
-function exports_reports_install() {
+function exports_reports_install_upgrade() {
 
 	/** @var \wpdb $wpdb */
 	global $wpdb;
@@ -111,8 +117,25 @@ function exports_reports_install() {
 	$version = (int) get_option( 'exports_reports_version' );
 
 	if ( empty( $version ) ) {
-		exports_reports_reset();
-	} elseif ( $version !== EXPORTS_REPORTS_VERSION ) {
+		exports_reports_sql_install();
+	} else {
+		exports_reports_upgrade();
+	}
+
+}
+
+/**
+ *
+ */
+function exports_reports_upgrade() {
+
+	/** @var \wpdb $wpdb */
+	global $wpdb;
+
+	// check version
+	$version = (int) get_option( 'exports_reports_version' );
+
+	if ( ! empty( $version ) && EXPORTS_REPORTS_VERSION !== $version ) {
 		$version = absint( $version );
 
 		if ( $version < 60 ) {
@@ -120,10 +143,7 @@ function exports_reports_install() {
 			update_option( 'exports_reports_token', $token );
 		}
 
-		delete_option( 'exports_reports_version' );
-		add_option( 'exports_reports_version', EXPORTS_REPORTS_VERSION );
-
-		exports_reports_schedule_cleanup();
+		exports_reports_sql_install( true );
 	}
 
 }
@@ -133,16 +153,24 @@ function exports_reports_install() {
  */
 function exports_reports_init() {
 
-	global $current_user, $wpdb;
+	exports_reports_upgrade();
 
 	$capabilities = exports_reports_capabilities();
 
-	// thx gravity forms, great way of integration with members!
-	if ( function_exists( 'members_get_capabilities' ) ) {
-		add_filter( 'members_get_capabilities', 'exports_reports_get_capabilities' );
+	add_filter( 'members_get_capabilities', 'exports_reports_get_capabilities' );
 
+	// thx gravity forms, great way of integration with members!
+	if ( ! is_user_logged_in() ) {
+		return;
+	}
+
+	if ( function_exists( 'members_get_capabilities' ) ) {
 		if ( exports_reports_current_user_can_any( 'exports_reports_full_access' ) ) {
-			$current_user->remove_cap( 'exports_reports_full_access' );
+			$user = get_userdata( get_current_user_id() );
+
+			if ( $user instanceof WP_User ) {
+				$user->remove_cap( 'exports_reports_full_access' );
+			}
 		}
 
 		$is_admin_with_no_permissions = exports_reports_has_role( 'administrator' ) && ! exports_reports_current_user_can_any( exports_reports_capabilities() );
@@ -150,8 +178,10 @@ function exports_reports_init() {
 		if ( $is_admin_with_no_permissions ) {
 			$role = get_role( 'administrator' );
 
-			foreach ( $capabilities as $cap ) {
-				$role->add_cap( $cap );
+			if ( $role ) {
+				foreach ( $capabilities as $cap ) {
+					$role->add_cap( $cap );
+				}
 			}
 		}
 	} else {
@@ -159,7 +189,11 @@ function exports_reports_init() {
 		$exports_reports_full_access = apply_filters( 'exports_reports_full_access', $exports_reports_full_access );
 
 		if ( ! empty( $exports_reports_full_access ) ) {
-			$current_user->add_cap( $exports_reports_full_access );
+			$user = get_userdata( get_current_user_id() );
+
+			if ( $user instanceof WP_User ) {
+				$user->add_cap( $exports_reports_full_access );
+			}
 		}
 	}
 
