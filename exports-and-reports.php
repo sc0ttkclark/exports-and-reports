@@ -3,16 +3,17 @@
 Plugin Name: Exports and Reports
 Plugin URI: https://www.scottkclark.com/
 Description: Define custom exports / reports for users by creating each export / report and defining the fields as well as custom MySQL queries to run.
-Version: 0.8.0
+Version: 0.8.1
 Author: Scott Kingsley Clark
 Author URI: https://www.scottkclark.com/
+GitHub Plugin URI: https://github.com/sc0ttkclark/exports-and-reports
 */
 
 /** @var wpdb $wpdb */
 global $wpdb;
 
 define( 'EXPORTS_REPORTS_TBL', $wpdb->prefix . 'exportsreports_' );
-define( 'EXPORTS_REPORTS_VERSION', '080' );
+define( 'EXPORTS_REPORTS_VERSION', '081' );
 define( 'EXPORTS_REPORTS_URL', plugin_dir_url( __FILE__ ) );
 define( 'EXPORTS_REPORTS_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -114,29 +115,9 @@ function exports_reports_install() {
 	} elseif ( $version !== EXPORTS_REPORTS_VERSION ) {
 		$version = absint( $version );
 
-		if ( $version < 32 ) {
-			$wpdb->query( 'ALTER TABLE `' . EXPORTS_REPORTS_TBL . 'groups` ADD COLUMN `role_access` MEDIUMTEXT NOT NULL AFTER `disabled`' );
-			$wpdb->query( 'ALTER TABLE `' . EXPORTS_REPORTS_TBL . 'reports` ADD COLUMN `disabled` int(1) NOT NULL AFTER `group`' );
-			$wpdb->query( 'ALTER TABLE `' . EXPORTS_REPORTS_TBL . 'reports` ADD COLUMN `role_access` MEDIUMTEXT NOT NULL AFTER `disable_export`' );
-			$wpdb->query( 'ALTER TABLE `' . EXPORTS_REPORTS_TBL . 'reports` ADD COLUMN `weight` int(10) NOT NULL AFTER `role_access`' );
-		}
-
-		if ( $version < 42 ) {
-			$wpdb->query( 'ALTER TABLE `' . EXPORTS_REPORTS_TBL . 'reports` ADD COLUMN `default_none` int(1) NOT NULL AFTER `disable_export`' );
-		}
-
-		if ( $version < 50 ) {
-			$wpdb->query( 'ALTER TABLE `' . EXPORTS_REPORTS_TBL . 'groups` ADD COLUMN `weight` int(10) NOT NULL AFTER `role_access`' );
-			$wpdb->query( 'ALTER TABLE `' . EXPORTS_REPORTS_TBL . 'reports` ADD COLUMN `sql_query_count` longtext NOT NULL AFTER `sql_query`' );
-		}
-
 		if ( $version < 60 ) {
 			$token = md5( microtime() . wp_generate_password( 20, true ) );
 			update_option( 'exports_reports_token', $token );
-		}
-
-		if ( $version < 80 ) {
-			$wpdb->query( 'ALTER TABLE `' . EXPORTS_REPORTS_TBL . 'reports` ADD COLUMN `page_orientation` MEDIUMTEXT NOT NULL AFTER `disabled`' );
 		}
 
 		delete_option( 'exports_reports_version' );

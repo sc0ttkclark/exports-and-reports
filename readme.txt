@@ -3,8 +3,8 @@ Contributors: sc0ttkclark
 Donate link: https://www.scottkclark.com/
 Tags: exports, reports, reporting, exporting, csv, xlsx, pdf, xml, json
 Requires at least: 3.8
-Tested up to: 4.9.8
-Stable tag: 0.8.0
+Tested up to: 5.0
+Stable tag: 0.8.1
 
 Define custom exports / reports for users, based off of any custom MySQL SELECT query you define.
 
@@ -70,6 +70,10 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 * Get paginated / full data from a report in JSON format
 
 == Changelog ==
+
+= 0.8.1 =
+* Moved install logic from init into activation hook, some times the plugin's version option was coming up empty and causing DB table resets.
+* Implemented dbDelta function for schema modifications.
 
 = 0.8.0 =
 * Added ability to export to TXT file (pipe-delimited)
