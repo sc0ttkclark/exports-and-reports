@@ -24,6 +24,8 @@ if ( ! defined( 'WP_ADMIN_UI_EXPORT_DIR' ) ) {
 	define( 'WP_ADMIN_UI_EXPORT_DIR', WP_CONTENT_DIR . '/exports' );
 }
 
+register_activation_hook( __FILE__, 'exports_reports_install' );
+
 add_action( 'admin_init', 'exports_reports_init' );
 add_action( 'admin_menu', 'exports_reports_menu' );
 add_action( 'admin_menu', 'exports_reports_admin_menu' );
@@ -67,14 +69,22 @@ function exports_reports_reset() {
 
 	$sql = explode( ";\n", str_replace( array( "\r", 'wp_' ), array( "\n", $wpdb->prefix ), $sql ) );
 
-	for ( $i = 0, $z = count( $sql ); $i < $z; $i ++ ) {
-		$query = trim( $sql[ $i ] );
+	foreach ( $sql as $query ) {
+		$query = trim( $query );
 
 		if ( empty( $query ) ) {
 			continue;
 		}
 
-		$wpdb->query( $query );
+		if ( 0 !== stripos( $query, 'CREATE TABLE' ) ) {
+			$wpdb->query( $query );
+
+			continue;
+		}
+
+		require_once ABSPATH . '/wp-admin/includes/upgrade.php';
+
+		dbDelta( $query );
 	}
 
 	delete_option( 'exports_reports_version' );
@@ -91,11 +101,10 @@ function exports_reports_reset() {
 /**
  *
  */
-function exports_reports_init() {
+function exports_reports_install() {
 
-	global $current_user, $wpdb;
-
-	$capabilities = exports_reports_capabilities();
+	/** @var \wpdb $wpdb */
+	global $wpdb;
 
 	// check version
 	$version = (int) get_option( 'exports_reports_version' );
@@ -135,6 +144,17 @@ function exports_reports_init() {
 
 		exports_reports_schedule_cleanup();
 	}
+
+}
+
+/**
+ *
+ */
+function exports_reports_init() {
+
+	global $current_user, $wpdb;
+
+	$capabilities = exports_reports_capabilities();
 
 	// thx gravity forms, great way of integration with members!
 	if ( function_exists( 'members_get_capabilities' ) ) {
@@ -1575,6 +1595,8 @@ function exports_reports_capabilities() {
 		'exports_reports_settings',
 		'exports_reports_view',
 	);
+
+	$caps = apply_filters( 'export_reports_capabilites', $caps );
 
 	return $caps;
 

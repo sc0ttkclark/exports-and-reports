@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS `wp_exportsreports_groups`;
 CREATE TABLE `wp_exportsreports_groups` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
@@ -10,7 +9,6 @@ CREATE TABLE `wp_exportsreports_groups` (
   PRIMARY KEY (`id`)
 ) DEFAULT CHARSET=utf8;
 
-DROP TABLE IF EXISTS `wp_exportsreports_reports`;
 CREATE TABLE `wp_exportsreports_reports` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
@@ -29,7 +27,6 @@ CREATE TABLE `wp_exportsreports_reports` (
   PRIMARY KEY (`id`)
 ) DEFAULT CHARSET=utf8;
 
-DROP TABLE IF EXISTS `wp_exportsreports_log`;
 CREATE TABLE `wp_exportsreports_log` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
   `report_id` int(10) NOT NULL,
