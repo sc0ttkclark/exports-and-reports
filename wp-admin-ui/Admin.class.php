@@ -1502,7 +1502,11 @@ class WP_Admin_UI {
 				require_once $this->base_dir . '/includes/tcpdf/tcpdf.php';
 				require_once $this->base_dir . '/includes/export-pdf.php';
 
-				$export_file = WP_Admin_UI_Export_PDF::CreateReport( $this );
+				$export_file = apply_filters( 'wp_admin_ui_export_pdf_report_file', null, $this );
+
+				if ( ! $export_file ) {
+					$export_file = WP_Admin_UI_Export_PDF::CreateReport( $this );
+				}
 
 				$this->message( '<strong>Success:</strong> Your export is ready, the download should begin in a few moments. If it doesn\'t, <a href="' . esc_url( $this->export_url . urlencode( $export_file ) ) . '" target="_blank">click here to access your PDF export file</a>.<br /><br />When you are done with your export, <a href="' . esc_url( $this->var_update( array(
 						'remove_export' => urlencode( $export_file ),

@@ -4,7 +4,7 @@ Donate link: https://www.scottkclark.com/
 Tags: exports, reports, reporting, exporting, csv, xlsx, pdf, xml, json
 Requires at least: 3.8
 Tested up to: 5.0
-Stable tag: 0.8.1
+Stable tag: 0.8.2
 
 Define custom exports / reports for users, based off of any custom MySQL SELECT query you define.
 
@@ -70,6 +70,10 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 * Get paginated / full data from a report in JSON format
 
 == Changelog ==
+
+= 0.8.2 =
+* Added new filter `wp_admin_ui_export_pdf_report_file` to override the default `WP_Admin_UI_Export_PDF::CreateReport( $this )` process when creating PDF reports.
+* Fixed PDF report titles that said 'item' instead of the report title.
 
 = 0.8.1 =
 * Moved install logic from init into activation hook, some times the plugin's version option was coming up empty and causing DB table resets.

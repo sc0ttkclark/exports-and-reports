@@ -222,11 +222,11 @@ class WP_Admin_UI_Export_PDF extends TCPDF {
 		$filter_output = implode( "\n", $filter_output );
 
 		// set document information
-		$pdf->SetTitle( $admin->item );
+		$pdf->SetTitle( $admin->items );
 		$pdf->SetAuthor( 'Texas Star Party ' );
 
 		// set default header data
-		$pdf->setHeaderData( '', 0, $admin->item, $filter_output );
+		$pdf->setHeaderData( '', 0, $admin->items, $filter_output );
 
 		// set header and footer fonts
 		$pdf->setHeaderFont( array( PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN ) );
