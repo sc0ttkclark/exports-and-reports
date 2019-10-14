@@ -3,7 +3,7 @@
 Plugin Name: Exports and Reports
 Plugin URI: https://www.scottkclark.com/
 Description: Define custom exports / reports for users by creating each export / report and defining the fields as well as custom MySQL queries to run.
-Version: 0.8.2
+Version: 0.8.3
 Author: Scott Kingsley Clark
 Author URI: https://www.scottkclark.com/
 GitHub Plugin URI: https://github.com/sc0ttkclark/exports-and-reports
@@ -13,7 +13,7 @@ GitHub Plugin URI: https://github.com/sc0ttkclark/exports-and-reports
 global $wpdb;
 
 define( 'EXPORTS_REPORTS_TBL', $wpdb->prefix . 'exportsreports_' );
-define( 'EXPORTS_REPORTS_VERSION', '082' );
+define( 'EXPORTS_REPORTS_VERSION', '083' );
 define( 'EXPORTS_REPORTS_URL', plugin_dir_url( __FILE__ ) );
 define( 'EXPORTS_REPORTS_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -278,14 +278,12 @@ function exports_reports_menu() {
 						$menu_page = 'exports-reports-group-' . $group->id;
 
 						if ( ! $init ) {
-							add_menu_page( 'Reports', 'Reports', 'read', 'exports-reports', null, EXPORTS_REPORTS_URL . 'assets/icons/16.png' );
+							add_menu_page( 'Reports', 'Reports', 'read', $menu_page, null, EXPORTS_REPORTS_URL . 'assets/icons/16.png' );
 
-							$menu_page = 'exports-reports';
-
-							$init = true;
+							$init = $menu_page;
 						}
 
-						add_submenu_page( 'exports-reports', $group->name, $group->name, 'read', $menu_page, 'exports_reports_view' );
+						add_submenu_page( $init, $group->name, $group->name, 'read', $menu_page, 'exports_reports_view' );
 
 						break;
 					}
@@ -301,14 +299,12 @@ function exports_reports_menu() {
 							$menu_page = 'exports-reports-group-' . $group->id;
 
 							if ( ! $init ) {
-								add_menu_page( 'Reports', 'Reports', 'read', 'exports-reports', null, EXPORTS_REPORTS_URL . 'assets/icons/16.png' );
+								add_menu_page( 'Reports', 'Reports', 'read', $menu_page, null, EXPORTS_REPORTS_URL . 'assets/icons/16.png' );
 
-								$menu_page = 'exports-reports';
-
-								$init = true;
+								$init = $menu_page;
 							}
 
-							add_submenu_page( 'exports-reports', $group->name, $group->name, 'read', $menu_page, 'exports_reports_view' );
+							add_submenu_page( $init, $group->name, $group->name, 'read', $menu_page, 'exports_reports_view' );
 
 							break;
 						}
