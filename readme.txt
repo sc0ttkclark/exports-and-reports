@@ -3,7 +3,7 @@ Contributors: sc0ttkclark
 Donate link: https://www.scottkclark.com/
 Tags: exports, reports, reporting, exporting, csv, xlsx, pdf, xml, json
 Requires at least: 3.8
-Tested up to: 5.2
+Tested up to: 5.4
 Stable tag: 0.8.3
 
 Define custom exports / reports for users, based off of any custom MySQL SELECT query you define.
@@ -70,6 +70,9 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 * Get paginated / full data from a report in JSON format
 
 == Changelog ==
+
+= 0.8.4 =
+* Fix some output escaping in the WP_Admin_UI class
 
 = 0.8.3 =
 * Fixed multiple group pages not showing the correct group view for first group in list [#8]

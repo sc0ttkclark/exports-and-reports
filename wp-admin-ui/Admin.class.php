@@ -54,7 +54,7 @@ if ( isset( $_GET['exports_and_reports_download'] ) && isset( $_GET['_wpnonce'] 
  *
  * @package Admin UI for Plugins
  *
- * @version 1.11.2
+ * @version 1.11.3
  * @author  Scott Kingsley Clark
  * @link    https://www.scottkclark.com/
  *
@@ -81,6 +81,7 @@ class WP_Admin_UI {
 	var $reorder_order = false;
 	var $reorder_order_dir = 'ASC';
 	var $api = false;
+	var $num = '';
 
 	// ui
 	var $item = 'Item';
@@ -666,7 +667,7 @@ class WP_Admin_UI {
 
 		$msg = $this->do_hook( 'message', $msg );
 		?>
-		<div id="message" class="updated fade"><p><?php echo $msg; ?></p></div>
+		<div id="message" class="updated fade"><p><?php echo wp_kses_post( $msg ); ?></p></div>
 		<?php
 	}
 
@@ -674,7 +675,7 @@ class WP_Admin_UI {
 
 		$msg = $this->do_hook( 'error', $msg );
 		?>
-		<div id="message" class="error fade"><p><?php echo $msg; ?></p></div>
+		<div id="message" class="error fade"><p><?php echo wp_kses_post( $msg ); ?></p></div>
 		<?php
 		return false;
 	}
@@ -2274,7 +2275,7 @@ class WP_Admin_UI {
 						}
 						?>&nbsp;&nbsp;
 						<label<?php echo( empty( $this->filters ) ? ' class="screen-reader-text"' : '' ); ?> for="page-search-input">Search:</label>
-						<input type="text" name="search_query" id="page-search-input" value="<?php echo $this->search_query; ?>" />
+						<input type="text" name="search_query" id="page-search-input" value="<?php echo esc_attr( $this->search_query ); ?>" />
 						<input type="submit" value="Search" class="button" />
 						<?php
 						if ( false !== $this->search_query ) {
@@ -2286,11 +2287,11 @@ class WP_Admin_UI {
 							}
 							?>
 							&nbsp;&nbsp;&nbsp;
-							<small>[<a href="<?php echo $this->var_update( $clear_filters, array(
+							<small>[<a href="<?php echo esc_url( $this->var_update( $clear_filters, array(
 									'order',
 									'order_dir',
 									'limit'
-								) ); ?>">Reset Filters</a>]
+								) ) ); ?>">Reset Filters</a>]
 							</small>
 							<?php
 						}
@@ -2318,7 +2319,7 @@ class WP_Admin_UI {
 				if ( 1 === $reorder ) {
 					?>
 					<input type="button" value="Update Order" class="button" onclick="jQuery('form.admin_ui_reorder_form').submit();" />
-					<input type="button" value="Cancel" class="button" onclick="document.location='<?php echo $this->var_update( array( 'action' => 'manage' ) ); ?>';" />
+					<input type="button" value="Cancel" class="button" onclick="document.location='<?php echo esc_url( $this->var_update( array( 'action' => 'manage' ) ) ); ?>';" />
 					<?php
 				} elseif ( $this->add || $this->export ) {
 					?>
@@ -2402,7 +2403,7 @@ class WP_Admin_UI {
 								$label = $attributes['label'];
 							}
 							?>
-							<th scope="col" class="manage-column"><?php echo $label; ?></th>
+							<th scope="col" class="manage-column"><?php echo wp_kses_post( $label ); ?></th>
 							<?php
 							if ( 'number' === $attributes['type'] ) {
 								$total = (int) $this->totals[ $column ];
@@ -2421,7 +2422,7 @@ class WP_Admin_UI {
 						<?php
 						foreach ( $columns as $column => $total ) {
 							?>
-							<td><?php echo $total; ?></td>
+							<td><?php echo esc_html( $total ); ?></td>
 							<?php
 						}
 						?>
@@ -2462,7 +2463,7 @@ class WP_Admin_UI {
 			}
 
 			.dragme {
-				background:          url(<?php echo $this->assets_url; ?>/move.png) no-repeat;
+				background:          url(<?php echo esc_url( $this->assets_url . '/move.png' ); ?>) no-repeat;
 				background-position: 8px 5px;
 				cursor:              pointer;
 			}
@@ -2471,10 +2472,10 @@ class WP_Admin_UI {
 				margin-left: 30px;
 			}
 		</style>
-		<form action="<?php echo $this->var_update( array(
+		<form action="<?php echo esc_url( $this->var_update( array(
 			'action' => 'reorder',
 			'do'     => 'save'
-		) ); ?>" method="post" class="admin_ui_reorder_form">
+		) ) ); ?>" method="post" class="admin_ui_reorder_form">
 			<?php
 			}
 			$column_index = 'columns';
@@ -2558,8 +2559,13 @@ class WP_Admin_UI {
 				<?php
 				if ( ! empty( $this->data ) ) {
 					foreach ( $this->data as $row ) {
+						$id = 0;
+
+						if ( ! empty( $row[ $this->identifier ] ) ) {
+							$id = $row[ $this->identifier ];
+						}
 						?>
-						<tr id="item-<?php echo $row[ $this->identifier ]; ?>" class="iedit">
+						<tr id="item-<?php echo esc_attr( $id ); ?>" class="iedit">
 							<?php
 							foreach ( $columns as $column => $attributes ) {
 								if ( ! is_array( $attributes ) ) {
@@ -2579,23 +2585,23 @@ class WP_Admin_UI {
 									if ( $this->view && ( $reorder == 0 || false === $this->reorder ) ) {
 										?>
 										<td class="post-title page-title column-title">
-										<strong><a class="row-title" href="<?php echo $this->var_update( array(
+										<strong><a class="row-title" href="<?php echo esc_url( $this->var_update( array(
 												'action' => 'view',
-												'id'     => $row[ $this->identifier ]
-											) ); ?>" title="View &#8220;<?php echo htmlentities( $row[ $column ] ); ?>&#8221;"><?php echo $row[ $column ]; ?></a></strong>
+												'id'     => $id,
+											) ) ); ?>" title="View &#8220;<?php echo htmlentities( $row[ $column ] ); ?>&#8221;"><?php echo wp_kses_post( $row[ $column ] ); ?></a></strong>
 										<?php
 									} elseif ( $this->edit && ( $reorder == 0 || false === $this->reorder ) ) {
 										?>
 										<td class="post-title page-title column-title">
-										<strong><a class="row-title" href="<?php echo $this->var_update( array(
+										<strong><a class="row-title" href="<?php echo esc_url( $this->var_update( array(
 												'action' => 'edit',
-												'id'     => $row[ $this->identifier ]
-											) ); ?>" title="Edit &#8220;<?php echo htmlentities( $row[ $column ] ); ?>&#8221;"><?php echo $row[ $column ]; ?></a></strong>
+												'id'     => $id,
+											) ) ); ?>" title="Edit &#8220;<?php echo htmlentities( $row[ $column ] ); ?>&#8221;"><?php echo wp_kses_post( $row[ $column ] ); ?></a></strong>
 										<?php
 									} else {
 										?>
 										<td class="post-title page-title column-title<?php echo( 1 === $reorder && $this->reorder ? ' dragme' : '' ); ?>">
-										<strong><?php echo $row[ $column ]; ?></strong>
+										<strong><?php echo wp_kses_post( $row[ $column ] ); ?></strong>
 										<?php
 									}
 									if ( $reorder == 0 || false === $this->reorder ) {
@@ -2603,25 +2609,25 @@ class WP_Admin_UI {
 										if ( $this->view ) {
 											$actions['view'] = '<span class="view"><a href="' . esc_url( $this->var_update( array(
 													'action' => 'view',
-													'id'     => $row[ $this->identifier ]
+													'id'     => $id,
 												) ) ) . '" title="View this item">View</a></span>';
 										}
 										if ( $this->edit ) {
 											$actions['edit'] = '<span class="edit"><a href="' . esc_url( $this->var_update( array(
 													'action' => 'edit',
-													'id'     => $row[ $this->identifier ]
+													'id'     => $id,
 												) ) ) . '" title="Edit this item">Edit</a></span>';
 										}
 										if ( $this->duplicate ) {
 											$actions['duplicate'] = '<span class="edit"><a href="' . esc_url( $this->var_update( array(
 													'action' => 'duplicate',
-													'id'     => $row[ $this->identifier ]
+													'id'     => $id,
 												) ) ) . '" title="Duplicate this item">Duplicate</a></span>';
 										}
 										if ( $this->delete ) {
 											$actions['delete'] = '<span class="delete"><a class="submitdelete" title="Delete this item" href="' . esc_url( $this->var_update( array(
 													'action'   => 'delete',
-													'id'       => $row[ $this->identifier ],
+													'id'       => $id,
 													'_wpnonce' => wp_create_nonce( 'wp-admin-ui-delete' ),
 												) ) ) . '" onclick="if(confirm(\'You are about to delete this item \'' . htmlentities( $row[ $column ] ) . '\'\n \'Cancel\' to stop, \'OK\' to delete.\')){return true;}return false;">Delete</a></span>';
 										}
@@ -2663,7 +2669,7 @@ class WP_Admin_UI {
 										<?php
 									} else {
 										?>
-										<input type="hidden" name="order[]" value="<?php echo $row[ $this->identifier ]; ?>" />
+										<input type="hidden" name="order[]" value="<?php echo esc_attr( $id ); ?>" />
 										<?php
 									}
 									?>
@@ -2672,40 +2678,40 @@ class WP_Admin_UI {
 								} elseif ( 'date' === $attributes['type'] ) {
 									?>
 									<td class="date column-date">
-										<abbr title="<?php echo $row[ $column ]; ?>"><?php echo $row[ $column ]; ?></abbr>
+										<abbr title="<?php echo esc_attr( $row[ $column ] ); ?>"><?php echo wp_kses_post( $row[ $column ] ); ?></abbr>
 									</td>
 									<?php
 								} elseif ( 'time' === $attributes['type'] ) {
 									?>
 									<td class="date column-date">
-										<abbr title="<?php echo $row[ $column ]; ?>"><?php echo $row[ $column ]; ?></abbr>
+										<abbr title="<?php echo esc_attr( $row[ $column ] ); ?>"><?php echo wp_kses_post( $row[ $column ] ); ?></abbr>
 									</td>
 									<?php
 								} elseif ( 'datetime' === $attributes['type'] ) {
 									?>
 									<td class="date column-date">
-										<abbr title="<?php echo $row[ $column ]; ?>"><?php echo $row[ $column ]; ?></abbr>
+										<abbr title="<?php echo esc_attr( $row[ $column ] ); ?>"><?php echo wp_kses_post( $row[ $column ] ); ?></abbr>
 									</td>
 									<?php
 								} elseif ( 'related' === $attributes['type'] && false !== $attributes['related'] ) {
 									?>
-									<td class="author column-author"><?php echo $row[ $column ]; ?></td>
+									<td class="author column-author"><?php echo wp_kses_post( $row[ $column ] ); ?></td>
 									<?php
 								} elseif ( 'bool' === $attributes['type'] ) {
 									?>
-									<td class="author column-author"><?php echo $row[ $column ]; ?></td>
+									<td class="author column-author"><?php echo wp_kses_post( $row[ $column ] ); ?></td>
 									<?php
 								} elseif ( 'number' === $attributes['type'] ) {
 									?>
-									<td class="author column-author"><?php echo $row[ $column ]; ?></td>
+									<td class="author column-author"><?php echo wp_kses_post( $row[ $column ] ); ?></td>
 									<?php
 								} elseif ( 'decimal' === $attributes['type'] ) {
 									?>
-									<td class="author column-author"><?php echo $row[ $column ]; ?></td>
+									<td class="author column-author"><?php echo wp_kses_post( $row[ $column ] ); ?></td>
 									<?php
 								} else {
 									?>
-									<td class="author column-author"><?php echo $row[ $column ]; ?></td>
+									<td class="author column-author"><?php echo wp_kses_post( $row[ $column ] ); ?></td>
 									<?php
 								}
 							}
