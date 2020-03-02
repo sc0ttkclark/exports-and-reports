@@ -4,7 +4,7 @@ Donate link: https://www.scottkclark.com/
 Tags: exports, reports, reporting, exporting, csv, xlsx, pdf, xml, json
 Requires at least: 3.8
 Tested up to: 5.4
-Stable tag: 0.8.3
+Stable tag: 0.8.4
 
 Define custom exports / reports for users, based off of any custom MySQL SELECT query you define.
 

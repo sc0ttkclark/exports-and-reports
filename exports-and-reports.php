@@ -3,7 +3,7 @@
 Plugin Name: Exports and Reports
 Plugin URI: https://www.scottkclark.com/
 Description: Define custom exports / reports for users by creating each export / report and defining the fields as well as custom MySQL queries to run.
-Version: 0.8.3
+Version: 0.8.4
 Author: Scott Kingsley Clark
 Author URI: https://www.scottkclark.com/
 GitHub Plugin URI: https://github.com/sc0ttkclark/exports-and-reports
