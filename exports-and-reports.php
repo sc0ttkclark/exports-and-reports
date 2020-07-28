@@ -3,7 +3,7 @@
 Plugin Name: Exports and Reports
 Plugin URI: https://www.scottkclark.com/
 Description: Define custom exports / reports for users by creating each export / report and defining the fields as well as custom MySQL queries to run.
-Version: 0.8.5
+Version: 0.8.6
 Author: Scott Kingsley Clark
 Author URI: https://www.scottkclark.com/
 GitHub Plugin URI: https://github.com/sc0ttkclark/exports-and-reports
@@ -13,7 +13,7 @@ GitHub Plugin URI: https://github.com/sc0ttkclark/exports-and-reports
 global $wpdb;
 
 define( 'EXPORTS_REPORTS_TBL', $wpdb->prefix . 'exportsreports_' );
-define( 'EXPORTS_REPORTS_VERSION', '085' );
+define( 'EXPORTS_REPORTS_VERSION', '086' );
 define( 'EXPORTS_REPORTS_URL', plugin_dir_url( __FILE__ ) );
 define( 'EXPORTS_REPORTS_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -135,7 +135,7 @@ function exports_reports_upgrade() {
 	// check version
 	$version = (int) get_option( 'exports_reports_version' );
 
-	if ( ! empty( $version ) && EXPORTS_REPORTS_VERSION !== $version ) {
+	if ( ! empty( $version ) && (int) EXPORTS_REPORTS_VERSION !== $version ) {
 		$version = absint( $version );
 
 		if ( $version < 60 ) {

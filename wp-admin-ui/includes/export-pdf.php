@@ -223,7 +223,7 @@ class WP_Admin_UI_Export_PDF extends TCPDF {
 
 		// set document information
 		$pdf->SetTitle( $admin->items );
-		$pdf->SetAuthor( 'Texas Star Party ' );
+		$pdf->SetAuthor( wp_get_current_user()->display_name );
 
 		// set default header data
 		$pdf->setHeaderData( '', 0, $admin->items, $filter_output );
