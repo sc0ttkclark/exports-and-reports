@@ -13,7 +13,7 @@ GitHub Plugin URI: https://github.com/sc0ttkclark/exports-and-reports
 global $wpdb;
 
 define( 'EXPORTS_REPORTS_TBL', $wpdb->prefix . 'exportsreports_' );
-define( 'EXPORTS_REPORTS_VERSION', '085' );
+define( 'EXPORTS_REPORTS_VERSION', '086' );
 define( 'EXPORTS_REPORTS_URL', plugin_dir_url( __FILE__ ) );
 define( 'EXPORTS_REPORTS_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -135,7 +135,7 @@ function exports_reports_upgrade() {
 	// check version
 	$version = (int) get_option( 'exports_reports_version' );
 
-	if ( ! empty( $version ) && EXPORTS_REPORTS_VERSION !== $version ) {
+	if ( ! empty( $version ) && (int) EXPORTS_REPORTS_VERSION !== $version ) {
 		$version = absint( $version );
 
 		if ( $version < 60 ) {
