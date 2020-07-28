@@ -3,8 +3,8 @@ Contributors: sc0ttkclark
 Donate link: https://www.scottkclark.com/
 Tags: exports, reports, reporting, exporting, csv, xlsx, pdf, xml, json
 Requires at least: 3.8
-Tested up to: 5.4
-Stable tag: 0.8.5
+Tested up to: 5.5
+Stable tag: 0.8.6
 
 Define custom exports / reports for users, based off of any custom MySQL SELECT query you define.
 
@@ -70,6 +70,10 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 * Get paginated / full data from a report in JSON format
 
 == Changelog ==
+
+= 0.8.6 =
+* Fixed a problem where the SQL upgrade would try to run after it's already done the install and is already up-to-date
+* Updated compatibility with WP 5.5
 
 = 0.8.5 =
 * Updated compatibility with WP 5.4
