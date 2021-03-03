@@ -12,15 +12,17 @@ if ( ! is_object( $wpdb ) ) {
 // FOR EXPORTS ONLY
 if ( isset( $_GET['exports_and_reports_download'] ) && isset( $_GET['_wpnonce'] ) && false !== wp_verify_nonce( $_GET['_wpnonce'], 'wp-admin-ui-export' ) ) {
 	do_action( 'wp_admin_ui_export_download' );
-	$file = WP_ADMIN_UI_EXPORT_DIR . '/' . str_replace( array( '/', '..' ), '', $_GET['exports_and_reports_export'] );
 
+	$file = WP_ADMIN_UI_EXPORT_DIR . '/' . str_replace( array( '/', '..' ), '', $_GET['exports_and_reports_export'] );
 	$file = realpath( $file );
+
+	$file_url = WP_ADMIN_UI_EXPORT_URL . '/' . str_replace( array( '/', '..' ), '', $_GET['exports_and_reports_export'] );
 
 	if ( ! isset( $_GET['exports_and_reports_export'] ) || empty( $_GET['exports_and_reports_export'] ) || ! file_exists( $file ) ) {
 		wp_die( 'File not found.' );
 	}
 
-	wp_redirect( str_replace( WP_ADMIN_UI_EXPORT_DIR, WP_ADMIN_UI_EXPORT_URL, $file ) );
+	wp_redirect( $file_url );
 	die();
 
 	// required for IE, otherwise Content-disposition is ignored
@@ -54,7 +56,7 @@ if ( isset( $_GET['exports_and_reports_download'] ) && isset( $_GET['_wpnonce'] 
  *
  * @package Admin UI for Plugins
  *
- * @version 1.11.3
+ * @version 1.11.4
  * @author  Scott Kingsley Clark
  * @link    https://www.scottkclark.com/
  *
@@ -1451,6 +1453,11 @@ class WP_Admin_UI {
 							$item[ $key ] = $attributes['custom_display']( $item[ $key ], $item, $key, $attributes, $this );
 						}
 						$row[ $key ] = wp_strip_all_tags( $item[ $key ] );
+
+						// Enforce numbers for the XLSX column.
+						if ( ! empty( $attributes['type'] ) && 'number' === $attributes['type'] ) {
+							$row[ $key ] = (int) $row[ $key ];
+						}
 					}
 
 					$writer->writeSheetRow( 'Sheet1', array_values( $row ) );
@@ -2144,9 +2151,6 @@ class WP_Admin_UI {
 
 	function manage( $reorder = 0 ) {
 
-		wp_enqueue_style( 'jquery-ui' );
-		wp_enqueue_script( 'jquery-ui-datepicker' );
-
 		/** @global wpdb $wpdb */
 		global $wpdb;
 		$this->do_hook( 'manage', $reorder );
@@ -2197,41 +2201,37 @@ class WP_Admin_UI {
 							$filter_column = $this->search_columns[ $filter ];
 							$date_exists   = false;
 
-							if ( in_array( $filter_column['type'], array( 'date', 'datetime' ), true ) ) {
-							if ( false === $date_exists ) {
-								?>
-								<script type="text/javascript">
-									jQuery( document ).ready( function () {
-										jQuery( 'input.admin_ui_date' ).datepicker();
-									} );
-								</script>
-							<?php
-							}
-							$date_exists = true;
-							$start       = $this->get_var( 'filter_' . $filter . '_start', $filter_column['filter_default'] );
-							$end         = $this->get_var( 'filter_' . $filter . '_end', $filter_column['filter_ongoing_default'] );
-							?>&nbsp;&nbsp;
-								<label for="admin_ui_filter_<?php echo esc_attr( $filter ); ?>_start"><?php echo esc_html( $filter_column['filter_label'] ); ?>:</label>
-							<input type="text" name="filter_<?php echo esc_attr( $filter ); ?>_start" class="admin_ui_filter admin_ui_date" id="admin_ui_filter_<?php echo esc_attr( $filter ); ?>_start" value="<?php echo( false !== $start && 0 < strlen( $start ) ? date_i18n( 'm/d/Y', strtotime( $start ) ) : '' ); ?>" />
-								<label for="admin_ui_filter_<?php echo esc_attr( $filter ); ?>_end">to</label>
-							<input type="text" name="filter_<?php echo esc_attr( $filter ); ?>_end" class="admin_ui_filter admin_ui_date" id="admin_ui_filter_<?php echo esc_attr( $filter ); ?>_end" value="<?php echo( false !== $end && 0 < strlen( $end ) ? date_i18n( 'm/d/Y', strtotime( $end ) ) : '' ); ?>" />
-							<?php
+							if ( in_array( $filter_column['type'], array( 'date', 'datetime', 'time' ), true ) ) {
+								$html_input_type = $filter_column['type'];
+
+								if ( 'datetime' === $html_input_type ) {
+									$html_input_type = 'datetime-local';
+								}
+
+								$start = $this->get_var( 'filter_' . $filter . '_start', $filter_column['filter_default'] );
+								$end   = $this->get_var( 'filter_' . $filter . '_end', $filter_column['filter_ongoing_default'] );
+								?>&nbsp;&nbsp;
+									<label for="admin_ui_filter_<?php echo esc_attr( $filter ); ?>_start"><?php echo esc_html( $filter_column['filter_label'] ); ?>:</label>
+								<input type="<?php echo esc_attr( $html_input_type ); ?>" name="filter_<?php echo esc_attr( $filter ); ?>_start" class="admin_ui_filter admin_ui_date" id="admin_ui_filter_<?php echo esc_attr( $filter ); ?>_start" value="<?php echo( false !== $start && 0 < strlen( $start ) ? esc_attr( $start ) : '' ); ?>" />
+									<label for="admin_ui_filter_<?php echo esc_attr( $filter ); ?>_end">to</label>
+								<input type="<?php echo esc_attr( $html_input_type ); ?>" name="filter_<?php echo esc_attr( $filter ); ?>_end" class="admin_ui_filter admin_ui_date" id="admin_ui_filter_<?php echo esc_attr( $filter ); ?>_end" value="<?php echo( false !== $end && 0 < strlen( $end ) ? esc_attr( $end ) : '' ); ?>" />
+								<?php
 							} elseif ( 'related' === $filter_column['type'] && false !== $filter_column['related'] ) {
-							if ( ! is_array( $filter_column['related'] ) ) {
-							$related  = $wpdb->get_results( 'SELECT `' . $this->sanitize( $filter_column['related_id'] ) . '`,`' . $this->sanitize( $filter_column['related_field'] ) . '` FROM ' . $filter_column['related'] . ( ! empty( $filter_column['related_sql'] ) ? ' ' . $filter_column['related_sql'] : '' ) );
-							$selected = $this->get_var( 'filter_' . $filter, $filter_column['filter_default'] );
-							?>
-								<label for="admin_ui_filter_<?php echo esc_attr( $filter ); ?>"><?php echo esc_html( $filter_column['filter_label'] ); ?>:</label>
-								<select name="filter_<?php echo esc_attr( $filter ); ?><?php echo( false !== $filter_column['related_multiple'] ? '[]' : '' ); ?>" id="admin_ui_filter_<?php echo esc_attr( $filter ); ?>"<?php echo( false !== $filter_column['related_multiple'] ? ' size="10" style="height:auto;" MULTIPLE' : '' ); ?>>
-									<option value="">-- Show All --</option>
-									<?php
-									foreach ( $related as $option ) {
-										?>
-										<option value="<?php echo esc_attr( $option->{$filter_column['related_id']} ); ?>"<?php selected( $option->{$filter_column['related_id']}, $selected ); ?>><?php echo esc_html( $option->{$filter_column['related_field']} ); ?></option>
+								if ( ! is_array( $filter_column['related'] ) ) {
+									$related  = $wpdb->get_results( 'SELECT `' . $this->sanitize( $filter_column['related_id'] ) . '`,`' . $this->sanitize( $filter_column['related_field'] ) . '` FROM ' . $filter_column['related'] . ( ! empty( $filter_column['related_sql'] ) ? ' ' . $filter_column['related_sql'] : '' ) );
+									$selected = $this->get_var( 'filter_' . $filter, $filter_column['filter_default'] );
+								?>
+									<label for="admin_ui_filter_<?php echo esc_attr( $filter ); ?>"><?php echo esc_html( $filter_column['filter_label'] ); ?>:</label>
+									<select name="filter_<?php echo esc_attr( $filter ); ?><?php echo( false !== $filter_column['related_multiple'] ? '[]' : '' ); ?>" id="admin_ui_filter_<?php echo esc_attr( $filter ); ?>"<?php echo( false !== $filter_column['related_multiple'] ? ' size="10" style="height:auto;" MULTIPLE' : '' ); ?>>
+										<option value="">-- Show All --</option>
 										<?php
-									}
-									?>
-								</select>
+										foreach ( $related as $option ) {
+											?>
+											<option value="<?php echo esc_attr( $option->{$filter_column['related_id']} ); ?>"<?php selected( $option->{$filter_column['related_id']}, $selected ); ?>><?php echo esc_html( $option->{$filter_column['related_field']} ); ?></option>
+											<?php
+										}
+										?>
+									</select>
 								<?php
 							} else {
 								$related  = $filter_column['related'];
@@ -2736,9 +2736,9 @@ class WP_Admin_UI {
 		<script type="text/javascript">
 			jQuery( 'table.widefat tbody tr:even' ).addClass( 'alternate' );
 			<?php if( 1 === $reorder && false !== $this->reorder ) { ?>
-			jQuery( document ).ready( function () {
-				jQuery( ".sortable" ).sortable( {axis : "y", handle : ".dragme"} );
-				jQuery( ".sortable" ).bind( 'sortupdate', function ( event, ui ) {
+			jQuery( function () {
+				jQuery( '.sortable' ).sortable( { axis : 'y', handle : '.dragme' } );
+				jQuery( '.sortable' ).on( 'sortupdate', function ( event, ui ) {
 					jQuery( 'table.widefat tbody tr' ).removeClass( 'alternate' );
 					jQuery( 'table.widefat tbody tr:even' ).addClass( 'alternate' );
 				} );
@@ -2799,7 +2799,7 @@ class WP_Admin_UI {
 					<span class="total-pages"><?php echo esc_html( $total_pages ); ?></span></span>
 				<script>
 
-					jQuery( document ).ready( function ( $ ) {
+					jQuery( function ( $ ) {
 						var pageInput = $( 'input.current-page' );
 						var currentPage = pageInput.val();
 						pageInput.closest( 'form' ).submit( function ( e ) {

@@ -4,7 +4,7 @@ Donate link: https://www.scottkclark.com/
 Tags: exports, reports, reporting, exporting, csv, xlsx, pdf, xml, json
 Requires at least: 3.8
 Tested up to: 5.5
-Stable tag: 0.8.6
+Stable tag: 0.8.7
 
 Define custom exports / reports for users, based off of any custom MySQL SELECT query you define.
 
@@ -70,6 +70,12 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 * Get paginated / full data from a report in JSON format
 
 == Changelog ==
+
+= 0.8.7 =
+* Fixed a problem with backslashes in URLs for Windows file exports, props @ZelonGames [#16]
+* Removed jQuery UI Datepicker functionality and replaced with HTML input types date, time, and datetime-local. [#10]
+* Added support for numeric values in XLSX exports instead of treating them as strings for the export. [#18]
+* Updated compatibility with WP 5.7
 
 = 0.8.6 =
 * Fixed a problem where the SQL upgrade would try to run after it's already done the install and is already up-to-date
