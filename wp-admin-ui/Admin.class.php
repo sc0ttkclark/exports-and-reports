@@ -1405,7 +1405,9 @@ class WP_Admin_UI {
 					) ) ) . '">click here to remove it</a>, otherwise the export will be deleted within 24 hours of generation.' );
 				echo '<script type="text/javascript">window.open("' . $this->export_url . urlencode( $export_file ) . '");</script>';
 			} elseif ( $this->export_type === 'xlsx' ) {
-				require_once $this->base_dir . '/includes/PHP_XLSXWriter/xlsxwriter.class.php';
+				if ( ! class_exists( 'XLSXWriter' ) ) {
+					require_once $this->base_dir . '/includes/PHP_XLSXWriter/xlsxwriter.class.php';
+				}
 
 				$writer = new XLSXWriter();
 
