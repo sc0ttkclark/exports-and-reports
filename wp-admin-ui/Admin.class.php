@@ -2067,7 +2067,20 @@ class WP_Admin_UI {
 			$sql = array_pop( $multi_sql );
 
 			// Execute the other queries altogether.
-			$multi = mysqli_multi_query( $wpdb->dbh, implode( '; ', $multi_sql ) );
+			// Check if we still have multiple queries to run.
+			if ( 1 < count( $multi_sql ) ) {
+				// Split the queries back up with a regular ";" delimiter.
+				$multi_sql = implode( '; ', $multi_sql );
+
+				// Run all queries.
+				mysqli_multi_query( $wpdb->dbh, $multi_sql );
+			} else {
+				// Just get the query.
+				$multi_sql = reset( $multi_sql );
+
+				// Run the only query we have.
+				$wpdb->query( $multi_sql );
+			}
 		}
 		
 		$results = $wpdb->get_results( $sql, ARRAY_A );
