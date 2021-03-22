@@ -2058,6 +2058,31 @@ class WP_Admin_UI {
 			$wpdb->show_errors( true );
 		}
 
+		// Check for the existence of multiple queries to run separated by ";;".
+		$multi_sql = preg_split( '/;{2,}\s+/', $sql, -1, PREG_SPLIT_NO_EMPTY );
+
+		// Check if we have multiple queries to run.
+		if ( 1 < count( $multi_sql ) ) {
+			// Get the last query and remove it from the array.
+			$sql = array_pop( $multi_sql );
+
+			// Execute the other queries altogether.
+			// Check if we still have multiple queries to run.
+			if ( 1 < count( $multi_sql ) ) {
+				// Split the queries back up with a regular ";" delimiter.
+				$multi_sql = implode( '; ', $multi_sql );
+
+				// Run all queries.
+				mysqli_multi_query( $wpdb->dbh, $multi_sql );
+			} else {
+				// Just get the query.
+				$multi_sql = reset( $multi_sql );
+
+				// Run the only query we have.
+				$wpdb->query( $multi_sql );
+			}
+		}
+		
 		$results = $wpdb->get_results( $sql, ARRAY_A );
 
 		$total = @current( $wpdb->get_col( "SELECT FOUND_ROWS()" ) );
