@@ -1719,7 +1719,7 @@ class WP_Admin_UI {
 		}
 		$sql       = preg_replace( '/ SELECT /i', " SELECT {$calc_found_sql} ", preg_replace( '/ SELECT SQL_CALC_FOUND_ROWS /i', ' SELECT ', $sql, 1 ), 1 );
 		$wheresql  = $havingsql = $ordersql = $limitsql = '';
-		$other_sql = $having_sql = $replace_varibles = array();
+		$other_sql = $having_sql = $replace_variables = array();
 		if ( $full || false !== $this->sql_count ) {
 			preg_match( '/SELECT (.*) FROM/i', $sql, $selectmatches );
 		} else {
@@ -1778,7 +1778,7 @@ class WP_Admin_UI {
 				if ( ! empty( $other_sql ) ) {
 					foreach ( $other_sql as $key => $value ) {
 						if ( false !== stripos( $sql, '%%' . $key . '%%' ) ) {
-							$replace_varibles[ $key ] = $value;
+							$replace_variables[ $key ] = $value;
 
 							unset( $other_sql[ $key ] );
 						}
@@ -1790,7 +1790,7 @@ class WP_Admin_UI {
 				if ( ! empty( $having_sql ) ) {
 					foreach ( $having_sql as $key => $value ) {
 						if ( false !== stripos( $sql, '%%' . $key . '%%' ) ) {
-							$replace_varibles[ $key ] = $value;
+							$replace_variables[ $key ] = $value;
 
 							unset( $having_sql[ $key ] );
 						}
@@ -1880,7 +1880,7 @@ class WP_Admin_UI {
 			if ( ! empty( $other_sql ) ) {
 				foreach ( $other_sql as $key => $value ) {
 					if ( false !== stripos( $sql, '%%' . $key . '%%' ) ) {
-						$replace_varibles[ $key ] = $value;
+						$replace_variables[ $key ] = $value;
 
 						unset( $other_sql[ $key ] );
 					}
@@ -1898,7 +1898,7 @@ class WP_Admin_UI {
 			if ( ! empty( $having_sql ) ) {
 				foreach ( $having_sql as $key => $value ) {
 					if ( false !== stripos( $sql, '%%' . $key . '%%' ) ) {
-						$replace_varibles[ $key ] = $value;
+						$replace_variables[ $key ] = $value;
 
 						unset( $having_sql[ $key ] );
 					}
@@ -1975,7 +1975,7 @@ class WP_Admin_UI {
 		} elseif ( stripos( $sql, '%%LIMIT%%' ) === false ) {
 			$sql = str_replace( ' LIMIT ', ' LIMIT %%LIMIT%% ', $sql );
 		}
-		foreach ( $replace_varibles as $k => $v ) {
+		foreach ( $replace_variables as $k => $v ) {
 			$sql = str_ireplace( '%%' . $k . '%%', $v, $sql );
 		}
 		$sql = str_replace( '%%WHERE%%', $wheresql, $sql );
@@ -1986,7 +1986,7 @@ class WP_Admin_UI {
 		$sql = str_replace( '  ', ' ', $sql );
 		if ( false !== $this->sql_count ) {
 			$wheresql       = $havingsql = $ordersql = $limitsql = '';
-			$sql_count      = ' ' . str_replace( array( "\n", "\r", '  ' ), ' ', ' ' . $this->sql_count ) . ' ';
+			$sql_count      = ' ' . preg_replace( '/\s+/', ' ', ' ' . $this->sql_count ) . ' ';
 			$calc_found_sql = 'SQL_CALC_FOUND_ROWS';
 			if ( $full || false !== $this->sql_count ) {
 				$calc_found_sql = '';
