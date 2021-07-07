@@ -179,7 +179,7 @@ if ( empty( $report ) ) {
 
 		if ( $admin->exported_file ) {
 			$data = array(
-				'export_file' => WP_ADMIN_UI_EXPORT_URL . '/' . $admin->exported_file,
+				'export_file' => WP_ADMIN_UI_EXPORT_DIR . '/' . $admin->exported_file,
 				'message'     => 'Report exported'
 			);
 
