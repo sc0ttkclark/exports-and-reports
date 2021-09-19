@@ -1568,7 +1568,6 @@ class WP_Admin_UI {
 		$export_file_location = WP_ADMIN_UI_EXPORT_DIR . '/' . $export_file;
 		$fp                   = fopen( $export_file_location, 'a+' );
 		$head                 = array();
-		$first                = true;
 		foreach ( $this->export_columns as $key => $attributes ) {
 			if ( ! is_array( $attributes ) ) {
 				$key        = $attributes;
@@ -1576,10 +1575,6 @@ class WP_Admin_UI {
 			}
 			if ( false === $attributes['export'] ) {
 				continue;
-			}
-			if ( $first ) {
-				$attributes['label'] .= ' ';
-				$first               = false;
 			}
 			$head[] = $attributes['label'];
 		}
@@ -1599,13 +1594,12 @@ class WP_Admin_UI {
 					$item[ $key ] = $attributes['custom_display']( $item[ $key ], $item, $key, $attributes, $this );
 				}
 				// Add extra content at the end of the line to prevent problems with quoting.
-				$line[] = trim( str_replace( array( "\r", "\n" ), ' ', $item[ $key ] ) ) . "#@ @#";
+				$line[] = trim( str_replace( array( "\r\n", "\r", "\n" ), ' ', $item[ $key ] ) );
 			}
 			fputcsv( $fp, $line, $export_delimiter );
 		}
 		fclose( $fp );
-		$contents = file_get_contents( $export_file_location );
-		$contents = str_replace( "#@ @#", "", $contents );
+		$contents = "\xEF\xBB\xBF" . file_get_contents( $export_file_location ); // add UTF-8 BOM
 		file_put_contents( $export_file_location, $contents );
 		$this->message( '<strong>Success:</strong> Your export is ready, the download should begin in a few moments. If it doesn\'t, <a href="' . esc_url( $this->export_url . urlencode( $export_file ) ) . '" target="_blank">click here to access your ' . esc_html( strtoupper( $export_ext ) ) . ' export file</a>.<br /><br />When you are done with your export, <a href="' . esc_url( $this->var_update( array(
 				'remove_export' => urlencode( $export_file ),
