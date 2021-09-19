@@ -1217,12 +1217,13 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 				}
 
 				$selectable_reports[ $report->id ] = array(
-					'name'            => $report->name,
-					'sql_query'       => $report->sql_query,
-					'sql_query_count' => $report->sql_query_count,
-					'default_none'    => $report->default_none,
-					'export'          => ( 0 === (int) $report->disable_export ? true : false ),
-					'field_data'      => $report->field_data,
+					'name'             => $report->name,
+					'sql_query'        => $report->sql_query,
+					'sql_query_count'  => $report->sql_query_count,
+					'default_none'     => $report->default_none,
+					'export'           => ( 0 === (int) $report->disable_export ? true : false ),
+					'field_data'       => $report->field_data,
+					'page_orientation' => $report->page_orientation,
 				);
 			}
 		}
