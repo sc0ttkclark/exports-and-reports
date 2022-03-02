@@ -56,7 +56,7 @@ if ( isset( $_GET['exports_and_reports_download'] ) && isset( $_GET['_wpnonce'] 
  *
  * @package Admin UI for Plugins
  *
- * @version 1.11.4
+ * @version 1.11.6
  * @author  Scott Kingsley Clark
  * @link    https://www.scottkclark.com/
  *
@@ -747,7 +747,7 @@ class WP_Admin_UI {
 
 		$this->do_hook( 'add' );
 		?>
-		<div class="wrap">
+		<div class="wrap wp-admin-ui-wrap">
 			<div id="icon-edit-pages" class="icon32"<?php if ( false !== $this->icon ) { ?> style="background-position:0 0;background-image:url(<?php echo esc_url( $this->icon ); ?>);"<?php } ?>>
 				<br /></div>
 			<h2><?php echo esc_html( $this->heading['add'] ); ?> <?php echo esc_html( $this->item ); ?>
@@ -772,7 +772,7 @@ class WP_Admin_UI {
 			call_user_func( $this->custom['edit'], $this, $duplicate );
 		}
 		?>
-		<div class="wrap">
+		<div class="wrap wp-admin-ui-wrap">
 			<div id="icon-edit-pages" class="icon32"<?php if ( false !== $this->icon ) { ?> style="background-position:0 0;background-image:url(<?php echo esc_url( $this->icon ); ?>);"<?php } ?>>
 				<br /></div>
 			<h2><?php echo esc_html( $duplicate ? $this->heading['duplicate'] : $this->heading['edit'] ); ?> <?php echo esc_html( $this->item ); ?>
@@ -874,6 +874,15 @@ class WP_Admin_UI {
 							?>
 							<textarea name="<?php echo esc_attr( $column ); ?>" id="admin_ui_<?php echo esc_attr( $column ); ?>" rows="10" cols="50"><?php echo esc_textarea( $this->row[ $column ] ); ?></textarea>
 							<?php
+						} elseif ( in_array( $attributes['type'], [ 'date', 'datetime', 'time' ], true ) ) {
+							$html_input_type = $attributes['type'];
+
+							if ( 'datetime' === $html_input_type ) {
+								$html_input_type = 'datetime-local';
+							}
+							?>
+							<input type="<?php echo esc_attr( $html_input_type ); ?>" name="<?php echo esc_attr( $column ); ?>" id="admin_ui_<?php echo esc_attr( $column ); ?>" value="<?php echo esc_attr( str_replace( ' ', 'T', $this->row[ $column ] ) ); ?>" />
+							<?php
 						} elseif ( 'related' === $attributes['type'] && false !== $attributes['related'] ) {
 							if ( ! is_array( $attributes['related'] ) ) {
 
@@ -952,7 +961,7 @@ class WP_Admin_UI {
 			return $this->error( "<strong>Error:</strong> $this->item not found." );
 		}
 		?>
-		<div class="wrap">
+		<div class="wrap wp-admin-ui-wrap">
 			<div id="icon-edit-pages" class="icon32"<?php if ( false !== $this->icon ) { ?> style="background-position:0 0;background-image:url(<?php echo esc_url( $this->icon ); ?>);"<?php } ?>>
 				<br /></div>
 			<h2><?php echo esc_html( $this->heading['view'] ); ?> <?php echo esc_html( $this->item ); ?>
@@ -2160,7 +2169,7 @@ class WP_Admin_UI {
 			return call_user_func( $this->custom['manage'], $this, $reorder );
 		}
 		?>
-		<div class="wrap">
+		<div class="wrap wp-admin-ui-wrap">
 			<div id="icon-edit-pages" class="icon32"<?php if ( false !== $this->icon ) { ?> style="background-position:0 0;background-image:url(<?php echo esc_url( $this->icon ); ?>);"<?php } ?>>
 				<br /></div>
 			<h2><?php echo( $reorder == 0 || false === $this->reorder ? $this->heading['manage'] : $this->heading['reorder'] ); ?> <?php echo esc_html( $this->items ); ?>

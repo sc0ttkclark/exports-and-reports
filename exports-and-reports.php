@@ -3,7 +3,7 @@
 Plugin Name: Exports and Reports
 Plugin URI: https://www.scottkclark.com/
 Description: Define custom exports / reports for users by creating each export / report and defining the fields as well as custom MySQL queries to run.
-Version: 0.8.8
+Version: 0.9.0
 Author: Scott Kingsley Clark
 Author URI: https://www.scottkclark.com/
 GitHub Plugin URI: https://github.com/sc0ttkclark/exports-and-reports
@@ -13,7 +13,7 @@ GitHub Plugin URI: https://github.com/sc0ttkclark/exports-and-reports
 global $wpdb;
 
 define( 'EXPORTS_REPORTS_TBL', $wpdb->prefix . 'exportsreports_' );
-define( 'EXPORTS_REPORTS_VERSION', '088' );
+define( 'EXPORTS_REPORTS_VERSION', '090' );
 define( 'EXPORTS_REPORTS_URL', plugin_dir_url( __FILE__ ) );
 define( 'EXPORTS_REPORTS_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -1701,3 +1701,22 @@ function exports_reports_has_role( $role ) {
 	return false;
 
 }
+
+/**
+ * Filter the robots.txt contents and add the /exports/ directory to the list of disallowed folders.
+ *
+ * @since 0.9.0
+ *
+ * @param string $robots_txt The robots.txt contents.
+ *
+ * @return string The robots.txt contents.
+ */
+function exports_reports_robots_txt( $robots_txt ) {
+	$exclude_path = str_replace( ABSPATH, '', WP_ADMIN_UI_EXPORT_DIR );
+	$exclude_path = str_replace( DIRECTORY_SEPARATOR, '/', $exclude_path );
+	$exclude_path = trim( $exclude_path, '/' );
+
+	return $robots_txt . "\n" . 'Disallow: */' . $exclude_path . '/*';
+}
+
+add_filter( 'robots_txt', 'exports_reports_robots_txt' );
