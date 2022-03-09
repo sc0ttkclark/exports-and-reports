@@ -3,8 +3,8 @@ Contributors: sc0ttkclark
 Donate link: https://www.scottkclark.com/
 Tags: exports, reports, reporting, exporting, csv, xlsx, pdf, xml, json
 Requires at least: 4.9
-Tested up to: 5.7
-Stable tag: 0.8.8
+Tested up to: 5.9
+Stable tag: 0.9.0
 
 Define custom exports / reports for users, based off of any custom MySQL SELECT query you define.
 
@@ -70,6 +70,11 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 * Get paginated / full data from a report in JSON format
 
 == Changelog ==
+
+= 0.9.0 =
+* Resolve PHP warning with TCPDF library.
+* Now ensuring robots.txt blocks the exports directory from being indexing in certain circumstances.
+* Updated compatibility with WP 5.9 and PHP 8.0
 
 = 0.8.8 =
 * Fixed an issue with the XLSX PHP library having deprecated notices, updated it to latest released version.
