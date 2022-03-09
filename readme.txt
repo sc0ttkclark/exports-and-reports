@@ -4,7 +4,7 @@ Donate link: https://www.scottkclark.com/
 Tags: exports, reports, reporting, exporting, csv, xlsx, pdf, xml, json
 Requires at least: 4.9
 Tested up to: 5.9
-Stable tag: 0.9.0
+Stable tag: 0.9.1
 
 Define custom exports / reports for users, based off of any custom MySQL SELECT query you define.
 
@@ -70,6 +70,12 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 * Get paginated / full data from a report in JSON format
 
 == Changelog ==
+
+= 0.9.1 =
+* Fixed issue with exporting via API. #33 #26 #25 (props @liedekef)
+* Fixed reports so when they are hidden then they will no longer show in the dropdowns. #33 #25 (props @liedekef)
+* Fixed access when mixing group permissions with individual report permissions. #29 #28 (props @dxdc)
+* Fixed PHP notices for page orientation. #29 #27 (props @dxdc)
 
 = 0.9.0 =
 * Resolve PHP warning with TCPDF library.
