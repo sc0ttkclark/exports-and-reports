@@ -3,7 +3,7 @@
 Plugin Name: Exports and Reports
 Plugin URI: https://www.scottkclark.com/
 Description: Define custom exports / reports for users by creating each export / report and defining the fields as well as custom MySQL queries to run.
-Version: 0.8.8
+Version: 0.9.0
 Author: Scott Kingsley Clark
 Author URI: https://www.scottkclark.com/
 GitHub Plugin URI: https://github.com/sc0ttkclark/exports-and-reports
@@ -13,7 +13,7 @@ GitHub Plugin URI: https://github.com/sc0ttkclark/exports-and-reports
 global $wpdb;
 
 define( 'EXPORTS_REPORTS_TBL', $wpdb->prefix . 'exportsreports_' );
-define( 'EXPORTS_REPORTS_VERSION', '088' );
+define( 'EXPORTS_REPORTS_VERSION', '090' );
 define( 'EXPORTS_REPORTS_URL', plugin_dir_url( __FILE__ ) );
 define( 'EXPORTS_REPORTS_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -250,7 +250,7 @@ function exports_reports_menu() {
 	$init = false;
 
 	$sql = '
-		SELECT `id`, `name`
+		SELECT `id`, `role_access`, `name`
 		FROM `' . EXPORTS_REPORTS_TBL . 'groups`
 		WHERE `disabled` = 0
 		ORDER BY `weight`, `name`	
@@ -265,7 +265,6 @@ function exports_reports_menu() {
 				FROM `' . EXPORTS_REPORTS_TBL . 'reports`
 				WHERE `disabled` = 0 AND `group` = %d
 				ORDER BY `weight`, `name`
-				LIMIT 1	
 			';
 
 			$sql = $wpdb->prepare( $sql, array( $group->id ) );
@@ -288,7 +287,7 @@ function exports_reports_menu() {
 						break;
 					}
 
-					$roles = explode( ',', $report->role_access );
+					$roles = array_unique( array_merge( explode( ',', $group->role_access ), explode( ',', $report->role_access ) ) );
 
 					if ( empty( $roles ) ) {
 						continue;
@@ -306,7 +305,7 @@ function exports_reports_menu() {
 
 							add_submenu_page( $init, $group->name, $group->name, 'read', $menu_page, 'exports_reports_view' );
 
-							break;
+							break 2;
 						}
 					}
 				}
@@ -1096,7 +1095,7 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 		}
 
 		$sql = '
-			SELECT `id`
+			SELECT `id`, `role_access`
 			FROM `' . EXPORTS_REPORTS_TBL . 'groups`
 			WHERE `disabled` = 0 AND `id` = %d
 			ORDER BY `weight`, `name`
@@ -1110,11 +1109,13 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 		if ( empty( $group ) ) {
 			return false;
 		}
+		$group_roles = explode( ',', $group->role_access );
 	} else {
 		$group_id = 0;
+		$group_roles = [];
 
 		$sql = '
-			SELECT `id`
+			SELECT `id`, `role_access`
 			FROM `' . EXPORTS_REPORTS_TBL . 'groups`
 			WHERE `disabled` = 0
 			ORDER BY `weight`, `name`
@@ -1129,7 +1130,6 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 					FROM `' . EXPORTS_REPORTS_TBL . 'reports`
 					WHERE `disabled` = 0 AND `group` = %d
 					ORDER BY `weight`, `name`
-					LIMIT 1
 				';
 
 				$sql = $wpdb->prepare( $sql, array( $group->id ) );
@@ -1140,11 +1140,12 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 					foreach ( $reports as $report ) {
 						if ( $has_full_access || exports_reports_current_user_can_any( 'exports_reports_view' ) || exports_reports_current_user_can_any( 'exports_reports_view_group_' . $group->id ) || exports_reports_current_user_can_any( 'exports_reports_view_report_' . $report->id ) ) {
 							$group_id = $group->id;
+							$group_roles = explode( ',', $group->role_access );
 
 							break;
 						}
 
-						$roles = explode( ',', $report->role_access );
+						$roles = array_unique( array_merge( explode( ',', $group->role_access ), explode( ',', $report->role_access ) ) );
 
 						if ( empty( $roles ) ) {
 							continue;
@@ -1153,8 +1154,9 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 						foreach ( $roles as $role ) {
 							if ( exports_reports_has_role( $role ) ) {
 								$group_id = $group->id;
+								$group_roles = explode( ',', $group->role_access );
 
-								break;
+								break 2;
 							}
 						}
 					}
@@ -1170,7 +1172,7 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 	$sql = '
 		SELECT *
 		FROM `' . EXPORTS_REPORTS_TBL . 'reports`
-		WHERE `group` = %d
+		WHERE `disabled` = 0 AND `group` = %d
 		ORDER BY `weight`, `name`
 	';
 
@@ -1204,7 +1206,7 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 			continue;
 		}
 
-		$roles = explode( ',', $report->role_access );
+		$roles = array_unique( array_merge( $group_roles, explode( ',', $report->role_access ) ) );
 
 		if ( empty( $roles ) ) {
 			continue;
@@ -1217,12 +1219,13 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 				}
 
 				$selectable_reports[ $report->id ] = array(
-					'name'            => $report->name,
-					'sql_query'       => $report->sql_query,
-					'sql_query_count' => $report->sql_query_count,
-					'default_none'    => $report->default_none,
-					'export'          => ( 0 === (int) $report->disable_export ? true : false ),
-					'field_data'      => $report->field_data,
+					'name'             => $report->name,
+					'sql_query'        => $report->sql_query,
+					'sql_query_count'  => $report->sql_query_count,
+					'default_none'     => $report->default_none,
+					'export'           => ( 0 === (int) $report->disable_export ? true : false ),
+					'field_data'       => $report->field_data,
+					'page_orientation' => $report->page_orientation,
 				);
 			}
 		}
@@ -1701,3 +1704,22 @@ function exports_reports_has_role( $role ) {
 	return false;
 
 }
+
+/**
+ * Filter the robots.txt contents and add the /exports/ directory to the list of disallowed folders.
+ *
+ * @since 0.9.0
+ *
+ * @param string $robots_txt The robots.txt contents.
+ *
+ * @return string The robots.txt contents.
+ */
+function exports_reports_robots_txt( $robots_txt ) {
+	$exclude_path = str_replace( ABSPATH, '', WP_ADMIN_UI_EXPORT_DIR );
+	$exclude_path = str_replace( DIRECTORY_SEPARATOR, '/', $exclude_path );
+	$exclude_path = trim( $exclude_path, '/' );
+
+	return $robots_txt . "\n" . 'Disallow: */' . $exclude_path . '/*';
+}
+
+add_filter( 'robots_txt', 'exports_reports_robots_txt' );
