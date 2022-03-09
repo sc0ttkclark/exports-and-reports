@@ -1575,9 +1575,8 @@ class WP_Admin_UI {
 		$export_file          = str_replace( '-', '_', sanitize_title( $this->items ) ) . '_' . date_i18n( 'm-d-Y_H-i-s' ) . '_' . wp_generate_password( 5, false ) . '.' . $export_ext;
 		$export_file          = apply_filters( 'wp_admin_ui_export_file', $export_file, $this->export_type, $this->export_type, $this->items, $this );
 		$export_file_location = WP_ADMIN_UI_EXPORT_DIR . '/' . $export_file;
-		$fp                   = fopen( $export_file_location, 'a+' );
+		$fp                   = fopen( $export_file_location, 'w+' );
 		$head                 = array();
-		$first                = true;
 		foreach ( $this->export_columns as $key => $attributes ) {
 			if ( ! is_array( $attributes ) ) {
 				$key        = $attributes;
@@ -1586,12 +1585,9 @@ class WP_Admin_UI {
 			if ( false === $attributes['export'] ) {
 				continue;
 			}
-			if ( $first ) {
-				$attributes['label'] .= ' ';
-				$first               = false;
-			}
 			$head[] = $attributes['label'];
 		}
+		fputs( $fp, "\xEF\xBB\xBF" ); // add UTF-8 BOM
 		fputcsv( $fp, $head, $export_delimiter );
 		foreach ( $this->full_data as $item ) {
 			$line = array();
@@ -1607,15 +1603,11 @@ class WP_Admin_UI {
 				if ( false !== $attributes['custom_display'] && function_exists( "{$attributes['custom_display']}" ) ) {
 					$item[ $key ] = $attributes['custom_display']( $item[ $key ], $item, $key, $attributes, $this );
 				}
-				// Add extra content at the end of the line to prevent problems with quoting.
-				$line[] = trim( str_replace( array( "\r", "\n" ), ' ', $item[ $key ] ) ) . "#@ @#";
+				$line[] = trim( str_replace( array( "\r\n", "\r", "\n" ), ' ', $item[ $key ] ) );
 			}
 			fputcsv( $fp, $line, $export_delimiter );
 		}
 		fclose( $fp );
-		$contents = file_get_contents( $export_file_location );
-		$contents = str_replace( "#@ @#", "", $contents );
-		file_put_contents( $export_file_location, $contents );
 		$this->message( '<strong>Success:</strong> Your export is ready, the download should begin in a few moments. If it doesn\'t, <a href="' . esc_url( $this->export_url . urlencode( $export_file ) ) . '" target="_blank">click here to access your ' . esc_html( strtoupper( $export_ext ) ) . ' export file</a>.<br /><br />When you are done with your export, <a href="' . esc_url( $this->var_update( array(
 				'remove_export' => urlencode( $export_file ),
 				'action'        => 'export'
