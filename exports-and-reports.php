@@ -1170,7 +1170,7 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 	$sql = '
 		SELECT *
 		FROM `' . EXPORTS_REPORTS_TBL . 'reports`
-		WHERE `group` = %d AND disabled=0
+		WHERE `group` = %d AND `disabled` = 0
 		ORDER BY `weight`, `name`
 	';
 
