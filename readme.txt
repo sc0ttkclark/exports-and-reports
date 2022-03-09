@@ -69,6 +69,17 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 * Run the Export action for a specific report to any supported export type
 * Get paginated / full data from a report in JSON format
 
+== Screenshots ==
+
+1. View the report, export data, search content, filter by date, and paginate through the records
+2. Create and manage report groups that can contain their own sets of reports
+3. Create and manage reports
+4. Specify the SQL query to use to select data from the database -- you can customize a special query used only for counting the total number of records
+5. Specify the fields to display on the report and what kind of data they are
+6. The list of supported data types for each field
+7. Set advanced field options to further customize how fields will be displayed, exported, searched, filtered, or related to other tables
+8. Manage plugin settings and get useful URLs for API access
+
 == Changelog ==
 
 = 0.9.1 =
