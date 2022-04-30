@@ -84,6 +84,7 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 
 = 0.9.2 =
 * Fixed issue with overriding the filtered content for a value.
+* Fixed problems reported with opening CSV in certain spreadsheet applications which read some CSV values as actual formulas.
 
 = 0.9.1 =
 * Fixed issue with exporting via API. #33 #26 #25 (props @liedekef)
