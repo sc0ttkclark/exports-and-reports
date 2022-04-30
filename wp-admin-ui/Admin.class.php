@@ -56,7 +56,7 @@ if ( isset( $_GET['exports_and_reports_download'] ) && isset( $_GET['_wpnonce'] 
  *
  * @package Admin UI for Plugins
  *
- * @version 1.11.6
+ * @version 1.11.7
  * @author  Scott Kingsley Clark
  * @link    https://www.scottkclark.com/
  *
@@ -2612,7 +2612,11 @@ class WP_Admin_UI {
 									} else {
 										?>
 										<td class="post-title page-title column-title<?php echo( 1 === $reorder && $this->reorder ? ' dragme' : '' ); ?>">
-										<strong><?php echo wp_kses_post( $row[ $column ] ); ?></strong>
+										<strong><?php
+											// This value is already cleaned up prior to this. Custom display will always allow for custom output.
+											// phpcs:ignore
+											echo $row[ $column ];
+											?></strong>
 										<?php
 									}
 									if ( $reorder == 0 || false === $this->reorder ) {

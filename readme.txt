@@ -4,7 +4,7 @@ Donate link: https://www.scottkclark.com/
 Tags: exports, reports, reporting, exporting, csv, xlsx, pdf, xml, json
 Requires at least: 4.9
 Tested up to: 5.9
-Stable tag: 0.9.1
+Stable tag: 0.9.2
 
 Define custom exports / reports for users, based off of any custom MySQL SELECT query you define.
 
@@ -81,6 +81,9 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 8. Manage plugin settings and get useful URLs for API access
 
 == Changelog ==
+
+= 0.9.2 =
+* Fixed issue with overriding the filtered content for a value.
 
 = 0.9.1 =
 * Fixed issue with exporting via API. #33 #26 #25 (props @liedekef)
