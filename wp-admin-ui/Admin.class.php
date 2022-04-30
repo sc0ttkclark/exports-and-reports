@@ -1578,44 +1578,71 @@ class WP_Admin_UI {
 		$fp                   = fopen( $export_file_location, 'a+' );
 		$head                 = array();
 		$first                = true;
+
 		foreach ( $this->export_columns as $key => $attributes ) {
 			if ( ! is_array( $attributes ) ) {
 				$key        = $attributes;
 				$attributes = $this->setup_column( $key );
 			}
+
 			if ( false === $attributes['export'] ) {
 				continue;
 			}
+
 			if ( $first ) {
 				$attributes['label'] .= ' ';
 				$first               = false;
 			}
+
 			$head[] = $attributes['label'];
 		}
+
 		fputcsv( $fp, $head, $export_delimiter );
+
 		foreach ( $this->full_data as $item ) {
-			$line = array();
+			$column_values = array();
+
 			foreach ( $this->export_columns as $key => $attributes ) {
 				if ( ! is_array( $attributes ) ) {
 					$key        = $attributes;
 					$attributes = $this->setup_column( $key );
 				}
+
 				if ( false === $attributes['export'] ) {
 					continue;
 				}
+
 				$item[ $key ] = $this->field_value( $item[ $key ], $key, $attributes );
+
 				if ( false !== $attributes['custom_display'] && function_exists( "{$attributes['custom_display']}" ) ) {
 					$item[ $key ] = $attributes['custom_display']( $item[ $key ], $item, $key, $attributes, $this );
 				}
+
 				// Add extra content at the end of the line to prevent problems with quoting.
-				$line[] = trim( str_replace( array( "\r", "\n" ), ' ', $item[ $key ] ) ) . "#@ @#";
+				$column_value = trim( str_replace( array( "\r", "\n" ), ' ', $item[ $key ] ) ) . "#@ @#";
+
+				// Maybe escape the first character to prevent formulas from getting used when opening the file with a spreadsheet app.
+				if (
+					0 === strpos( $column_value, '=' )
+					|| 0 === strpos( $column_value, '+' )
+					|| 0 === strpos( $column_value, '-' )
+					|| 0 === strpos( $column_value, '@' )
+				) {
+					$column_value = '\\' . $column_value;
+				}
+
+				$column_values[] = $column_value;
 			}
-			fputcsv( $fp, $line, $export_delimiter );
+
+			fputcsv( $fp, $column_values, $export_delimiter );
 		}
+
 		fclose( $fp );
+
 		$contents = file_get_contents( $export_file_location );
 		$contents = str_replace( "#@ @#", "", $contents );
 		file_put_contents( $export_file_location, $contents );
+
 		$this->message( '<strong>Success:</strong> Your export is ready, the download should begin in a few moments. If it doesn\'t, <a href="' . esc_url( $this->export_url . urlencode( $export_file ) ) . '" target="_blank">click here to access your ' . esc_html( strtoupper( $export_ext ) ) . ' export file</a>.<br /><br />When you are done with your export, <a href="' . esc_url( $this->var_update( array(
 				'remove_export' => urlencode( $export_file ),
 				'action'        => 'export'
