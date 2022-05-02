@@ -4,7 +4,7 @@ Donate link: https://www.scottkclark.com/
 Tags: exports, reports, reporting, exporting, csv, xlsx, pdf, xml, json
 Requires at least: 4.9
 Tested up to: 5.9
-Stable tag: 0.9.2
+Stable tag: 0.9.3
 
 Define custom exports / reports for users, based off of any custom MySQL SELECT query you define.
 
@@ -82,7 +82,7 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 
 == Changelog ==
 
-= 0.9.2 =
+= 0.9.3 =
 * Fixed issue with overriding the filtered content for a value.
 * Fixed problems reported with opening CSV in certain spreadsheet applications which read some CSV values as actual formulas.
 
