@@ -17,4 +17,4 @@ jobs:
     - name: Install Dependences
       run: composer install
     - name: Check WordPress Coding Standards
-      run: phpcs
+      run: ${GITHUB_WORKSPACE}/vendor/bin/phpcs
