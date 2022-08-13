@@ -1,52 +1,6 @@
 <?php
-if ( ! defined( 'WP_ADMIN_UI_EXPORT_DIR' ) ) {
-	define( 'WP_ADMIN_UI_EXPORT_DIR', WP_CONTENT_DIR . '/exports' );
-}
-
-/** @var wpdb $wpdb */
-global $wpdb;
-
-if ( ! is_object( $wpdb ) ) {
-	wp_die( 'Access denied' );
-}
-// FOR EXPORTS ONLY
-if ( isset( $_GET['exports_and_reports_download'] ) && isset( $_GET['_wpnonce'] ) && false !== wp_verify_nonce( $_GET['_wpnonce'], 'wp-admin-ui-export' ) ) {
-	do_action( 'wp_admin_ui_export_download' );
-
-	$file = WP_ADMIN_UI_EXPORT_DIR . '/' . str_replace( array( '/', '..' ), '', $_GET['exports_and_reports_export'] );
-	$file = realpath( $file );
-
-	$file_url = WP_ADMIN_UI_EXPORT_URL . '/' . str_replace( array( '/', '..' ), '', $_GET['exports_and_reports_export'] );
-
-	if ( ! isset( $_GET['exports_and_reports_export'] ) || empty( $_GET['exports_and_reports_export'] ) || ! file_exists( $file ) ) {
-		wp_die( 'File not found.' );
-	}
-
-	wp_redirect( $file_url );
-	die();
-
-	// required for IE, otherwise Content-disposition is ignored
-	if ( ini_get( 'zlib.output_compression' ) ) {
-		ini_set( 'zlib.output_compression', 'Off' );
-	}
-
-	header( 'Pragma: public' ); // required
-	header( 'Expires: 0' );
-	header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
-	header( 'Cache-Control: private', false ); // required for certain browsers
-	header( 'Content-Type: application/force-download' );
-	header( 'Content-Disposition: attachment; filename="' . basename( $file ) . '";' );
-	header( 'Content-Transfer-Encoding: binary' );
-	header( 'Content-Length: ' . filesize( $file ) );
-	flush();
-	readfile( "$file" );
-	exit();
-}
-
 /**
  * Admin UI class for WordPress plugins
- *
- * Creates a UI for any plugin screens within WordPress
  *
  * NOTE: If you are including this class code in a plugin,
  * consider renaming the class to avoid conflicts with other plugins.
@@ -62,7 +16,26 @@ if ( isset( $_GET['exports_and_reports_download'] ) && isset( $_GET['_wpnonce'] 
  *
  * @param mixed $options
  */
-class WP_Admin_UI {
+
+if ( ! defined( 'WP_ADMIN_UI_EXPORT_DIR' ) ) {
+	define( 'WP_ADMIN_UI_EXPORT_DIR', WP_CONTENT_DIR . '/exports' );
+}
+
+/** @var wpdb $wpdb */
+global $wpdb;
+
+if ( ! is_object( $wpdb ) ) {
+	wp_die( 'Access denied' );
+}
+
+/**
+ * Class Exports_Reports_Admin_UI
+ *
+ * Creates a UI for any plugin screens within WordPress
+ *
+ * @param mixed $options
+ */
+class Exports_Reports_Admin_UI {
 
 	// base
 	var $table = false;
@@ -149,9 +122,9 @@ class WP_Admin_UI {
 		do_action( 'wp_admin_ui_pre_init', $options );
 		$options          = $this->do_hook( 'options', $options );
 		$this->base_dir   = __DIR__;
-		$this->base_url   = plugins_url( 'Admin.class.php', __FILE__ );
+		$this->base_url   = plugins_url( 'class-exports-reports-admin-ui.php', __FILE__ );
 		$this->export_url = admin_url( 'admin-ajax.php' ) . '?action=wp_admin_ui_export&exports_and_reports_download=1&_wpnonce=' . wp_create_nonce( 'wp-admin-ui-export' ) . '&exports_and_reports_export=';
-		$this->assets_url = str_replace( '/Admin.class.php', '', $this->base_url ) . '/assets';
+		$this->assets_url = str_replace( '/class-exports-reports-admin-ui.php', '', $this->base_url ) . '/assets';
 		if ( false !== $this->get_var( 'id' ) ) {
 			$this->id = sanitize_text_field( $_GET['id'] );
 		}
@@ -3096,7 +3069,7 @@ class WP_Admin_UI {
 				<?php
 			} else {
 				?>
-				<span class="paging-input"><?php echo esc_html( $this->page ); ?> <?php _e( 'of' ); ?>
+				<span class="paging-input"><?php echo esc_html( $this->page ); ?> <?php esc_attr_e( 'of' ); ?>
 					<span class="total-pages"><?php echo esc_html( number_format_i18n( $total_pages ) ); ?></span></span>
 				<?php
 			}
@@ -3107,7 +3080,7 @@ class WP_Admin_UI {
 		}
 	}
 
-	function limit( $options = false ) {
+	public function limit( $options = false ) {
 
 		$this->do_hook( 'limit', $options );
 		if ( isset( $this->custom['limit'] ) && function_exists( "{$this->custom['limit']}" ) ) {
@@ -3137,21 +3110,21 @@ class WP_Admin_UI {
 		}
 	}
 
-	function parse_template_string( $in, $row = false ) {
+	public function parse_template_string( $in, $row = false ) {
 
-		if ( $row !== false ) {
+		if ( false !== $row ) {
 			$this->temp_row = $this->row;
 			$this->row      = $row;
 		}
 		$out = preg_replace_callback( '/({@(.*?)})/m', array( $this, 'parse_magic_tags' ), $in );
-		if ( $row !== false ) {
+		if ( false !== $row ) {
 			$this->row = $this->temp_row;
 		}
 
 		return $out;
 	}
 
-	function parse_magic_tags( $in ) {
+	public function parse_magic_tags( $in ) {
 
 		$name   = $in[2];
 		$helper = '';
@@ -3161,7 +3134,7 @@ class WP_Admin_UI {
 			$helper = trim( $helper );
 		}
 		$value = $this->row[ $name ];
-		// Use helper if necessary
+		// Use helper if necessary.
 		if ( ! empty( $helper ) ) {
 			$value = $$helper( $value, $name, $this->row );
 		}

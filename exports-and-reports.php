@@ -40,7 +40,7 @@ require_once EXPORTS_REPORTS_DIR . 'vendor/autoload.php';
  */
 function exports_reports_wp_admin_ui_export() {
 
-	require_once EXPORTS_REPORTS_DIR . 'wp-admin-ui/Admin.class.php';
+	require_once EXPORTS_REPORTS_DIR . 'wp-admin-ui/export.php';
 
 	die( 'Invalid request' ); // AJAX dies
 
@@ -419,7 +419,7 @@ function exports_reports_settings() {
  */
 function exports_reports_groups() {
 
-	require_once EXPORTS_REPORTS_DIR . 'wp-admin-ui/Admin.class.php';
+	require_once EXPORTS_REPORTS_DIR . 'wp-admin-ui/class-exports-reports-admin-ui.php';
 
 	$columns = array(
 		'name',
@@ -474,7 +474,7 @@ function exports_reports_groups() {
 		'duplicate'    => true,
 	);
 
-	$admin = new WP_Admin_UI( $admin_ui );
+	$admin = new Exports_Reports_Admin_UI( $admin_ui );
 
 	$admin->go();
 
@@ -493,7 +493,7 @@ function exports_reports_reports() {
 		wp_print_scripts( 'jquery-ui-sortable' );
 	}
 
-	require_once EXPORTS_REPORTS_DIR . 'wp-admin-ui/Admin.class.php';
+	require_once EXPORTS_REPORTS_DIR . 'wp-admin-ui/class-exports-reports-admin-ui.php';
 
 	$columns = array(
 		'name',
@@ -597,7 +597,7 @@ function exports_reports_reports() {
 		'duplicate'     => true,
 	);
 
-	$admin = new WP_Admin_UI( $admin_ui );
+	$admin = new Exports_Reports_Admin_UI( $admin_ui );
 
 	$admin->go();
 
@@ -1241,7 +1241,7 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 		$current_report = absint( $_GET['report'] );
 	}
 
-	require_once EXPORTS_REPORTS_DIR . 'wp-admin-ui/Admin.class.php';
+	require_once EXPORTS_REPORTS_DIR . 'wp-admin-ui/class-exports-reports-admin-ui.php';
 
 	$options = array();
 
@@ -1364,7 +1364,7 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 
 	$options = apply_filters( 'exports_reports_report_options', $options, $current_report );
 
-	$admin = new WP_Admin_UI( $options );
+	$admin = new Exports_Reports_Admin_UI( $options );
 
 	if ( 1 < count( $selectable_reports ) ) {
 		?>

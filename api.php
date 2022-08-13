@@ -70,7 +70,7 @@ if ( empty( $report ) ) {
 		wp_send_json_error( 'Exports disabled for this report.' );
 	}
 
-	require_once EXPORTS_REPORTS_DIR . 'wp-admin-ui/Admin.class.php';
+	require_once EXPORTS_REPORTS_DIR . 'wp-admin-ui/class-exports-reports-admin-ui.php';
 	$options                 = array();
 	$options['css']          = EXPORTS_REPORTS_URL . 'assets/admin.css';
 	$options['readonly']     = true;
@@ -165,7 +165,7 @@ if ( empty( $report ) ) {
 	$download = false;
 
 	ob_start();
-	$admin         = new WP_Admin_UI( $options );
+	$admin         = new Exports_Reports_Admin_UI( $options );
 	$admin->action = 'export';
 
 	if ( 'manage' === $_GET['action'] ) {
