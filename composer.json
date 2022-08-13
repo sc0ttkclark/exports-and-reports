@@ -1,0 +1,14 @@
+{
+    "name": "sc0ttkclark/exports-and-reports",
+    "description": "Define custom exports / reports for users, based off of any custom MySQL SELECT query you define.",
+    "type": "wordpress-plugin",
+    "license": "GPL",
+    "require-dev": {
+        "wp-coding-standards/wpcs": "^2.3",
+        "dealerdirect/phpcodesniffer-composer-installer": "^0.7.2"
+    },
+    "require": {
+        "mk-j/php_xlsxwriter": "^0.38.0",
+        "tecnickcom/tcpdf": "^6.5"
+    }
+}
