@@ -14,13 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - name: Install Dependences
-      uses: shivammathur/setup-php@v2
+    - uses: shivammathur/setup-php@v2
       with:
         php-version: '7.4'
+    - name: Install Dependences
       run: composer install
     - name: Check WordPress Coding Standards
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '7.4'
       run: ${GITHUB_WORKSPACE}/vendor/bin/phpcs
