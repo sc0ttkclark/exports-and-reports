@@ -30,14 +30,14 @@ if ( isset( $_GET['exports_and_reports_download'] ) && isset( $_GET['_wpnonce'] 
 		ini_set( 'zlib.output_compression', 'Off' );
 	}
 
-	header( "Pragma: public" ); // required
-	header( "Expires: 0" );
-	header( "Cache-Control: must-revalidate, post-check=0, pre-check=0" );
-	header( "Cache-Control: private", false ); // required for certain browsers
-	header( "Content-Type: application/force-download" );
-	header( "Content-Disposition: attachment; filename=\"" . basename( $file ) . "\";" );
-	header( "Content-Transfer-Encoding: binary" );
-	header( "Content-Length: " . filesize( $file ) );
+	header( 'Pragma: public' ); // required
+	header( 'Expires: 0' );
+	header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
+	header( 'Cache-Control: private', false ); // required for certain browsers
+	header( 'Content-Type: application/force-download' );
+	header( 'Content-Disposition: attachment; filename="' . basename( $file ) . '";' );
+	header( 'Content-Transfer-Encoding: binary' );
+	header( 'Content-Length: ' . filesize( $file ) );
 	flush();
 	readfile( "$file" );
 	exit();
@@ -94,7 +94,7 @@ class WP_Admin_UI {
 		'edit'      => 'Edit',
 		'duplicate' => 'Duplicate',
 		'view'      => 'View',
-		'reorder'   => 'Reorder'
+		'reorder'   => 'Reorder',
 	);
 	var $icon = false;
 	var $css = false;
@@ -155,7 +155,10 @@ class WP_Admin_UI {
 		if ( false !== $this->get_var( 'id' ) ) {
 			$this->id = sanitize_text_field( $_GET['id'] );
 		}
-		if ( false !== $this->get_var( 'action', false, array(
+		if ( false !== $this->get_var(
+			'action',
+			false,
+			array(
 				'add',
 				'edit',
 				'duplicate',
@@ -163,8 +166,9 @@ class WP_Admin_UI {
 				'delete',
 				'manage',
 				'reorder',
-				'export'
-			) ) ) {
+				'export',
+			)
+		) ) {
 			$this->action = sanitize_text_field( $_GET['action'] );
 		}
 		if ( false !== $this->get_var( 'do', false, array( 'save', 'create' ) ) ) {
@@ -181,16 +185,19 @@ class WP_Admin_UI {
 		}
 		if ( false !== $this->get_var( 'order' ) ) {
 			$order = sanitize_text_field( $_GET['order'] );
-			$order = preg_replace( "/([- ])/", "_", trim( $order ) );
-			$order = preg_replace( "/([^0-9a-z_])/", "", strtolower( $order ) );
-			$order = preg_replace( "/(_){2,}/", "_", $order );
+			$order = preg_replace( '/([- ])/', '_', trim( $order ) );
+			$order = preg_replace( '/([^0-9a-z_])/', '', strtolower( $order ) );
+			$order = preg_replace( '/(_){2,}/', '_', $order );
 
 			$this->order = $order;
 		}
 		if ( false !== $this->get_var( 'order_dir', false, array( 'ASC', 'DESC' ) ) ) {
 			$this->order_dir = ( 'ASC' == strtoupper( trim( $_GET['order_dir'] ) ) ? 'ASC' : 'DESC' );
 		}
-		if ( false !== $this->get_var( 'action', false, 'export' ) && false !== $this->get_var( 'export_type', false, array(
+		if ( false !== $this->get_var( 'action', false, 'export' ) && false !== $this->get_var(
+			'export_type',
+			false,
+			array(
 				'csv',
 				'tsv',
 				'pipe',
@@ -199,7 +206,8 @@ class WP_Admin_UI {
 				'xml',
 				'json',
 				'pdf',
-			) ) ) {
+			)
+		) ) {
 			$this->export_type = sanitize_text_field( $_GET['export_type'] );
 		}
 		if ( false !== $this->get_var( 'action', false, 'export' ) && 'custom' === $this->export_type && false !== $this->get_var( 'export_delimiter' ) ) {
@@ -280,19 +288,19 @@ class WP_Admin_UI {
 	}
 
 	/*
-    // Example code for use with $this->do_hook
-    function my_filter_function ($args,$obj)
-    {
-        $obj[0]->item = 'Post';
-        $obj[0]->add = true;
-        // args are an array (0=>$arg1,1=>$arg2)
-        // may have more than one arg, dependant on filter
-        return $args;
-    }
-    add_filter('wp_admin_ui_post_init','my_filter_function',10,2);
-    // OR
-    add_action('wp_admin_ui_post_init','my_filter_function',10,2);
-    */
+	// Example code for use with $this->do_hook
+	function my_filter_function ($args,$obj)
+	{
+		$obj[0]->item = 'Post';
+		$obj[0]->add = true;
+		// args are an array (0=>$arg1,1=>$arg2)
+		// may have more than one arg, dependant on filter
+		return $args;
+	}
+	add_filter('wp_admin_ui_post_init','my_filter_function',10,2);
+	// OR
+	add_action('wp_admin_ui_post_init','my_filter_function',10,2);
+	*/
 	function do_hook() {
 
 		$args = func_get_args();
@@ -334,7 +342,7 @@ class WP_Admin_UI {
 			'export_delimiter',
 			'remove_export',
 			'updated',
-			'duplicate'
+			'duplicate',
 		);
 		if ( false === $allowed ) {
 			$allowed = array();
@@ -585,18 +593,24 @@ class WP_Admin_UI {
 		if ( ! isset( $attributes['readonly'] ) ) {
 			$attributes['readonly'] = false;
 		}
-		if ( ! isset( $attributes['date_touch'] ) || ! in_array( $attributes['type'], array(
+		if ( ! isset( $attributes['date_touch'] ) || ! in_array(
+			$attributes['type'],
+			array(
 				'date',
 				'time',
-				'datetime'
-			) ) ) {
+				'datetime',
+			)
+		) ) {
 			$attributes['date_touch'] = false;
 		}
-		if ( ! isset( $attributes['date_touch_on_create'] ) || ! in_array( $attributes['type'], array(
+		if ( ! isset( $attributes['date_touch_on_create'] ) || ! in_array(
+			$attributes['type'],
+			array(
 				'date',
 				'time',
-				'datetime'
-			) ) ) {
+				'datetime',
+			)
+		) ) {
 			$attributes['date_touch_on_create'] = false;
 		}
 		if ( ! isset( $attributes['display'] ) ) {
@@ -617,18 +631,24 @@ class WP_Admin_UI {
 		if ( false === $attributes['filter'] || ! isset( $attributes['filter_default'] ) || ! in_array( $column, $this->filters ) ) {
 			$attributes['filter_default'] = false;
 		}
-		if ( false === $attributes['filter'] || ! isset( $attributes['date_ongoing'] ) || ! in_array( $attributes['type'], array(
+		if ( false === $attributes['filter'] || ! isset( $attributes['date_ongoing'] ) || ! in_array(
+			$attributes['type'],
+			array(
 				'date',
 				'time',
-				'datetime'
-			) ) || ! in_array( $column, $this->filters ) ) {
+				'datetime',
+			)
+		) || ! in_array( $column, $this->filters ) ) {
 			$attributes['date_ongoing'] = false;
 		}
-		if ( false === $attributes['filter'] || ! isset( $attributes['date_ongoing'] ) || ! in_array( $attributes['type'], array(
+		if ( false === $attributes['filter'] || ! isset( $attributes['date_ongoing'] ) || ! in_array(
+			$attributes['type'],
+			array(
 				'date',
 				'time',
-				'datetime'
-			) ) || ! isset( $attributes['filter_ongoing_default'] ) || ! in_array( $column, $this->filters ) ) {
+				'datetime',
+			)
+		) || ! isset( $attributes['filter_ongoing_default'] ) || ! in_array( $column, $this->filters ) ) {
 			$attributes['filter_ongoing_default'] = false;
 		}
 		if ( ! isset( $attributes['export'] ) ) {
@@ -748,13 +768,25 @@ class WP_Admin_UI {
 		$this->do_hook( 'add' );
 		?>
 		<div class="wrap wp-admin-ui-wrap">
-			<div id="icon-edit-pages" class="icon32"<?php if ( false !== $this->icon ) { ?> style="background-position:0 0;background-image:url(<?php echo esc_url( $this->icon ); ?>);"<?php } ?>>
+			<div id="icon-edit-pages" class="icon32"
+			<?php
+			if ( false !== $this->icon ) {
+				?>
+				 style="background-position:0 0;background-image:url(<?php echo esc_url( $this->icon ); ?>);"<?php } ?>>
 				<br /></div>
 			<h2><?php echo esc_html( $this->heading['add'] ); ?> <?php echo esc_html( $this->item ); ?>
-				<small>(<a href="<?php echo esc_url( $this->var_update( array(
-						'action' => 'manage',
-						'id'     => ''
-					) ) ); ?>">&laquo; Back to Manage</a>)
+				<small>(<a href="
+				<?php
+				echo esc_url(
+					$this->var_update(
+						array(
+							'action' => 'manage',
+							'id'     => '',
+						)
+					)
+				);
+				?>
+									">&laquo; Back to Manage</a>)
 				</small>
 			</h2>
 			<?php $this->form( 1 ); ?>
@@ -773,13 +805,25 @@ class WP_Admin_UI {
 		}
 		?>
 		<div class="wrap wp-admin-ui-wrap">
-			<div id="icon-edit-pages" class="icon32"<?php if ( false !== $this->icon ) { ?> style="background-position:0 0;background-image:url(<?php echo esc_url( $this->icon ); ?>);"<?php } ?>>
+			<div id="icon-edit-pages" class="icon32"
+			<?php
+			if ( false !== $this->icon ) {
+				?>
+				 style="background-position:0 0;background-image:url(<?php echo esc_url( $this->icon ); ?>);"<?php } ?>>
 				<br /></div>
 			<h2><?php echo esc_html( $duplicate ? $this->heading['duplicate'] : $this->heading['edit'] ); ?> <?php echo esc_html( $this->item ); ?>
-				<small>(<a href="<?php echo esc_url( $this->var_update( array(
-						'action' => 'manage',
-						'id'     => ''
-					) ) ); ?>">&laquo; Back to Manage</a>)
+				<small>(<a href="
+				<?php
+				echo esc_url(
+					$this->var_update(
+						array(
+							'action' => 'manage',
+							'id'     => '',
+						)
+					)
+				);
+				?>
+									">&laquo; Back to Manage</a>)
 				</small>
 			</h2>
 			<?php $this->form( 0, $duplicate ); ?>
@@ -802,7 +846,11 @@ class WP_Admin_UI {
 		}
 		$submit = 'Add ' . $this->item;
 		$id     = '';
-		$vars   = array( 'action' => 'manage', 'do' => 'create', 'id' => '' );
+		$vars   = array(
+			'action' => 'manage',
+			'do' => 'create',
+			'id' => '',
+		);
 		if ( $create == 0 ) {
 			if ( empty( $this->row ) ) {
 				$this->get_row();
@@ -813,7 +861,11 @@ class WP_Admin_UI {
 			if ( $duplicate == 0 ) {
 				$submit = 'Save Changes';
 				$id     = $this->row[ $this->identifier ];
-				$vars   = array( 'action' => 'edit', 'do' => 'save', 'id' => $id );
+				$vars   = array(
+					'action' => 'edit',
+					'do' => 'save',
+					'id' => $id,
+				);
 			}
 		}
 		?>
@@ -843,7 +895,7 @@ class WP_Admin_UI {
 						<span class="description"><?php echo wp_kses_post( $attributes['comments'] ); ?></span>
 						<?php
 						if ( 'desc' !== $attributes['type'] || 'code' !== $attributes['type'] ) {
-							echo "<br />";
+							echo '<br />';
 						}
 					}
 					if ( false !== $attributes['custom_input'] && function_exists( "{$attributes['custom_input']}" ) ) {
@@ -874,7 +926,7 @@ class WP_Admin_UI {
 							?>
 							<textarea name="<?php echo esc_attr( $column ); ?>" id="admin_ui_<?php echo esc_attr( $column ); ?>" rows="10" cols="50"><?php echo esc_textarea( $this->row[ $column ] ); ?></textarea>
 							<?php
-						} elseif ( in_array( $attributes['type'], [ 'date', 'datetime', 'time' ], true ) ) {
+						} elseif ( in_array( $attributes['type'], array( 'date', 'datetime', 'time' ), true ) ) {
 							$html_input_type = $attributes['type'];
 
 							if ( 'datetime' === $html_input_type ) {
@@ -923,7 +975,7 @@ class WP_Admin_UI {
 					}
 					if ( ! empty( $attributes['comments'] ) && false === $attributes['comments_top'] ) {
 						if ( 'desc' !== $attributes['type'] || 'code' !== $attributes['type'] ) {
-							echo "<br />";
+							echo '<br />';
 						}
 						?>
 						<span class="description"><?php echo wp_kses_post( $attributes['comments'] ); ?></span>
@@ -962,13 +1014,25 @@ class WP_Admin_UI {
 		}
 		?>
 		<div class="wrap wp-admin-ui-wrap">
-			<div id="icon-edit-pages" class="icon32"<?php if ( false !== $this->icon ) { ?> style="background-position:0 0;background-image:url(<?php echo esc_url( $this->icon ); ?>);"<?php } ?>>
+			<div id="icon-edit-pages" class="icon32"
+			<?php
+			if ( false !== $this->icon ) {
+				?>
+				 style="background-position:0 0;background-image:url(<?php echo esc_url( $this->icon ); ?>);"<?php } ?>>
 				<br /></div>
 			<h2><?php echo esc_html( $this->heading['view'] ); ?> <?php echo esc_html( $this->item ); ?>
-				<small>(<a href="<?php echo esc_url( $this->var_update( array(
-						'action' => 'manage',
-						'id'     => ''
-					) ) ); ?>">&laquo; Back to Manage</a>)
+				<small>(<a href="
+				<?php
+				echo esc_url(
+					$this->var_update(
+						array(
+							'action' => 'manage',
+							'id'     => '',
+						)
+					)
+				);
+				?>
+									">&laquo; Back to Manage</a>)
 				</small>
 			</h2>
 			<table class="form-table">
@@ -992,13 +1056,16 @@ class WP_Admin_UI {
 					<td>
 					<?php
 					if ( false !== $attributes['custom_view'] && is_callable( $attributes['custom_view'] ) ) {
-						echo call_user_func_array( $attributes['custom_view'], array(
-							$this->row[ $column ],
-							$this->row,
-							$column,
-							$attributes,
-							$this
-						) );
+						echo call_user_func_array(
+							$attributes['custom_view'],
+							array(
+								$this->row[ $column ],
+								$this->row,
+								$column,
+								$attributes,
+								$this,
+							)
+						);
 						?>
 						</td>
 						</tr>
@@ -1114,12 +1181,12 @@ class WP_Admin_UI {
 				}
 			}
 			if ( in_array( $attributes['type'], array( 'date', 'time', 'datetime' ) ) ) {
-				$format = "Y-m-d H:i:s";
+				$format = 'Y-m-d H:i:s';
 				if ( 'date' === $attributes['type'] ) {
-					$format = "Y-m-d";
+					$format = 'Y-m-d';
 				}
 				if ( 'time' === $attributes['type'] ) {
-					$format = "H:i:s";
+					$format = 'H:i:s';
 				}
 				if ( false !== $attributes['date_touch'] || ( false !== $attributes['date_touch_on_create'] && $create == 1 && $this->id < 1 ) ) {
 					$value = date_i18n( $format );
@@ -1155,7 +1222,7 @@ class WP_Admin_UI {
 			if ( isset( $attributes['custom_save'] ) && false !== $attributes['custom_save'] && function_exists( "{$attributes['custom_save']}" ) ) {
 				$value = $attributes['custom_save']( $value, $column, $attributes, $this );
 			}
-			$column_sql[]    = "`" . $this->sanitize( $column ) . "`=$vartype";
+			$column_sql[]    = '`' . $this->sanitize( $column ) . "`=$vartype";
 			$values[]        = $value;
 			$data[ $column ] = $value;
 		}
@@ -1193,10 +1260,16 @@ class WP_Admin_UI {
 		}
 		if ( isset( $_POST['order'] ) && ! empty( $_POST['order'] ) ) {
 			foreach ( $_POST['order'] as $order => $id ) {
-				$updated = $wpdb->update( $this->table, array( $this->reorder => $order ), array( $this->identifier => $id ), array(
-					'%s',
-					'%d'
-				), array( '%d' ) );
+				$updated = $wpdb->update(
+					$this->table,
+					array( $this->reorder => $order ),
+					array( $this->identifier => $id ),
+					array(
+						'%s',
+						'%d',
+					),
+					array( '%d' )
+				);
 			}
 			$this->message( '<strong>Success!</strong> Order updated successfully.' );
 		} else {
@@ -1242,7 +1315,7 @@ class WP_Admin_UI {
 					}
 				}
 				if ( empty( $column_data ) && ! empty( $selected_options ) ) {
-					$limited = " WHERE `" . $this->sanitize( $attributes['related_id'] ) . "` IN ('" . implode( "', '", $this->sanitize( $selected_options ) ) . "')";
+					$limited = ' WHERE `' . $this->sanitize( $attributes['related_id'] ) . "` IN ('" . implode( "', '", $this->sanitize( $selected_options ) ) . "')";
 					$related = $wpdb->get_results( 'SELECT `' . $this->sanitize( $attributes['related_id'] ) . '`,`' . $attributes['related_field'] . '` FROM ' . $attributes['related'] . ( ! empty( $attributes['related_sql'] ) ? ' ' . $attributes['related_sql'] : $limited ) );
 					foreach ( $related as $option ) {
 						if ( in_array( $option->{$attributes['related_id']}, $selected_options ) ) {
@@ -1325,13 +1398,13 @@ class WP_Admin_UI {
 		$url = array_reverse( $url );
 		$url = $url[0];
 		if ( false === ( $credentials = request_filesystem_credentials( $url, '', false, ABSPATH ) ) ) {
-			$this->error( "<strong>Error:</strong> Your hosting configuration does not allow access to add files to your site." );
+			$this->error( '<strong>Error:</strong> Your hosting configuration does not allow access to add files to your site.' );
 
 			return false;
 		}
 		if ( ! WP_Filesystem( $credentials, ABSPATH ) ) {
-			request_filesystem_credentials( $url, '', true, ABSPATH ); //Failed to connect, Error and request again
-			$this->error( "<strong>Error:</strong> Your hosting configuration does not allow access to add files to your site." );
+			request_filesystem_credentials( $url, '', true, ABSPATH ); // Failed to connect, Error and request again
+			$this->error( '<strong>Error:</strong> Your hosting configuration does not allow access to add files to your site.' );
 
 			return false;
 		}
@@ -1345,13 +1418,13 @@ class WP_Admin_UI {
 		$dir = dirname( WP_ADMIN_UI_EXPORT_DIR );
 		if ( ! file_exists( WP_ADMIN_UI_EXPORT_DIR ) ) {
 			if ( ! $wp_filesystem->is_writable( $dir ) || ! ( $dir = $wp_filesystem->mkdir( WP_ADMIN_UI_EXPORT_DIR ) ) ) {
-				$this->error( "<strong>Error:</strong> Your export directory (<strong>" . WP_ADMIN_UI_EXPORT_DIR . "</strong>) did not exist and couldn&#8217;t be created by the web server. Check the directory permissions and try again." );
+				$this->error( '<strong>Error:</strong> Your export directory (<strong>' . WP_ADMIN_UI_EXPORT_DIR . '</strong>) did not exist and couldn&#8217;t be created by the web server. Check the directory permissions and try again.' );
 
 				return false;
 			}
 		}
 		if ( ! $wp_filesystem->is_writable( WP_ADMIN_UI_EXPORT_DIR ) ) {
-			$this->error( "<strong>Error:</strong> Your export directory (<strong>" . WP_ADMIN_UI_EXPORT_DIR . "</strong>) needs to be writable for this plugin to work. Double-check it and try again." );
+			$this->error( '<strong>Error:</strong> Your export directory (<strong>' . WP_ADMIN_UI_EXPORT_DIR . '</strong>) needs to be writable for this plugin to work. Double-check it and try again.' );
 
 			return false;
 		}
@@ -1366,12 +1439,12 @@ class WP_Admin_UI {
 					return;
 				} else {
 					$this->do_hook( 'post_remove_export', $_GET['remove_export'], false );
-					$this->error( "<strong>Error:</strong> Your export directory (<strong>" . WP_ADMIN_UI_EXPORT_DIR . "</strong>) needs to be writable for this plugin to work. Double-check it and try again." );
+					$this->error( '<strong>Error:</strong> Your export directory (<strong>' . WP_ADMIN_UI_EXPORT_DIR . '</strong>) needs to be writable for this plugin to work. Double-check it and try again.' );
 
 					return false;
 				}
 			} else {
-				$this->error( "<strong>Error:</strong> That file does not exist in the export directory." );
+				$this->error( '<strong>Error:</strong> That file does not exist in the export directory.' );
 
 				return false;
 			}
@@ -1408,10 +1481,16 @@ class WP_Admin_UI {
 				$foot = '</items>';
 				fwrite( $fp, $foot );
 				fclose( $fp );
-				$this->message( '<strong>Success:</strong> Your export is ready, the download should begin in a few moments. If it doesn\'t, <a href="' . esc_url( $this->export_url . urlencode( $export_file ) ) . '" target="_blank">click here to download your XML export file</a>.<br /><br />When you are done with your export, <a href="' . esc_url( $this->var_update( array(
-						'remove_export' => urlencode( $export_file ),
-						'action'        => 'export'
-					) ) ) . '">click here to remove it</a>, otherwise the export will be deleted within 24 hours of generation.' );
+				$this->message(
+					'<strong>Success:</strong> Your export is ready, the download should begin in a few moments. If it doesn\'t, <a href="' . esc_url( $this->export_url . urlencode( $export_file ) ) . '" target="_blank">click here to download your XML export file</a>.<br /><br />When you are done with your export, <a href="' . esc_url(
+						$this->var_update(
+							array(
+								'remove_export' => urlencode( $export_file ),
+								'action'        => 'export',
+							)
+						)
+					) . '">click here to remove it</a>, otherwise the export will be deleted within 24 hours of generation.'
+				);
 				echo '<script type="text/javascript">window.open("' . $this->export_url . urlencode( $export_file ) . '");</script>';
 			} elseif ( $this->export_type === 'xlsx' ) {
 
@@ -1473,10 +1552,16 @@ class WP_Admin_UI {
 
 				$writer->writeToFile( $export_file_location );
 
-				$this->message( '<strong>Success:</strong> Your export is ready, the download should begin in a few moments. If it doesn\'t, <a href="' . esc_url( $this->export_url . urlencode( $export_file ) ) . '" target="_blank">click here to access your XLSX export file</a>.<br /><br />When you are done with your export, <a href="' . esc_url( $this->var_update( array(
-						'remove_export' => urlencode( $export_file ),
-						'action'        => 'export'
-					) ) ) . '">click here to remove it</a>, otherwise the export will be deleted within 24 hours of generation.' );
+				$this->message(
+					'<strong>Success:</strong> Your export is ready, the download should begin in a few moments. If it doesn\'t, <a href="' . esc_url( $this->export_url . urlencode( $export_file ) ) . '" target="_blank">click here to access your XLSX export file</a>.<br /><br />When you are done with your export, <a href="' . esc_url(
+						$this->var_update(
+							array(
+								'remove_export' => urlencode( $export_file ),
+								'action'        => 'export',
+							)
+						)
+					) . '">click here to remove it</a>, otherwise the export will be deleted within 24 hours of generation.'
+				);
 				echo '<script type="text/javascript">window.open("' . $this->export_url . urlencode( $export_file ) . '");</script>';
 			} elseif ( $this->export_type === 'json' ) {
 				$export_file          = str_replace( '-', '_', sanitize_title( $this->items ) ) . '_' . date_i18n( 'm-d-Y_H-i-s' ) . '_' . wp_generate_password( 5, false ) . '.' . $this->export_type;
@@ -1486,8 +1571,8 @@ class WP_Admin_UI {
 				$data                 = array(
 					'items' => array(
 						'count' => count( $this->full_data ),
-						'item'  => array()
-					)
+						'item'  => array(),
+					),
 				);
 				foreach ( $this->full_data as $item ) {
 					$row = array();
@@ -1509,10 +1594,16 @@ class WP_Admin_UI {
 				}
 				fwrite( $fp, json_encode( $data ) );
 				fclose( $fp );
-				$this->message( '<strong>Success:</strong> Your export is ready, the download should begin in a few moments. If it doesn\'t, <a href="' . esc_url( $this->export_url . urlencode( $export_file ) ) . '" target="_blank">click here to access your JSON export file</a>.<br /><br />When you are done with your export, <a href="' . esc_url( $this->var_update( array(
-						'remove_export' => urlencode( $export_file ),
-						'action'        => 'export'
-					) ) ) . '">click here to remove it</a>, otherwise the export will be deleted within 24 hours of generation.' );
+				$this->message(
+					'<strong>Success:</strong> Your export is ready, the download should begin in a few moments. If it doesn\'t, <a href="' . esc_url( $this->export_url . urlencode( $export_file ) ) . '" target="_blank">click here to access your JSON export file</a>.<br /><br />When you are done with your export, <a href="' . esc_url(
+						$this->var_update(
+							array(
+								'remove_export' => urlencode( $export_file ),
+								'action'        => 'export',
+							)
+						)
+					) . '">click here to remove it</a>, otherwise the export will be deleted within 24 hours of generation.'
+				);
 				echo '<script type="text/javascript">window.open("' . $this->export_url . urlencode( $export_file ) . '");</script>';
 			} elseif ( $this->export_type === 'pdf' ) {
 
@@ -1522,13 +1613,19 @@ class WP_Admin_UI {
 					$export_file = WP_Admin_UI_Export_PDF::CreateReport( $this );
 				}
 
-				$this->message( '<strong>Success:</strong> Your export is ready, the download should begin in a few moments. If it doesn\'t, <a href="' . esc_url( $this->export_url . urlencode( $export_file ) ) . '" target="_blank">click here to access your PDF export file</a>.<br /><br />When you are done with your export, <a href="' . esc_url( $this->var_update( array(
-						'remove_export' => urlencode( $export_file ),
-						'action'        => 'export'
-					) ) ) . '">click here to remove it</a>, otherwise the export will be deleted within 24 hours of generation.' );
+				$this->message(
+					'<strong>Success:</strong> Your export is ready, the download should begin in a few moments. If it doesn\'t, <a href="' . esc_url( $this->export_url . urlencode( $export_file ) ) . '" target="_blank">click here to access your PDF export file</a>.<br /><br />When you are done with your export, <a href="' . esc_url(
+						$this->var_update(
+							array(
+								'remove_export' => urlencode( $export_file ),
+								'action'        => 'export',
+							)
+						)
+					) . '">click here to remove it</a>, otherwise the export will be deleted within 24 hours of generation.'
+				);
 				echo '<script type="text/javascript">window.open("' . $this->export_url . urlencode( $export_file ) . '");</script>';
 			} else {
-				$this->error( "<strong>Error:</strong> Invalid export type." );
+				$this->error( '<strong>Error:</strong> Invalid export type.' );
 
 				return false;
 			}
@@ -1614,7 +1711,7 @@ class WP_Admin_UI {
 				}
 
 				// Add extra content at the end of the line to prevent problems with quoting.
-				$column_value = trim( str_replace( array( "\r", "\n" ), ' ', $item[ $key ] ) ) . "#@ @#";
+				$column_value = trim( str_replace( array( "\r", "\n" ), ' ', $item[ $key ] ) ) . '#@ @#';
 
 				// Maybe escape the first character to prevent formulas from getting used when opening the file with a spreadsheet app.
 				if (
@@ -1635,13 +1732,19 @@ class WP_Admin_UI {
 		fclose( $fp );
 
 		$contents = file_get_contents( $export_file_location );
-		$contents = str_replace( "#@ @#", "", $contents );
+		$contents = str_replace( '#@ @#', '', $contents );
 		file_put_contents( $export_file_location, $contents );
 
-		$this->message( '<strong>Success:</strong> Your export is ready, the download should begin in a few moments. If it doesn\'t, <a href="' . esc_url( $this->export_url . urlencode( $export_file ) ) . '" target="_blank">click here to access your ' . esc_html( strtoupper( $export_ext ) ) . ' export file</a>.<br /><br />When you are done with your export, <a href="' . esc_url( $this->var_update( array(
-				'remove_export' => urlencode( $export_file ),
-				'action'        => 'export'
-			) ) ) . '">click here to remove it</a>, otherwise the export will be deleted within 24 hours of generation.' );
+		$this->message(
+			'<strong>Success:</strong> Your export is ready, the download should begin in a few moments. If it doesn\'t, <a href="' . esc_url( $this->export_url . urlencode( $export_file ) ) . '" target="_blank">click here to access your ' . esc_html( strtoupper( $export_ext ) ) . ' export file</a>.<br /><br />When you are done with your export, <a href="' . esc_url(
+				$this->var_update(
+					array(
+						'remove_export' => urlencode( $export_file ),
+						'action'        => 'export',
+					)
+				)
+			) . '">click here to remove it</a>, otherwise the export will be deleted within 24 hours of generation.'
+		);
 		echo '<script type="text/javascript">window.open("' . $this->export_url . urlencode( $export_file ) . '");</script>';
 
 		return $export_file;
@@ -2080,7 +2183,7 @@ class WP_Admin_UI {
 			$sql_count = str_replace( '  ', ' ', $sql_count );
 		}
 		if ( current_user_can( 'manage_options' ) && isset( $_GET['debug'] ) && 1 == $_GET['debug'] ) {
-			echo "<textarea cols='130' rows='30'>" . esc_textarea( $sql ) . "</textarea>";
+			echo "<textarea cols='130' rows='30'>" . esc_textarea( $sql ) . '</textarea>';
 		}
 		if ( false !== $this->default_none && false === $this->search_query && false === $full && empty( $wheresql ) && empty( $havingsql ) ) {
 			return false;
@@ -2091,7 +2194,7 @@ class WP_Admin_UI {
 
 		$results = $wpdb->get_results( $sql, ARRAY_A );
 
-		$total = @current( $wpdb->get_col( "SELECT FOUND_ROWS()" ) );
+		$total = @current( $wpdb->get_col( 'SELECT FOUND_ROWS()' ) );
 		$total = $this->do_hook( 'get_data_total', $total, $full );
 
 		if ( is_numeric( $total ) ) {
@@ -2192,14 +2295,26 @@ class WP_Admin_UI {
 		}
 		?>
 		<div class="wrap wp-admin-ui-wrap">
-			<div id="icon-edit-pages" class="icon32"<?php if ( false !== $this->icon ) { ?> style="background-position:0 0;background-image:url(<?php echo esc_url( $this->icon ); ?>);"<?php } ?>>
+			<div id="icon-edit-pages" class="icon32"
+			<?php
+			if ( false !== $this->icon ) {
+				?>
+				 style="background-position:0 0;background-image:url(<?php echo esc_url( $this->icon ); ?>);"<?php } ?>>
 				<br /></div>
 			<h2><?php echo( $reorder == 0 || false === $this->reorder ? $this->heading['manage'] : $this->heading['reorder'] ); ?> <?php echo esc_html( $this->items ); ?>
 				<?php if ( 1 === $reorder && false !== $this->reorder ) { ?>
-					<small>(<a href="<?php echo esc_url( $this->var_update( array(
-						'action' => 'manage',
-						'id'     => ''
-					) ) ); ?>">&laquo; Back to Manage</a>)</small><?php } ?></h2>
+					<small>(<a href="
+					<?php
+					echo esc_url(
+						$this->var_update(
+							array(
+								'action' => 'manage',
+								'id'     => '',
+							)
+						)
+					);
+					?>
+										">&laquo; Back to Manage</a>)</small><?php } ?></h2>
 			<?php
 			if ( isset( $this->custom['header'] ) && function_exists( "{$this->custom['header']}" ) ) {
 				echo call_user_func( $this->custom['header'], $this );
@@ -2243,7 +2358,8 @@ class WP_Admin_UI {
 
 								$start = $this->get_var( 'filter_' . $filter . '_start', $filter_column['filter_default'] );
 								$end   = $this->get_var( 'filter_' . $filter . '_end', $filter_column['filter_ongoing_default'] );
-								?>&nbsp;&nbsp;
+								?>
+								&nbsp;&nbsp;
 									<label for="admin_ui_filter_<?php echo esc_attr( $filter ); ?>_start"><?php echo esc_html( $filter_column['filter_label'] ); ?>:</label>
 								<input type="<?php echo esc_attr( $html_input_type ); ?>" name="filter_<?php echo esc_attr( $filter ); ?>_start" class="admin_ui_filter admin_ui_date" id="admin_ui_filter_<?php echo esc_attr( $filter ); ?>_start" value="<?php echo( false !== $start && 0 < strlen( $start ) ? esc_attr( $start ) : '' ); ?>" />
 									<label for="admin_ui_filter_<?php echo esc_attr( $filter ); ?>_end">to</label>
@@ -2253,7 +2369,7 @@ class WP_Admin_UI {
 								if ( ! is_array( $filter_column['related'] ) ) {
 									$related  = $wpdb->get_results( 'SELECT `' . $this->sanitize( $filter_column['related_id'] ) . '`,`' . $this->sanitize( $filter_column['related_field'] ) . '` FROM ' . $filter_column['related'] . ( ! empty( $filter_column['related_sql'] ) ? ' ' . $filter_column['related_sql'] : '' ) );
 									$selected = $this->get_var( 'filter_' . $filter, $filter_column['filter_default'] );
-								?>
+									?>
 									<label for="admin_ui_filter_<?php echo esc_attr( $filter ); ?>"><?php echo esc_html( $filter_column['filter_label'] ); ?>:</label>
 									<select name="filter_<?php echo esc_attr( $filter ); ?><?php echo( false !== $filter_column['related_multiple'] ? '[]' : '' ); ?>" id="admin_ui_filter_<?php echo esc_attr( $filter ); ?>"<?php echo( false !== $filter_column['related_multiple'] ? ' size="10" style="height:auto;" MULTIPLE' : '' ); ?>>
 										<option value="">-- Show All --</option>
@@ -2265,11 +2381,11 @@ class WP_Admin_UI {
 										}
 										?>
 									</select>
-								<?php
-							} else {
-								$related  = $filter_column['related'];
-								$selected = $this->get_var( 'filter_' . $filter, $filter_column['filter_default'] );
-								?>
+									<?php
+								} else {
+									$related  = $filter_column['related'];
+									$selected = $this->get_var( 'filter_' . $filter, $filter_column['filter_default'] );
+									?>
 								<label for="admin_ui_filter_<?php echo esc_attr( $filter ); ?>"><?php echo esc_html( $filter_column['filter_label'] ); ?>:</label>
 								<select name="filter_<?php echo esc_attr( $filter ); ?><?php echo( false !== $filter_column['related_multiple'] ? '[]' : '' ); ?>" id="admin_ui_filter_<?php echo esc_attr( $filter ); ?>"<?php echo( false !== $filter_column['related_multiple'] ? ' size="10" style="height:auto;" MULTIPLE' : '' ); ?>>
 									<option value="">-- Show All --</option>
@@ -2281,32 +2397,31 @@ class WP_Admin_UI {
 									}
 									?>
 								</select>
-							<?php
-							}
+									<?php
+								}
 							} elseif ( 'bool' === $filter_column['type'] ) {
-							$selected = (int) $this->get_var( 'filter_' . $filter, $filter_column['filter_default'] );
+								$selected = (int) $this->get_var( 'filter_' . $filter, $filter_column['filter_default'] );
 
-							if ( 1 !== $selected ) {
-								$selected = 0;
-							}
-							?>
+								if ( 1 !== $selected ) {
+									$selected = 0;
+								}
+								?>
 								<label for="admin_ui_filter_<?php echo esc_attr( $filter ); ?>"><?php echo esc_html( $filter_column['filter_label'] ); ?>:</label>
 								<select name="filter_<?php echo esc_attr( $filter ); ?>" id="admin_ui_filter_<?php echo esc_attr( $filter ); ?>">
 									<option value="">-- Show All --</option>
 									<option value="1"<?php selected( 1, $selected ); ?>>Yes</option>
 									<option value="0"<?php selected( 0, $selected ); ?>>No</option>
 								</select>
-							<?php
-							}
-							else
-							{
-							?>
+								<?php
+							} else {
+								?>
 								<label for="admin_ui_filter_<?php echo esc_attr( $filter ); ?>"><?php echo esc_html( $filter_column['filter_label'] ); ?>:</label>
 							<input type="text" name="filter_<?php echo esc_attr( $filter ); ?>" class="admin_ui_filter" id="admin_ui_filter_<?php echo esc_attr( $filter ); ?>" value="<?php echo esc_attr( $this->get_var( 'filter_' . $filter, $filter_column['filter_default'] ) ); ?>" />
 								<?php
 							}
 						}
-						?>&nbsp;&nbsp;
+						?>
+						&nbsp;&nbsp;
 						<label<?php echo( empty( $this->filters ) ? ' class="screen-reader-text"' : '' ); ?> for="page-search-input">Search:</label>
 						<input type="text" name="search_query" id="page-search-input" value="<?php echo esc_attr( $this->search_query ); ?>" />
 						<input type="submit" value="Search" class="button" />
@@ -2320,11 +2435,20 @@ class WP_Admin_UI {
 							}
 							?>
 							&nbsp;&nbsp;&nbsp;
-							<small>[<a href="<?php echo esc_url( $this->var_update( $clear_filters, array(
-									'order',
-									'order_dir',
-									'limit'
-								) ) ); ?>">Reset Filters</a>]
+							<small>[<a href="
+							<?php
+							echo esc_url(
+								$this->var_update(
+									$clear_filters,
+									array(
+										'order',
+										'order_dir',
+										'limit',
+									)
+								)
+							);
+							?>
+												">Reset Filters</a>]
 							</small>
 							<?php
 						}
@@ -2367,34 +2491,90 @@ class WP_Admin_UI {
 
 						<?php if ( $this->export && ! empty( $this->data ) ) { ?>
 							<strong>Export:</strong>
-							<input type="button" value=" CSV " class="button" onclick="document.location='<?php echo esc_url( $this->var_update( array(
-								'action'      => 'export',
-								'export_type' => 'csv'
-							) ) ); ?>';" />
-							<input type="button" value=" TSV " class="button" onclick="document.location='<?php echo esc_url( $this->var_update( array(
-								'action'      => 'export',
-								'export_type' => 'tsv'
-							) ) ); ?>';" />
-							<input type="button" value=" TXT " class="button" onclick="document.location='<?php echo esc_url( $this->var_update( array(
-								'action'      => 'export',
-								'export_type' => 'pipe'
-							) ) ); ?>';" />
-							<input type="button" value=" XLSX " class="button" onclick="document.location='<?php echo esc_url( $this->var_update( array(
-								'action'      => 'export',
-								'export_type' => 'xlsx'
-							) ) ); ?>';" />
-							<input type="button" value=" XML " class="button" onclick="document.location='<?php echo esc_url( $this->var_update( array(
-								'action'      => 'export',
-								'export_type' => 'xml'
-							) ) ); ?>';" />
-							<input type="button" value=" JSON " class="button" onclick="document.location='<?php echo esc_url( $this->var_update( array(
-								'action'      => 'export',
-								'export_type' => 'json'
-							) ) ); ?>';" />
-							<input type="button" value=" PDF " class="button" onclick="document.location='<?php echo esc_url( $this->var_update( array(
-								'action'      => 'export',
-								'export_type' => 'pdf'
-							) ) ); ?>';" />
+							<input type="button" value=" CSV " class="button" onclick="document.location='
+							<?php
+							echo esc_url(
+								$this->var_update(
+									array(
+										'action'      => 'export',
+										'export_type' => 'csv',
+									)
+								)
+							);
+							?>
+																											';" />
+							<input type="button" value=" TSV " class="button" onclick="document.location='
+							<?php
+							echo esc_url(
+								$this->var_update(
+									array(
+										'action'      => 'export',
+										'export_type' => 'tsv',
+									)
+								)
+							);
+							?>
+																											';" />
+							<input type="button" value=" TXT " class="button" onclick="document.location='
+							<?php
+							echo esc_url(
+								$this->var_update(
+									array(
+										'action'      => 'export',
+										'export_type' => 'pipe',
+									)
+								)
+							);
+							?>
+																											';" />
+							<input type="button" value=" XLSX " class="button" onclick="document.location='
+							<?php
+							echo esc_url(
+								$this->var_update(
+									array(
+										'action'      => 'export',
+										'export_type' => 'xlsx',
+									)
+								)
+							);
+							?>
+																											';" />
+							<input type="button" value=" XML " class="button" onclick="document.location='
+							<?php
+							echo esc_url(
+								$this->var_update(
+									array(
+										'action'      => 'export',
+										'export_type' => 'xml',
+									)
+								)
+							);
+							?>
+																											';" />
+							<input type="button" value=" JSON " class="button" onclick="document.location='
+							<?php
+							echo esc_url(
+								$this->var_update(
+									array(
+										'action'      => 'export',
+										'export_type' => 'json',
+									)
+								)
+							);
+							?>
+																											';" />
+							<input type="button" value=" PDF " class="button" onclick="document.location='
+							<?php
+							echo esc_url(
+								$this->var_update(
+									array(
+										'action'      => 'export',
+										'export_type' => 'pdf',
+									)
+								)
+							);
+							?>
+																											';" />
 						<?php } ?>
 					</div>
 					<?php
@@ -2406,7 +2586,11 @@ class WP_Admin_UI {
 			<?php
 			if ( empty( $this->data ) && false !== $this->default_none && false === $this->search_query ) {
 				?>
-				<p>Please use the search filter(s) above to display data<?php if ( $this->export ) { ?>, or click on an Export to download a full copy of the data<?php } ?>.</p>
+				<p>Please use the search filter(s) above to display data
+				<?php
+				if ( $this->export ) {
+					?>
+					, or click on an Export to download a full copy of the data<?php } ?>.</p>
 			<?php } else { ?>
 				<?php $this->table( $reorder ); ?>
 			<?php } ?>
@@ -2489,7 +2673,8 @@ class WP_Admin_UI {
 			<?php
 			return false;
 		}
-	if ( 1 === $reorder && $this->reorder ) { ?>
+		if ( 1 === $reorder && $this->reorder ) {
+			?>
 		<style type="text/css">
 			table.widefat.fixed tbody.sortable tr {
 				height: 50px;
@@ -2505,20 +2690,28 @@ class WP_Admin_UI {
 				margin-left: 30px;
 			}
 		</style>
-		<form action="<?php echo esc_url( $this->var_update( array(
-			'action' => 'reorder',
-			'do'     => 'save'
-		) ) ); ?>" method="post" class="admin_ui_reorder_form">
+		<form action="
 			<?php
-			}
-			$column_index = 'columns';
-			if ( 1 === $reorder ) {
-				$column_index = 'reorder_columns';
-			}
-			if ( false === $this->{$column_index} || empty( $this->{$column_index} ) ) {
-				return $this->error( '<strong>Error:</strong> Invalid Configuration - Missing "columns" definition.' );
-			}
+			echo esc_url(
+				$this->var_update(
+					array(
+						'action' => 'reorder',
+						'do'     => 'save',
+					)
+				)
+			);
 			?>
+						" method="post" class="admin_ui_reorder_form">
+				<?php
+		}
+			$column_index = 'columns';
+		if ( 1 === $reorder ) {
+			$column_index = 'reorder_columns';
+		}
+		if ( false === $this->{$column_index} || empty( $this->{$column_index} ) ) {
+			return $this->error( '<strong>Error:</strong> Invalid Configuration - Missing "columns" definition.' );
+		}
+		?>
 			<table class="widefat page fixed admin_ui_table wp-list-table" cellspacing="0"<?php echo( 1 === $reorder && $this->reorder ? ' id="admin_ui_reorder"' : '' ); ?>>
 				<thead>
 				<tr>
@@ -2554,7 +2747,10 @@ class WP_Admin_UI {
 							if ( false !== $this->get_var( 'label', false, false, $attributes ) ) {
 								$label = $attributes['label'];
 							}
-							$columns[ $column ] = array( 'label' => $label, 'id' => $id );
+							$columns[ $column ] = array(
+								'label' => $label,
+								'id' => $id,
+							);
 							$columns[ $column ] = array_merge( $columns[ $column ], $attributes );
 							$dir                = 'ASC';
 							if ( $this->order == $column && $this->order_dir === 'ASC' ) {
@@ -2568,10 +2764,19 @@ class WP_Admin_UI {
 							}
 							?>
 							<th scope="col" id="<?php echo esc_attr( $id ); ?>" class="manage-column column-<?php echo esc_attr( $id ); ?>"<?php echo $width; ?>>
-								<a href="<?php echo esc_url( $this->var_update( array(
-									'order'     => $column,
-									'order_dir' => $dir
-								), array( 'limit', 'search_query' ) ) ); ?>"><?php echo wp_kses_post( $label ); ?></a>
+								<a href="
+								<?php
+								echo esc_url(
+									$this->var_update(
+										array(
+											'order'     => $column,
+											'order_dir' => $dir,
+										),
+										array( 'limit', 'search_query' )
+									)
+								);
+								?>
+											"><?php echo wp_kses_post( $label ); ?></a>
 							</th>
 							<?php
 						}
@@ -2618,70 +2823,107 @@ class WP_Admin_UI {
 									if ( $this->view && ( $reorder == 0 || false === $this->reorder ) ) {
 										?>
 										<td class="post-title page-title column-title">
-										<strong><a class="row-title" href="<?php echo esc_url( $this->var_update( array(
-												'action' => 'view',
-												'id'     => $id,
-											) ) ); ?>" title="View &#8220;<?php echo htmlentities( $row[ $column ] ); ?>&#8221;"><?php echo wp_kses_post( $row[ $column ] ); ?></a></strong>
+										<strong><a class="row-title" href="
+										<?php
+										echo esc_url(
+											$this->var_update(
+												array(
+													'action' => 'view',
+													'id'     => $id,
+												)
+											)
+										);
+										?>
+																			" title="View &#8220;<?php echo htmlentities( $row[ $column ] ); ?>&#8221;"><?php echo wp_kses_post( $row[ $column ] ); ?></a></strong>
 										<?php
 									} elseif ( $this->edit && ( $reorder == 0 || false === $this->reorder ) ) {
 										?>
 										<td class="post-title page-title column-title">
-										<strong><a class="row-title" href="<?php echo esc_url( $this->var_update( array(
-												'action' => 'edit',
-												'id'     => $id,
-											) ) ); ?>" title="Edit &#8220;<?php echo htmlentities( $row[ $column ] ); ?>&#8221;"><?php echo wp_kses_post( $row[ $column ] ); ?></a></strong>
+										<strong><a class="row-title" href="
+										<?php
+										echo esc_url(
+											$this->var_update(
+												array(
+													'action' => 'edit',
+													'id'     => $id,
+												)
+											)
+										);
+										?>
+																			" title="Edit &#8220;<?php echo htmlentities( $row[ $column ] ); ?>&#8221;"><?php echo wp_kses_post( $row[ $column ] ); ?></a></strong>
 										<?php
 									} else {
 										?>
 										<td class="post-title page-title column-title<?php echo( 1 === $reorder && $this->reorder ? ' dragme' : '' ); ?>">
-										<strong><?php
+										<strong>
+										<?php
 											// This value is already cleaned up prior to this. Custom display will always allow for custom output.
 											// phpcs:ignore
 											echo $row[ $column ];
-											?></strong>
+										?>
+											</strong>
 										<?php
 									}
 									if ( $reorder == 0 || false === $this->reorder ) {
 										$actions = array();
 										if ( $this->view ) {
-											$actions['view'] = '<span class="view"><a href="' . esc_url( $this->var_update( array(
-													'action' => 'view',
-													'id'     => $id,
-												) ) ) . '" title="View this item">View</a></span>';
+											$actions['view'] = '<span class="view"><a href="' . esc_url(
+												$this->var_update(
+													array(
+														'action' => 'view',
+														'id'     => $id,
+													)
+												)
+											) . '" title="View this item">View</a></span>';
 										}
 										if ( $this->edit ) {
-											$actions['edit'] = '<span class="edit"><a href="' . esc_url( $this->var_update( array(
-													'action' => 'edit',
-													'id'     => $id,
-												) ) ) . '" title="Edit this item">Edit</a></span>';
+											$actions['edit'] = '<span class="edit"><a href="' . esc_url(
+												$this->var_update(
+													array(
+														'action' => 'edit',
+														'id'     => $id,
+													)
+												)
+											) . '" title="Edit this item">Edit</a></span>';
 										}
 										if ( $this->duplicate ) {
-											$actions['duplicate'] = '<span class="edit"><a href="' . esc_url( $this->var_update( array(
-													'action' => 'duplicate',
-													'id'     => $id,
-												) ) ) . '" title="Duplicate this item">Duplicate</a></span>';
+											$actions['duplicate'] = '<span class="edit"><a href="' . esc_url(
+												$this->var_update(
+													array(
+														'action' => 'duplicate',
+														'id'     => $id,
+													)
+												)
+											) . '" title="Duplicate this item">Duplicate</a></span>';
 										}
 										if ( $this->delete ) {
-											$actions['delete'] = '<span class="delete"><a class="submitdelete" title="Delete this item" href="' . esc_url( $this->var_update( array(
-													'action'   => 'delete',
-													'id'       => $id,
-													'_wpnonce' => wp_create_nonce( 'wp-admin-ui-delete' ),
-												) ) ) . '" onclick="if(confirm(\'You are about to delete this item \'' . htmlentities( $row[ $column ] ) . '\'\n \'Cancel\' to stop, \'OK\' to delete.\')){return true;}return false;">Delete</a></span>';
+											$actions['delete'] = '<span class="delete"><a class="submitdelete" title="Delete this item" href="' . esc_url(
+												$this->var_update(
+													array(
+														'action'   => 'delete',
+														'id'       => $id,
+														'_wpnonce' => wp_create_nonce( 'wp-admin-ui-delete' ),
+													)
+												)
+											) . '" onclick="if(confirm(\'You are about to delete this item \'' . htmlentities( $row[ $column ] ) . '\'\n \'Cancel\' to stop, \'OK\' to delete.\')){return true;}return false;">Delete</a></span>';
 										}
 										if ( is_array( $this->custom ) ) {
 											foreach ( $this->custom as $custom_action => $custom_data ) {
 												if ( is_array( $custom_data ) && isset( $custom_data['link'] ) ) {
-													if ( ! in_array( $custom_action, array(
-														'add',
-														'view',
-														'edit',
-														'duplicate',
-														'delete',
-														'save',
-														'readonly',
-														'export',
-														'reorder'
-													) ) ) {
+													if ( ! in_array(
+														$custom_action,
+														array(
+															'add',
+															'view',
+															'edit',
+															'duplicate',
+															'delete',
+															'save',
+															'readonly',
+															'export',
+															'reorder',
+														)
+													) ) {
 														if ( ! isset( $custom_data['label'] ) ) {
 															$custom_data['label'] = ucwords( str_replace( '_', ' ', $custom_action ) );
 														}
@@ -2754,8 +2996,10 @@ class WP_Admin_UI {
 							}
 							?>
 						</tr>
-					<?php }
-				} ?>
+						<?php
+					}
+				}
+				?>
 				<?php if ( 0 < count( $this->sum_data ) && ceil( $this->total / $this->limit ) == $this->page ) { // Sum row if one given and we're on the last page ?>
 					<tr id="exports-and-reports-sums" class="iedit">
 						<?php foreach ( $columns as $column => $attributes ) { ?>
@@ -2772,7 +3016,7 @@ class WP_Admin_UI {
 	<?php } ?>
 		<script type="text/javascript">
 			jQuery( 'table.widefat tbody tr:even' ).addClass( 'alternate' );
-			<?php if( 1 === $reorder && false !== $this->reorder ) { ?>
+			<?php if ( 1 === $reorder && false !== $this->reorder ) { ?>
 			jQuery( function () {
 				jQuery( '.sortable' ).sortable( { axis : 'y', handle : '.dragme' } );
 				jQuery( '.sortable' ).on( 'sortupdate', function ( event, ui ) {
@@ -2780,7 +3024,7 @@ class WP_Admin_UI {
 					jQuery( 'table.widefat tbody tr:even' ).addClass( 'alternate' );
 				} );
 			} );
-			<?php
+				<?php
 			}
 			?>
 		</script>
@@ -2804,12 +3048,15 @@ class WP_Admin_UI {
 		$total_rows    = $this->total;
 		$total_pages   = ceil( $total_rows / $rows_per_page );
 
-		$request_uri = $this->var_update( array( 'pg' => '' ), array(
-			'limit',
-			'order',
-			'order_dir',
-			'search_query'
-		) );
+		$request_uri = $this->var_update(
+			array( 'pg' => '' ),
+			array(
+				'limit',
+				'order',
+				'order_dir',
+				'search_query',
+			)
+		);
 
 		$append = false;
 
@@ -2876,11 +3123,16 @@ class WP_Admin_UI {
 			if ( $this->limit == $option ) {
 				echo ' <span class="page-numbers current">' . esc_html( $option ) . '</span>';
 			} else {
-				echo ' <a href="' . esc_url( $this->var_update( array( 'limit' => $option ), array(
-						'order',
-						'order_dir',
-						'search_query'
-					) ) ) . '">' . esc_html( $option ) . '</a>';
+				echo ' <a href="' . esc_url(
+					$this->var_update(
+						array( 'limit' => $option ),
+						array(
+							'order',
+							'order_dir',
+							'search_query',
+						)
+					)
+				) . '">' . esc_html( $option ) . '</a>';
 			}
 		}
 	}
@@ -2891,7 +3143,7 @@ class WP_Admin_UI {
 			$this->temp_row = $this->row;
 			$this->row      = $row;
 		}
-		$out = preg_replace_callback( "/({@(.*?)})/m", array( $this, "parse_magic_tags" ), $in );
+		$out = preg_replace_callback( '/({@(.*?)})/m', array( $this, 'parse_magic_tags' ), $in );
 		if ( $row !== false ) {
 			$this->row = $this->temp_row;
 		}

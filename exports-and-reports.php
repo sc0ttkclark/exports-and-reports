@@ -561,25 +561,25 @@ function exports_reports_reports() {
 		'label'            => 'WP Roles with Access',
 		'type'             => 'related',
 		'related'          => $roles,
-		'related_multiple' => true
+		'related_multiple' => true,
 	);
 
 	$form_columns['sql_query'] = array(
 		'label'    => 'SQL Query',
 		'type'     => 'desc',
-		'comments' => 'Available Variables: %%WHERE%% %%HAVING%% %%ORDERBY%% %%LIMIT%%<br />(example: WHERE %%WHERE%% my_field=1)'
+		'comments' => 'Available Variables: %%WHERE%% %%HAVING%% %%ORDERBY%% %%LIMIT%%<br />(example: WHERE %%WHERE%% my_field=1)',
 	);
 
 	$form_columns['sql_query_count'] = array(
 		'label'    => 'SQL Query for Count (advanced, optional)',
 		'type'     => 'desc',
-		'comments' => 'For advanced/complex queries above, you can SELECT minimal fields here for better "Total Count" performance.<br />Available Variables: %%WHERE%% %%HAVING%%<br />(example: WHERE %%WHERE%% my_field=1)'
+		'comments' => 'For advanced/complex queries above, you can SELECT minimal fields here for better "Total Count" performance.<br />Available Variables: %%WHERE%% %%HAVING%%<br />(example: WHERE %%WHERE%% my_field=1)',
 	);
 
 	$form_columns['field_data'] = array(
 		'label'        => 'Fields (optional)',
 		'custom_input' => 'exports_reports_report_field',
-		'custom_save'  => 'exports_reports_report_field_save'
+		'custom_save'  => 'exports_reports_report_field_save',
 	);
 
 	$admin_ui = array(
@@ -1013,7 +1013,7 @@ function exports_reports_report_field_save( $value, $column, $attributes, $obj )
 				'filter_ongoing'         => $_POST['field_filter_ongoing'][ $key ],
 				'filter_ongoing_default' => $_POST['field_filter_ongoing_default'][ $key ],
 				'total_field'            => '',
-				//'total_field'            => absint( $_POST['field_total_field'][ $key ] ),
+				// 'total_field'            => absint( $_POST['field_total_field'][ $key ] ),
 				'related'                => $_POST['field_related'][ $key ],
 				'related_field'          => $_POST['field_related_field'][ $key ],
 				'related_sql'            => $_POST['field_related_sql'][ $key ],
@@ -1114,7 +1114,7 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 		$group_roles = explode( ',', $group->role_access );
 	} else {
 		$group_id = 0;
-		$group_roles = [];
+		$group_roles = array();
 
 		$sql = '
 			SELECT `id`, `role_access`
@@ -1248,7 +1248,7 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 	$options['css']      = EXPORTS_REPORTS_URL . 'assets/admin.css';
 	$options['readonly'] = true;
 
-	//$options['identifier']   = true;
+	// $options['identifier']   = true;
 
 	$options['export']       = $selectable_reports[ $current_report ]['export'];
 	$options['search']       = ( strlen( $selectable_reports[ $current_report ]['field_data'] ) > 0 ? true : false );
@@ -1375,10 +1375,21 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 				<?php
 				foreach ( $selectable_reports as $report_id => $report ) {
 					?>
-					<option value="<?php echo esc_attr( $admin->var_update( array(
-						'page'   => sanitize_text_field( $_GET['page'] ),
-						'report' => absint( $report_id ),
-					), false, false, true ) ); ?>"<?php selected( $current_report, $report_id ); ?>><?php echo esc_html( $report['name'] ); ?></option>
+					<option value="
+					<?php
+					echo esc_attr(
+						$admin->var_update(
+							array(
+								'page'   => sanitize_text_field( $_GET['page'] ),
+								'report' => absint( $report_id ),
+							),
+							false,
+							false,
+							true
+						)
+					);
+					?>
+					"<?php selected( $current_report, $report_id ); ?>><?php echo esc_html( $report['name'] ); ?></option>
 					<?php
 				}
 				?>
@@ -1407,15 +1418,19 @@ function exports_reports_log( $args, $obj ) {
 
 	$filename = $args[1];
 
-	$result = $wpdb->insert( EXPORTS_REPORTS_TBL . 'log', array(
-		'report_id' => $obj[0]->report_id,
-		'filename'  => $filename,
-		'created'   => date_i18n( 'Y-m-d H:i:s' ),
-	), array(
-		'%d',
-		'%s',
-		'%s',
-	) );
+	$result = $wpdb->insert(
+		EXPORTS_REPORTS_TBL . 'log',
+		array(
+			'report_id' => $obj[0]->report_id,
+			'filename'  => $filename,
+			'created'   => date_i18n( 'Y-m-d H:i:s' ),
+		),
+		array(
+			'%d',
+			'%s',
+			'%s',
+		)
+	);
 
 	return $result;
 
@@ -1440,10 +1455,13 @@ function exports_reports_delete_log( $args, $obj ) {
 			WHERE `report_id` = %d AND `filename` = %s
 		';
 
-		$sql = $wpdb->prepare( $sql, array(
-			$obj[0]->report_id,
-			$filename
-		) );
+		$sql = $wpdb->prepare(
+			$sql,
+			array(
+				$obj[0]->report_id,
+				$filename,
+			)
+		);
 
 		$result = $wpdb->query( $sql );
 
