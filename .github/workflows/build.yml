@@ -13,7 +13,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout
+    - uses: actions/checkout@master
     - name: Install Dependences
       run: composer install
     - name: Check WordPress Coding Standards
