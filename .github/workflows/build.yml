@@ -1,0 +1,19 @@
+name: Build
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout
+    - name: Install Dependences
+      run: composer install
+    - name: Check WordPress Coding Standards
+      run: phpcs

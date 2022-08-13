@@ -4,9 +4,13 @@ on:
     tags:
     - "*"
 jobs:
+  build:
+    name: Build
+    uses: ./.github/workflows/build.yml
   tag:
     name: New tag
     runs-on: ubuntu-latest
+    needs: build
     steps:
     - uses: actions/checkout@master
     - name: WordPress Plugin Deploy
