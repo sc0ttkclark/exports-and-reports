@@ -3,7 +3,7 @@
 
 global $wpdb;
 
-//define('WP_DEBUG',true);
+// define('WP_DEBUG',true);
 
 if ( ! is_object( $wpdb ) ) {
 	ob_start();
@@ -70,7 +70,7 @@ if ( empty( $report ) ) {
 		wp_send_json_error( 'Exports disabled for this report.' );
 	}
 
-	require_once EXPORTS_REPORTS_DIR . 'wp-admin-ui/Admin.class.php';
+	require_once EXPORTS_REPORTS_DIR . 'wp-admin-ui/class-exports-reports-admin-ui.php';
 	$options                 = array();
 	$options['css']          = EXPORTS_REPORTS_URL . 'assets/admin.css';
 	$options['readonly']     = true;
@@ -165,7 +165,7 @@ if ( empty( $report ) ) {
 	$download = false;
 
 	ob_start();
-	$admin         = new WP_Admin_UI( $options );
+	$admin         = new Exports_Reports_Admin_UI( $options );
 	$admin->action = 'export';
 
 	if ( 'manage' === $_GET['action'] ) {
@@ -180,7 +180,7 @@ if ( empty( $report ) ) {
 		if ( $admin->exported_file ) {
 			$data = array(
 				'export_file' => WP_ADMIN_UI_EXPORT_DIR . '/' . $admin->exported_file,
-				'message'     => 'Report exported'
+				'message'     => 'Report exported',
 			);
 
 			if ( ! empty( $_GET['exports_and_reports_download'] ) ) {
@@ -216,14 +216,14 @@ if ( empty( $report ) ) {
 			if ( ini_get( 'zlib.output_compression' ) ) {
 				ini_set( 'zlib.output_compression', 'Off' );
 			}
-			header( "Pragma: public" ); // required
-			header( "Expires: 0" );
-			header( "Cache-Control: must-revalidate, post-check=0, pre-check=0" );
-			header( "Cache-Control: private", false ); // required for certain browsers
-			header( "Content-Type: application/force-download" );
-			header( "Content-Disposition: attachment; filename=\"" . basename( $file ) . "\";" );
-			header( "Content-Transfer-Encoding: binary" );
-			header( "Content-Length: " . filesize( $file ) );
+			header( 'Pragma: public' ); // required
+			header( 'Expires: 0' );
+			header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
+			header( 'Cache-Control: private', false ); // required for certain browsers
+			header( 'Content-Type: application/force-download' );
+			header( 'Content-Disposition: attachment; filename="' . basename( $file ) . '";' );
+			header( 'Content-Transfer-Encoding: binary' );
+			header( 'Content-Length: ' . filesize( $file ) );
 			flush();
 			readfile( "$file" );
 			exit();

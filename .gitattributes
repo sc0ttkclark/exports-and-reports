@@ -2,6 +2,7 @@
 * text=auto
 /.github export-ignore
 /.wordpress-org export-ignore
+/composer.lock export-ignore
 
 # Custom for Visual Studio
 *.cs     diff=csharp

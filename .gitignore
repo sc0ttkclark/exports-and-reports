@@ -36,3 +36,4 @@ tests/clover.xml
 
 # Node
 node_modules/*
+/vendor/
