@@ -5,20 +5,6 @@
 $strauss_src = dirname(__FILE__);
 
 return array(
-   'ExportsReports__Prefixed__TCPDF_PARSER' => $strauss_src . '/tecnickcom/tcpdf/tcpdf_parser.php',
-   'ExportsReports__Prefixed__TCPDF_IMPORT' => $strauss_src . '/tecnickcom/tcpdf/tcpdf_import.php',
-   'ExportsReports__Prefixed__TCPDF2DBarcode' => $strauss_src . '/tecnickcom/tcpdf/tcpdf_barcodes_2d.php',
-   'ExportsReports__Prefixed__TCPDF_COLORS' => $strauss_src . '/tecnickcom/tcpdf/include/tcpdf_colors.php',
-   'ExportsReports__Prefixed__TCPDF_STATIC' => $strauss_src . '/tecnickcom/tcpdf/include/tcpdf_static.php',
-   'ExportsReports__Prefixed__TCPDF_FONTS' => $strauss_src . '/tecnickcom/tcpdf/include/tcpdf_fonts.php',
-   'ExportsReports__Prefixed__QRcode' => $strauss_src . '/tecnickcom/tcpdf/include/barcodes/qrcode.php',
-   'ExportsReports__Prefixed__PDF417' => $strauss_src . '/tecnickcom/tcpdf/include/barcodes/pdf417.php',
-   'ExportsReports__Prefixed__Datamatrix' => $strauss_src . '/tecnickcom/tcpdf/include/barcodes/datamatrix.php',
-   'ExportsReports__Prefixed__TCPDF_IMAGES' => $strauss_src . '/tecnickcom/tcpdf/include/tcpdf_images.php',
-   'ExportsReports__Prefixed__TCPDF_FONT_DATA' => $strauss_src . '/tecnickcom/tcpdf/include/tcpdf_font_data.php',
-   'ExportsReports__Prefixed__TCPDF_FILTERS' => $strauss_src . '/tecnickcom/tcpdf/include/tcpdf_filters.php',
-   'ExportsReports__Prefixed__TCPDFBarcode' => $strauss_src . '/tecnickcom/tcpdf/tcpdf_barcodes_1d.php',
-   'ExportsReports__Prefixed__TCPDF' => $strauss_src . '/tecnickcom/tcpdf/tcpdf.php',
    'ExportsReports__Prefixed__XLSXWriter' => $strauss_src . '/mk-j/php_xlsxwriter/xlsxwriter.class.php',
    'ExportsReports__Prefixed__XLSXWriter_BuffererWriter' => $strauss_src . '/mk-j/php_xlsxwriter/xlsxwriter.class.php',
 );

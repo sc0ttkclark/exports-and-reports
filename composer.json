@@ -54,13 +54,12 @@
       "constant_prefix": "EXPORTS_REPORTS_PREFIXED_",
       "function_prefix": "exportreports_prefixed_",
       "packages": [
-        "mk-j/php_xlsxwriter",
-        "tecnickcom/tcpdf"
+        "mk-j/php_xlsxwriter"
       ],
       "exclude_from_prefix": {
         "file_patterns": []
       },
-      "delete_vendor_files": false
+      "delete_vendor_files": true
     }
   },
   "config": {

@@ -1395,7 +1395,7 @@ class Exports_Reports_Admin_UI {
 						] ) ) . '">click here to remove it</a>, otherwise the export will be deleted within 24 hours of generation.' );
 				echo '<script type="text/javascript">window.open("' . $this->export_url . urlencode( $export_file ) . '");</script>';
 			} elseif ( $this->export_type === 'xlsx' ) {
-				$writer = new XLSXWriter();
+				$writer = new ExportsReports__Prefixed__XLSXWriter();
 
 				$export_file          = str_replace( '-', '_', sanitize_title( $this->items ) ) . '_' . date_i18n( 'm-d-Y_H-i-s' ) . '_' . wp_generate_password( 5, false ) . '.' . $this->export_type;
 				$export_file          = apply_filters( 'wp_admin_ui_export_file', $export_file, $this->export_type, $this->export_type, $this->items, $this );
@@ -2339,63 +2339,42 @@ class Exports_Reports_Admin_UI {
 						<?php } ?>
 
 						<?php if ( $this->export && ! empty( $this->data ) ) { ?>
-							<strong>Export:</strong>
-							<input type="button" value=" CSV " class="button" onclick="document.location='
 							<?php
-							echo esc_url( $this->var_update( [
+							$export_format_links = [
+								'CSV' => $this->var_update( [
 									'action'      => 'export',
 									'export_type' => 'csv',
-								] ) );
-							?>
-								';" />
-							<input type="button" value=" TSV " class="button" onclick="document.location='
-							<?php
-							echo esc_url( $this->var_update( [
+								] ),
+								'TSV' => $this->var_update( [
 									'action'      => 'export',
 									'export_type' => 'tsv',
-								] ) );
-							?>
-								';" />
-							<input type="button" value=" TXT " class="button" onclick="document.location='
-							<?php
-							echo esc_url( $this->var_update( [
+								] ),
+								'TXT' => $this->var_update( [
 									'action'      => 'export',
 									'export_type' => 'pipe',
-								] ) );
-							?>
-								';" />
-							<input type="button" value=" XLSX " class="button" onclick="document.location='
-							<?php
-							echo esc_url( $this->var_update( [
+								] ),
+								'XLSX' => $this->var_update( [
 									'action'      => 'export',
 									'export_type' => 'xlsx',
-								] ) );
-							?>
-								';" />
-							<input type="button" value=" XML " class="button" onclick="document.location='
-							<?php
-							echo esc_url( $this->var_update( [
+								] ),
+								'XML' => $this->var_update( [
 									'action'      => 'export',
 									'export_type' => 'xml',
-								] ) );
-							?>
-								';" />
-							<input type="button" value=" JSON " class="button" onclick="document.location='
-							<?php
-							echo esc_url( $this->var_update( [
+								] ),
+								'JSON' => $this->var_update( [
 									'action'      => 'export',
 									'export_type' => 'json',
-								] ) );
-							?>
-								';" />
-							<input type="button" value=" PDF " class="button" onclick="document.location='
-							<?php
-							echo esc_url( $this->var_update( [
+								] ),
+								'PDF' => $this->var_update( [
 									'action'      => 'export',
 									'export_type' => 'pdf',
-								] ) );
+								] ),
+							];
 							?>
-								';" />
+							<strong>Export:</strong>
+							<?php foreach ( $export_format_links as $export_format_text => $export_format_link ) { ?>
+								<input type="button" value=" <?php echo esc_attr( $export_format_text ); ?> " class="button" onclick="document.location='<?php echo esc_url( $export_format_link ); ?>';" />
+							<?php } ?>
 						<?php } ?>
 					</div>
 					<?php

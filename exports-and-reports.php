@@ -33,6 +33,10 @@ add_action( 'admin_menu', 'exports_reports_admin_menu' );
 
 add_action( 'wp_ajax_wp_admin_ui_export', 'exports_reports_wp_admin_ui_export' );
 
+if ( ! class_exists( 'TCPDF' ) ) {
+	require_once EXPORTS_REPORTS_DIR . 'vendor/autoload.php';
+}
+
 require_once EXPORTS_REPORTS_DIR . 'vendor/vendor-prefixed/autoload.php';
 
 /**
