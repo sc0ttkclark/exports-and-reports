@@ -67,7 +67,8 @@
     "allow-plugins": {
       "composer/installers": true,
       "dealerdirect/phpcodesniffer-composer-installer": true,
-      "kylekatarnls/update-helper": true
+      "kylekatarnls/update-helper": true,
+      "phpstan/extension-installer": true
     }
   }
 }
