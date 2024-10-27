@@ -1381,7 +1381,7 @@ class Exports_Reports_Admin_UI {
 			if ( in_array( $this->export_type, [ 'csv', 'tsv', 'pipe', 'custom' ], true ) ) {
 				$export_file = $this->export_sv();
 			} elseif ( $this->export_type === 'xml' ) {
-				$export_file          = str_replace( '-', '_', sanitize_title( $this->items ) ) . '_' . date_i18n( 'm-d-Y_H-i-s' ) . '_' . wp_generate_password( 5, false ) . '.' . $this->export_type;
+				$export_file          = str_replace( '-', '_', sanitize_title( $this->items ) ) . '_' . date_i18n( 'm-d-Y_H-i-s' ) . '_' . wp_generate_password( 8, false ) . '.' . $this->export_type;
 				$export_file          = apply_filters( 'wp_admin_ui_export_file', $export_file, $this->export_type, $this->export_type, $this->items, $this );
 				$export_file_location = WP_ADMIN_UI_EXPORT_DIR . '/' . $export_file;
 
@@ -1429,7 +1429,7 @@ class Exports_Reports_Admin_UI {
 			} elseif ( $this->export_type === 'xlsx' ) {
 				$writer = new ExportsReports__Prefixed__XLSXWriter();
 
-				$export_file          = str_replace( '-', '_', sanitize_title( $this->items ) ) . '_' . date_i18n( 'm-d-Y_H-i-s' ) . '_' . wp_generate_password( 5, false ) . '.' . $this->export_type;
+				$export_file          = str_replace( '-', '_', sanitize_title( $this->items ) ) . '_' . date_i18n( 'm-d-Y_H-i-s' ) . '_' . wp_generate_password( 8, false ) . '.' . $this->export_type;
 				$export_file          = apply_filters( 'wp_admin_ui_export_file', $export_file, $this->export_type, $this->export_type, $this->items, $this );
 				$export_file_location = WP_ADMIN_UI_EXPORT_DIR . '/' . $export_file;
 
@@ -1496,7 +1496,7 @@ class Exports_Reports_Admin_UI {
 				// phpcs:ignore
 				echo '<script type="text/javascript">window.open("' . $this->export_url . urlencode( $export_file ) . '");</script>';
 			} elseif ( $this->export_type === 'json' ) {
-				$export_file          = str_replace( '-', '_', sanitize_title( $this->items ) ) . '_' . date_i18n( 'm-d-Y_H-i-s' ) . '_' . wp_generate_password( 5, false ) . '.' . $this->export_type;
+				$export_file          = str_replace( '-', '_', sanitize_title( $this->items ) ) . '_' . date_i18n( 'm-d-Y_H-i-s' ) . '_' . wp_generate_password( 8, false ) . '.' . $this->export_type;
 				$export_file          = apply_filters( 'wp_admin_ui_export_file', $export_file, $this->export_type, $this->export_type, $this->items, $this );
 				$export_file_location = WP_ADMIN_UI_EXPORT_DIR . '/' . $export_file;
 
@@ -1591,7 +1591,7 @@ class Exports_Reports_Admin_UI {
 			$export_ext = $file_ext[ $this->export_type ];
 		}
 
-		$export_file          = str_replace( '-', '_', sanitize_title( $this->items ) ) . '_' . date_i18n( 'm-d-Y_H-i-s' ) . '_' . wp_generate_password( 5, false ) . '.' . $export_ext;
+		$export_file          = str_replace( '-', '_', sanitize_title( $this->items ) ) . '_' . date_i18n( 'm-d-Y_H-i-s' ) . '_' . wp_generate_password( 8, false ) . '.' . $export_ext;
 		$export_file          = apply_filters( 'wp_admin_ui_export_file', $export_file, $this->export_type, $this->export_type, $this->items, $this );
 		$export_file_location = WP_ADMIN_UI_EXPORT_DIR . '/' . $export_file;
 
