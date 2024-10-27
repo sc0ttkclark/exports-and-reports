@@ -1,18 +1,28 @@
 <?php
-/*
-Plugin Name: Exports and Reports
-Plugin URI: https://www.scottkclark.com/
-Description: Define custom exports / reports for users by creating each export / report and defining the fields as well as custom MySQL queries to run.
-Version: 0.9.4
-Author: Scott Kingsley Clark
-Author URI: https://www.scottkclark.com/
-GitHub Plugin URI: https://github.com/sc0ttkclark/exports-and-reports
-*/
+/**
+ * Exports and Reports
+ *
+ * @package   ExportsReports
+ * @author    Scott Kingsley Clark
+ * @copyright 2024 Scott Kingsley Clark
+ * @license   GPL v2 or later
+ *
+ * Plugin Name:       Exports and Reports
+ * Plugin URI:        https://github.com/sc0ttkclark/exports-and-reports
+ * Description:       Define custom exports / reports for users by creating each export / report and defining the fields as well as custom MySQL queries to run.
+ * Version:           0.9.4
+ * Author:            Scott Kingsley Clark
+ * Author URI:        https://www.scottkclark.com/
+ * Text Domain:       exports-and-reports
+ * License:           GPL v2 or later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * Requires at least: 6.0
+ * Requires PHP:      8.0
+ * GitHub Plugin URI: https://github.com/sc0ttkclark/exports-and-reports
+ * Primary Branch:    main
+ */
 
-/** @var wpdb $wpdb */
-global $wpdb;
-
-define( 'EXPORTS_REPORTS_TBL', $wpdb->prefix . 'exportsreports_' );
+define( 'EXPORTS_REPORTS_TBL', 'exportsreports_' );
 define( 'EXPORTS_REPORTS_VERSION', '094' );
 define( 'EXPORTS_REPORTS_URL', plugin_dir_url( __FILE__ ) );
 define( 'EXPORTS_REPORTS_DIR', plugin_dir_path( __FILE__ ) );
@@ -46,8 +56,13 @@ function exports_reports_wp_admin_ui_export() {
 	require_once EXPORTS_REPORTS_DIR . 'wp-admin-ui/export.php';
 
 	die( 'Invalid request' ); // AJAX dies
-
 }
+
+function exports_reports_assets() {
+	wp_register_script( 'exports-reports-admin', plugins_url( 'exports-and-reports/assets/admin.js' ), [ 'jquery' ], EXPORTS_REPORTS_VERSION, [ 'in_footer' => true ] );
+	wp_register_style( 'exports-reports-admin', plugins_url( 'exports-and-reports/assets/admin.css' ), [], EXPORTS_REPORTS_VERSION );
+}
+add_action( 'admin_enqueue_scripts', 'exports_reports_assets' );
 
 /**
  *
@@ -55,7 +70,15 @@ function exports_reports_wp_admin_ui_export() {
 function exports_reports_sql_install( $upgrade = false ) {
 	/** @var wpdb $wpdb */ global $wpdb;
 
-	$sql = file_get_contents( EXPORTS_REPORTS_DIR . 'assets/dump.sql' );
+	require_once( ABSPATH . 'wp-admin/includes/file.php' );
+
+	/**
+	 * @var $wp_filesystem WP_Filesystem_Base
+	 */ global $wp_filesystem;
+
+	WP_Filesystem();
+
+	$sql = $wp_filesystem->get_contents( EXPORTS_REPORTS_DIR . 'assets/dump.sql' );
 
 	$charset_collate = 'DEFAULT CHARSET utf8';
 
@@ -67,7 +90,7 @@ function exports_reports_sql_install( $upgrade = false ) {
 		$charset_collate .= " COLLATE {$wpdb->collate}";
 	}
 
-	if ( 'DEFAULT CHARSET utf8' != $charset_collate ) {
+	if ( 'DEFAULT CHARSET utf8' !== $charset_collate ) {
 		$sql = str_replace( 'DEFAULT CHARSET utf8', $charset_collate, $sql );
 	}
 
@@ -85,6 +108,7 @@ function exports_reports_sql_install( $upgrade = false ) {
 				continue;
 			}
 
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			$wpdb->query( $query );
 
 			continue;
@@ -241,24 +265,27 @@ function exports_reports_menu() {
 
 	$sql = '
 		SELECT `id`, `role_access`, `name`
-		FROM `' . EXPORTS_REPORTS_TBL . 'groups`
+		FROM `' . $wpdb->prefix . EXPORTS_REPORTS_TBL . 'groups`
 		WHERE `disabled` = 0
 		ORDER BY `weight`, `name`	
 	';
 
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 	$groups = $wpdb->get_results( $sql );
 
 	if ( ! empty( $groups ) ) {
 		foreach ( $groups as $group ) {
 			$sql = '
 				SELECT `id`, `role_access`
-				FROM `' . EXPORTS_REPORTS_TBL . 'reports`
+				FROM `' . $wpdb->prefix . EXPORTS_REPORTS_TBL . 'reports`
 				WHERE `disabled` = 0 AND `group` = %d
 				ORDER BY `weight`, `name`
 			';
 
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			$sql = $wpdb->prepare( $sql, [ $group->id ] );
 
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			$reports = $wpdb->get_results( $sql );
 
 			if ( 0 < @count( $reports ) ) {
@@ -321,13 +348,15 @@ function exports_reports_reset() {
  */
 function exports_reports_settings() {
 	if ( ! empty( $_POST['cronjob_token'] ) ) {
-		update_option( 'exports_reports_token', sanitize_title( $_POST['cronjob_token'] ) );
+		update_option( 'exports_reports_token', sanitize_title( sanitize_text_field( $_POST['cronjob_token'] ) ) );
 	}
 
-	$api_url = EXPORTS_REPORTS_URL . 'api.php?report=YOUR_REPORT_ID%s&token=' . get_option( 'exports_reports_token' );
+	$api_url = EXPORTS_REPORTS_URL . 'api.php?report=YOUR_REPORT_ID%s&token=' . urlencode( get_option( 'exports_reports_token' ) );
+
+	wp_enqueue_style( 'exports-reports-admin' );
 	?>
 	<div class="wrap">
-		<div id="icon-edit-pages" class="icon32" style="background-position:0 0;background-image:url(<?php echo EXPORTS_REPORTS_URL; ?>assets/icons/32.png);">
+		<div id="icon-edit-pages" class="icon32" style="background-position:0 0;background-image:url(<?php echo esc_url( EXPORTS_REPORTS_URL . 'assets/icons/32.png' ); ?>)">
 			<br /></div>
 		<h2>Exports and Reports - Settings</h2>
 
@@ -352,7 +381,6 @@ function exports_reports_settings() {
 		?>
 
 		<div style="height:20px;"></div>
-		<link type="text/css" rel="stylesheet" href="<?php echo esc_url( EXPORTS_REPORTS_URL . 'assets/admin.css' ); ?>" />
 		<form method="post" action="">
 			<table class="form-table">
 				<tr valign="top">
@@ -411,6 +439,8 @@ function exports_reports_settings() {
  *
  */
 function exports_reports_groups() {
+	global $wpdb;
+
 	require_once EXPORTS_REPORTS_DIR . 'wp-admin-ui/class-exports-reports-admin-ui.php';
 
 	$columns = [
@@ -459,7 +489,7 @@ function exports_reports_groups() {
 		'css'          => EXPORTS_REPORTS_URL . 'assets/admin.css',
 		'item'         => 'Report Group',
 		'items'        => 'Report Groups',
-		'table'        => EXPORTS_REPORTS_TBL . 'groups',
+		'table'        => $wpdb->prefix . EXPORTS_REPORTS_TBL . 'groups',
 		'columns'      => $columns,
 		'form_columns' => $form_columns,
 		'icon'         => EXPORTS_REPORTS_URL . 'assets/icons/32.png',
@@ -475,6 +505,8 @@ function exports_reports_groups() {
  *
  */
 function exports_reports_reports() {
+	global $wpdb;
+
 	if ( ! wp_script_is( 'jquery-ui-core', 'queue' ) && ! wp_script_is( 'jquery-ui-core', 'to_do' ) && ! wp_script_is( 'jquery-ui-core', 'done' ) ) {
 		wp_print_scripts( 'jquery-ui-core' );
 	}
@@ -490,7 +522,7 @@ function exports_reports_reports() {
 		'group'    => [
 			'label'   => 'Group',
 			'type'    => 'related',
-			'related' => EXPORTS_REPORTS_TBL . 'groups',
+			'related' => $wpdb->prefix . EXPORTS_REPORTS_TBL . 'groups',
 		],
 		'disabled' => [
 			'label' => 'Disabled',
@@ -580,7 +612,7 @@ function exports_reports_reports() {
 		'css'           => EXPORTS_REPORTS_URL . 'assets/admin.css',
 		'item'          => 'Report',
 		'items'         => 'Reports',
-		'table'         => EXPORTS_REPORTS_TBL . 'reports',
+		'table'         => $wpdb->prefix . EXPORTS_REPORTS_TBL . 'reports',
 		'columns'       => $columns,
 		'form_columns'  => $form_columns,
 		'icon'          => EXPORTS_REPORTS_URL . 'assets/icons/32.png',
@@ -819,12 +851,12 @@ function exports_reports_report_field( $column, $attributes, $obj ) {
 									<td>
 										<div>Hide from Report</div>
 										Yes
-										<input type="radio" name="field_hide_report[<?php echo esc_attr( $count ); ?>]" value="1" class="medium-text"<?php echo( $field['hide_report'] == 1 ? ' CHECKED' : '' ); ?> />&nbsp;&nbsp; No<input type="radio" name="field_hide_report[<?php echo esc_attr( $count ); ?>]" value="0" class="medium-text"<?php echo( $field['hide_report'] != 1 ? ' CHECKED' : '' ); ?> />
+										<input type="radio" name="field_hide_report[<?php echo esc_attr( $count ); ?>]" value="1" class="medium-text"<?php echo( $field['hide_report'] == 1 ? ' CHECKED' : '' ); ?> />&nbsp;&nbsp; No<input type="radio" name="field_hide_report[<?php echo esc_attr( $count ); ?>]" value="0" class="medium-text"<?php echo( $field['hide_report'] !== 1 ? ' CHECKED' : '' ); ?> />
 									</td>
 									<td>
 										<div>Searchable</div>
 										Yes
-										<input type="radio" name="field_search[<?php echo esc_attr( $count ); ?>]" value="0" class="medium-text"<?php echo( $field['search'] != 1 ? ' CHECKED' : '' ); ?> />&nbsp;&nbsp; No<input type="radio" name="field_search[<?php echo esc_attr( $count ); ?>]" value="1" class="medium-text"<?php echo( $field['search'] == 1 ? ' CHECKED' : '' ); ?> />
+										<input type="radio" name="field_search[<?php echo esc_attr( $count ); ?>]" value="0" class="medium-text"<?php echo( $field['search'] !== 1 ? ' CHECKED' : '' ); ?> />&nbsp;&nbsp; No<input type="radio" name="field_search[<?php echo esc_attr( $count ); ?>]" value="1" class="medium-text"<?php echo( $field['search'] == 1 ? ' CHECKED' : '' ); ?> />
 									</td>
 								</tr>
 								<tr>
@@ -835,12 +867,12 @@ function exports_reports_report_field( $column, $attributes, $obj ) {
 									<td>
 										<div>Hide from Export</div>
 										Yes
-										<input type="radio" name="field_hide_export[<?php echo esc_attr( $count ); ?>]" value="1" class="medium-text"<?php echo( $field['hide_export'] == 1 ? ' CHECKED' : '' ); ?> />&nbsp;&nbsp; No<input type="radio" name="field_hide_export[<?php echo esc_attr( $count ); ?>]" value="0" class="medium-text"<?php echo( $field['hide_export'] != 1 ? ' CHECKED' : '' ); ?> />
+										<input type="radio" name="field_hide_export[<?php echo esc_attr( $count ); ?>]" value="1" class="medium-text"<?php echo( $field['hide_export'] == 1 ? ' CHECKED' : '' ); ?> />&nbsp;&nbsp; No<input type="radio" name="field_hide_export[<?php echo esc_attr( $count ); ?>]" value="0" class="medium-text"<?php echo( $field['hide_export'] !== 1 ? ' CHECKED' : '' ); ?> />
 									</td>
 									<td>
 										<div>Filterable (optional)</div>
 										Yes
-										<input type="radio" name="field_filter[<?php echo esc_attr( $count ); ?>]" value="1" class="medium-text"<?php echo( $field['filter'] == 1 ? ' CHECKED' : '' ); ?> />&nbsp;&nbsp; No<input type="radio" name="field_filter[<?php echo esc_attr( $count ); ?>]" value="0" class="medium-text"<?php echo( $field['filter'] != 1 ? ' CHECKED' : '' ); ?> />
+										<input type="radio" name="field_filter[<?php echo esc_attr( $count ); ?>]" value="1" class="medium-text"<?php echo( $field['filter'] == 1 ? ' CHECKED' : '' ); ?> />&nbsp;&nbsp; No<input type="radio" name="field_filter[<?php echo esc_attr( $count ); ?>]" value="0" class="medium-text"<?php echo( $field['filter'] !== 1 ? ' CHECKED' : '' ); ?> />
 									</td>
 								</tr>
 								<tr>
@@ -851,7 +883,7 @@ function exports_reports_report_field( $column, $attributes, $obj ) {
 									<td>
 										<div>Filter using HAVING</div>
 										Yes
-										<input type="radio" name="field_group_related[<?php echo esc_attr( $count ); ?>]" value="1" class="medium-text"<?php echo( $field['group_related'] == 1 ? ' CHECKED' : '' ); ?> />&nbsp;&nbsp; No<input type="radio" name="field_group_related[<?php echo esc_attr( $count ); ?>]" value="0" class="medium-text"<?php echo( $field['group_related'] != 1 ? ' CHECKED' : '' ); ?> />
+										<input type="radio" name="field_group_related[<?php echo esc_attr( $count ); ?>]" value="1" class="medium-text"<?php echo( $field['group_related'] == 1 ? ' CHECKED' : '' ); ?> />&nbsp;&nbsp; No<input type="radio" name="field_group_related[<?php echo esc_attr( $count ); ?>]" value="0" class="medium-text"<?php echo( $field['group_related'] !== 1 ? ' CHECKED' : '' ); ?> />
 									</td>
 									<td>
 										<div>Default Filter Value (optional)</div>
@@ -867,7 +899,7 @@ function exports_reports_report_field( $column, $attributes, $obj ) {
 										<div>Ongoing Default Filter Value (optional)</div>
 										<input type="text" name="field_filter_ongoing_default[<?php echo esc_attr( $count ); ?>]" value="<?php echo esc_attr( $field['filter_ongoing_default'] ); ?>" class="medium-text" />
 									</td>
-									<td><!--<div>Total Field?</div> Yes <input type="radio" name="field_total_field[<?php echo esc_attr( $count ); ?>]" value="1" class="medium-text"<?php echo( $field['total_field'] == 1 ? ' CHECKED' : '' ); ?> />&nbsp;&nbsp; No<input type="radio" name="field_total_field[<?php echo esc_attr( $count ); ?>]" value="0" class="medium-text"<?php echo( $field['total_field'] != 1 ? ' CHECKED' : '' ); ?> />--></td>
+									<td><!--<div>Total Field?</div> Yes <input type="radio" name="field_total_field[<?php echo esc_attr( $count ); ?>]" value="1" class="medium-text"<?php echo( $field['total_field'] == 1 ? ' CHECKED' : '' ); ?> />&nbsp;&nbsp; No<input type="radio" name="field_total_field[<?php echo esc_attr( $count ); ?>]" value="0" class="medium-text"<?php echo( $field['total_field'] !== 1 ? ' CHECKED' : '' ); ?> />--></td>
 								</tr>
 								<tr>
 									<td>
@@ -903,6 +935,7 @@ function exports_reports_report_field( $column, $attributes, $obj ) {
 					$count ++;
 				}
 			} else {
+				// phpcs:ignore
 				echo $field_html;
 			}
 			$field_html = str_replace( [ '  ', "\n", "\r", "'" ], [ ' ', ' ', ' ', "\'" ], $field_html );
@@ -923,7 +956,10 @@ function exports_reports_report_field( $column, $attributes, $obj ) {
 
 		function field_add_row( append ) {
 			var field_count = jQuery( '.field_data tbody.sortable tr.field_row' ).length + 1;
-			var row = '<?php echo str_replace( "_0\'", "_'+field_count+'\'", str_replace( '_0"', "_'+field_count+'\"", str_replace( '[0]', "['+field_count+']", $field_html ) ) ); ?>';
+			var row = '<?php
+				// phpcs:ignore
+				echo str_replace( "_0\'", "_'+field_count+'\'", str_replace( '_0"', "_'+field_count+'\"", str_replace( '[0]', "['+field_count+']", $field_html ) ) );
+				?>';
 			if ( append == 1 ) {
 				jQuery( '.field_data table#field_data tbody.sortable' ).append( row );
 			}
@@ -942,12 +978,12 @@ function exports_reports_report_field( $column, $attributes, $obj ) {
 		jQuery( function () {
 			exports_reports_reset_alt();
 			jQuery( ".sortable" ).sortable( {
-												axis                 : "y",
-												handle               : ".dragme",
-												forcePlaceholderSize : true,
-												forceHelperSize      : true,
-												placeholder          : 'ui-state-highlight'
-											} );
+				axis                 : "y",
+				handle               : ".dragme",
+				forcePlaceholderSize : true,
+				forceHelperSize      : true,
+				placeholder          : 'ui-state-highlight'
+			} );
 		} );
 	</script>
 	<?php
@@ -1008,7 +1044,7 @@ function exports_reports_report_field_save( $value, $column, $attributes, $obj )
 		}
 	}
 
-	return json_encode( $value );
+	return wp_json_encode( $value );
 }
 
 /**
@@ -1062,7 +1098,7 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 
 	/** @var wpdb $wpdb */ global $wpdb;
 
-	wp_enqueue_script( 'exports-reports-admin', plugins_url( 'exports-and-reports/assets/admin.js' ), [ 'jquery' ], EXPORTS_REPORTS_VERSION );
+	wp_enqueue_script( 'exports-reports-admin' );
 
 	if ( null === $has_full_access ) {
 		$has_full_access = exports_reports_current_user_can_any( 'exports_reports_full_access' );
@@ -1079,14 +1115,16 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 
 		$sql = '
 			SELECT `id`, `role_access`
-			FROM `' . EXPORTS_REPORTS_TBL . 'groups`
+			FROM `' . $wpdb->prefix . EXPORTS_REPORTS_TBL . 'groups`
 			WHERE `disabled` = 0 AND `id` = %d
 			ORDER BY `weight`, `name`
 			LIMIT 1
 		';
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$sql = $wpdb->prepare( $sql, [ $group_id ] );
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$group = $wpdb->get_row( $sql );
 
 		if ( empty( $group ) ) {
@@ -1099,24 +1137,27 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 
 		$sql = '
 			SELECT `id`, `role_access`
-			FROM `' . EXPORTS_REPORTS_TBL . 'groups`
+			FROM `' . $wpdb->prefix . EXPORTS_REPORTS_TBL . 'groups`
 			WHERE `disabled` = 0
 			ORDER BY `weight`, `name`
 		';
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$groups = $wpdb->get_results( $sql );
 
 		if ( ! empty( $groups ) ) {
 			foreach ( $groups as $group ) {
 				$sql = '
 					SELECT `id`, `role_access`
-					FROM `' . EXPORTS_REPORTS_TBL . 'reports`
+					FROM `' . $wpdb->prefix . EXPORTS_REPORTS_TBL . 'reports`
 					WHERE `disabled` = 0 AND `group` = %d
 					ORDER BY `weight`, `name`
 				';
 
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 				$sql = $wpdb->prepare( $sql, [ $group->id ] );
 
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 				$reports = $wpdb->get_results( $sql );
 
 				if ( 0 < @count( $reports ) ) {
@@ -1154,13 +1195,15 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 
 	$sql = '
 		SELECT *
-		FROM `' . EXPORTS_REPORTS_TBL . 'reports`
+		FROM `' . $wpdb->prefix . EXPORTS_REPORTS_TBL . 'reports`
 		WHERE `disabled` = 0 AND `group` = %d
 		ORDER BY `weight`, `name`
 	';
 
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 	$sql = $wpdb->prepare( $sql, [ $group_id ] );
 
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 	$reports = $wpdb->get_results( $sql );
 
 	if ( empty( $reports ) ) {
@@ -1389,7 +1432,7 @@ function exports_reports_log( $args, $obj ) {
 
 	$filename = $args[1];
 
-	$wpdb->insert( EXPORTS_REPORTS_TBL . 'log', [
+	$wpdb->insert( $wpdb->prefix . EXPORTS_REPORTS_TBL . 'log', [
 			'report_id' => $obj[0]->report_id,
 			'filename'  => $filename,
 			'created'   => date_i18n( 'Y-m-d H:i:s' ),
@@ -1411,15 +1454,17 @@ function exports_reports_delete_log( $args, $obj ) {
 
 	if ( false !== $args[2] ) {
 		$sql = '
-			DELETE FROM `' . EXPORTS_REPORTS_TBL . 'log`
+			DELETE FROM `' . $wpdb->prefix . EXPORTS_REPORTS_TBL . 'log`
 			WHERE `report_id` = %d AND `filename` = %s
 		';
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$sql = $wpdb->prepare( $sql, [
-				$obj[0]->report_id,
-				$filename,
-			] );
+			$obj[0]->report_id,
+			$filename,
+		] );
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$wpdb->query( $sql );
 	}
 }
@@ -1501,7 +1546,8 @@ function exports_reports_cleanup( $full = false ) {
 	/** @var wpdb $wpdb */ global $wpdb;
 
 	if ( $full ) {
-		$wpdb->query( 'TRUNCATE ' . EXPORTS_REPORTS_TBL . 'log' );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$wpdb->query( 'TRUNCATE ' . $wpdb->prefix . EXPORTS_REPORTS_TBL . 'log' );
 
 		exports_reports_delete_dir_files( WP_ADMIN_UI_EXPORT_DIR );
 	} else {
@@ -1509,12 +1555,14 @@ function exports_reports_cleanup( $full = false ) {
 
 		$sql = '
 			SELECT *
-			FROM `' . EXPORTS_REPORTS_TBL . 'log`
+			FROM `' . $wpdb->prefix . EXPORTS_REPORTS_TBL . 'log`
 			WHERE `created` < DATE_ADD( NOW(), INTERVAL -%d DAY )
 		';
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$sql = $wpdb->prepare( $sql, [ $purge_age ] );
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$cleanup = $wpdb->get_results( $sql );
 
 		if ( false !== $cleanup && ! empty( $cleanup ) ) {
@@ -1534,12 +1582,14 @@ function exports_reports_cleanup( $full = false ) {
 				}
 
 				$sql = '
-					DELETE FROM `' . EXPORTS_REPORTS_TBL . 'log`
+					DELETE FROM `' . $wpdb->prefix . EXPORTS_REPORTS_TBL . 'log`
 					WHERE `id` = %d
 				';
 
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 				$sql = $wpdb->prepare( $sql, [ $export->id ] );
 
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 				$wpdb->query( $sql );
 			}
 

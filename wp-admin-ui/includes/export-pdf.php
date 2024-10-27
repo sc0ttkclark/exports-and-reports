@@ -46,11 +46,11 @@ class Exports_Reports_Admin_UI_Export_PDF extends TCPDF {
 			} else {
 				$this->x = $this->original_lMargin;
 			}
-			if ( ( $headerdata['logo'] ) and ( $headerdata['logo'] != K_BLANK_IMAGE ) ) {
+			if ( $headerdata['logo'] && $headerdata['logo'] !== K_BLANK_IMAGE ) {
 				$imgtype = TCPDF_IMAGES::getImageFileType( K_PATH_IMAGES . $headerdata['logo'] );
-				if ( ( $imgtype == 'eps' ) or ( $imgtype == 'ai' ) ) {
+				if ( $imgtype === 'eps' || $imgtype === 'ai' ) {
 					$this->ImageEps( K_PATH_IMAGES . $headerdata['logo'], '', '', $headerdata['logo_width'] );
-				} elseif ( $imgtype == 'svg' ) {
+				} elseif ( $imgtype === 'svg' ) {
 					$this->ImageSVG( K_PATH_IMAGES . $headerdata['logo'], '', '', $headerdata['logo_width'] );
 				} else {
 					$this->Image( K_PATH_IMAGES . $headerdata['logo'], '', '', $headerdata['logo_width'] );
@@ -103,7 +103,7 @@ class Exports_Reports_Admin_UI_Export_PDF extends TCPDF {
 		// print header template
 		$x  = 0;
 		$dx = 0;
-		if ( ! $this->header_xobj_autoreset and $this->booklet and ( ( $this->page % 2 ) == 0 ) ) {
+		if ( ! $this->header_xobj_autoreset && $this->booklet && ( ( $this->page % 2 ) === 0 ) ) {
 			// adjust margins for booklet mode
 			$dx = ( $this->original_lMargin - $this->original_rMargin );
 		}
@@ -168,7 +168,7 @@ class Exports_Reports_Admin_UI_Export_PDF extends TCPDF {
 		// Added for page numbers and date
 		$headerfont = $this->getHeaderFont();
 		$this->SetFont( $headerfont[0], $headerfont[1], 8 );
-		$this->Cell( 0, 0, get_date_from_gmt( date( 'Y-m-d H:i:s' ), 'm/d/Y H:i:s' ), 0, 0, 'R' );
+		$this->Cell( 0, 0, date_i18n( 'm/d/Y H:i:s' ), 0, 0, 'R' );
 		$this->SetX( $this->original_lMargin );
 		$this->Cell( 0, 0, 'Page ' . $pagenumtxt, 'T', 1, 'L' );
 	}
@@ -282,7 +282,7 @@ class Exports_Reports_Admin_UI_Export_PDF extends TCPDF {
 					} ?>
 					<?php $col_label = $attributes['label']; ?>
 					<?php $col_width = ( ! empty( $attributes['width'] ) ) ? 'width="' . esc_attr( $attributes['width'] ) . '"' : ''; ?>
-					<th <?php echo $col_width; ?>><strong><?php echo $col_label; ?></strong></th>
+					<th <?php echo esc_html( $col_width ); ?>><strong><?php echo wp_kses_post( $col_label ); ?></strong></th>
 				<?php } ?>
 			</tr>
 			</thead>
@@ -298,7 +298,7 @@ class Exports_Reports_Admin_UI_Export_PDF extends TCPDF {
 						}
 						$output    = self::format_field( $attributes['type'], $row_data[ $column ] );
 						$col_width = ( ! empty( $attributes['width'] ) ) ? 'width="' . esc_attr( $attributes['width'] ) . '"' : ''; ?>
-						<td <?php echo $col_width; ?> style="overflow: hidden;"><?php echo $output; ?></td>
+						<td <?php echo esc_html( $col_width ); ?> style="overflow: hidden;"><?php echo wp_kses_post( $output ); ?></td>
 					<?php } ?>
 				</tr>
 			<?php } ?>

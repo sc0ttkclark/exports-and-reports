@@ -15,7 +15,7 @@
     "composer/installers": "2.2.*",
     "mk-j/php_xlsxwriter": "^0.39",
     "tecnickcom/tcpdf": "^6.7.7",
-    "php": ">=7.2"
+    "php": ">=8.0"
   },
   "require-dev": {
     "dealerdirect/phpcodesniffer-composer-installer": "^1.0.0",
