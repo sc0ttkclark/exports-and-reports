@@ -1,0 +1,18 @@
+{
+  "name": "exports-and-reports",
+  "version": "0.9.4",
+  "description": "",
+  "author": "SKC Development, LLC",
+  "homepage": "https://skc.dev/",
+  "bugs": "https://github.com/sc0ttkclark/exports-and-reports/issues",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/sc0ttkclark/exports-and-reports.git"
+  },
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/sponsors/sc0ttkclark"
+  },
+  "license": "GPL-2.0+",
+  "contributors": "https://github.com/sc0ttkclark/exports-and-reports/graphs/contributors"
+}
