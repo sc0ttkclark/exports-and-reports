@@ -1,0 +1,9 @@
+parameters:
+  level: 0
+  paths:
+    - wp-admin-ui
+    - vendor/vendor-prefixed
+    - api.php
+    - exports-and-reports.php
+  excludePaths:
+    - tests

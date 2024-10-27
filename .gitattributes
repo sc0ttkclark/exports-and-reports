@@ -39,4 +39,5 @@ tests/_support/_generated/* linguist-generated=true
 composer.json export-ignore
 phpcs.xml export-ignore
 phpcs.xml.dist export-ignore
+phpstan.neon export-ignore
 README.md export-ignore
