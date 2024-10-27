@@ -82,6 +82,11 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 
 == Changelog ==
 
+= 0.9.4 =
+* Fixed PHP compatibility issues.
+* Fixed compatibility issues when on sites that load their own XLSXWriter class.
+* Updated XLSXWriter and TCPDF to the latest versions.
+
 = 0.9.3 =
 * Fixed issue with overriding the filtered content for a value.
 * Fixed problems reported with opening CSV in certain spreadsheet applications which read some CSV values as actual formulas.
