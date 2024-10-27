@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Class WP_Admin_UI_Export_PDF
+ * Class Exports_Reports_Admin_UI_Export_PDF
  */
-class WP_Admin_UI_Export_PDF extends TCPDF {
+class Exports_Reports_Admin_UI_Export_PDF extends TCPDF {
 
-	/** WP_Admin_UI $admin */
+	/** Exports_Reports_Admin_UI $admin */
 	var $admin = null;
 
 	/**
-	 * @param WP_Admin_UI $admin
+	 * @param Exports_Reports_Admin_UI $admin
 	 * @param string      $orientation
 	 * @param string      $unit
 	 * @param string      $format
@@ -20,7 +20,7 @@ class WP_Admin_UI_Export_PDF extends TCPDF {
 	 *
 	 * @return self
 	 */
-	public static function setupPDFClass( WP_Admin_UI $admin, $orientation = 'P', $unit = 'mm', $format = 'A4', $unicode = true, $encoding = 'UTF-8', $diskcache = false, $pdfa = false ) {
+	public static function setupPDFClass( Exports_Reports_Admin_UI $admin, $orientation = 'P', $unit = 'mm', $format = 'A4', $unicode = true, $encoding = 'UTF-8', $diskcache = false, $pdfa = false ) {
 		$obj = new self( $orientation, $unit, $format, $unicode, $encoding, $diskcache, $pdfa );
 
 		$obj->admin = $admin;
@@ -174,7 +174,7 @@ class WP_Admin_UI_Export_PDF extends TCPDF {
 	}
 
 	/**
-	 * @param WP_Admin_UI $admin
+	 * @param Exports_Reports_Admin_UI $admin
 	 *
 	 * @return string Report file name
 	 */
@@ -266,7 +266,7 @@ class WP_Admin_UI_Export_PDF extends TCPDF {
 	}
 
 	/**
-	 * @param WP_Admin_UI $admin
+	 * @param Exports_Reports_Admin_UI $admin
 	 *
 	 * @return string
 	 */

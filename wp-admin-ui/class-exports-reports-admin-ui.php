@@ -1500,7 +1500,7 @@ class Exports_Reports_Admin_UI {
 				$export_file = apply_filters( 'wp_admin_ui_export_pdf_report_file', null, $this );
 
 				if ( ! $export_file ) {
-					$export_file = WP_Admin_UI_Export_PDF::CreateReport( $this );
+					$export_file = Exports_Reports_Admin_UI_Export_PDF::CreateReport( $this );
 				}
 
 				$this->message( '<strong>Success:</strong> Your export is ready, the download should begin in a few moments. If it doesn\'t, <a href="' . esc_url( $this->export_url . urlencode( $export_file ) ) . '" target="_blank">click here to access your PDF export file</a>.<br /><br />When you are done with your export, <a href="' . esc_url( $this->var_update( [
@@ -2641,7 +2641,7 @@ class Exports_Reports_Admin_UI {
 													'id'     => $id,
 												] ) );
 											?>
-																			" title="View &#8220;<?php echo htmlentities( $row[ $column ] ); ?>&#8221;"><?php echo wp_kses_post( $row[ $column ] ); ?></a></strong>
+																			" title="View &#8220;<?php echo htmlentities( $row[ $column ], ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ); ?>&#8221;"><?php echo wp_kses_post( $row[ $column ] ); ?></a></strong>
 										<?php
 									} elseif ( $this->edit && ( $reorder == 0 || false === $this->reorder ) ) {
 										?>
@@ -2653,7 +2653,7 @@ class Exports_Reports_Admin_UI {
 													'id'     => $id,
 												] ) );
 											?>
-																			" title="Edit &#8220;<?php echo htmlentities( $row[ $column ] ); ?>&#8221;"><?php echo wp_kses_post( $row[ $column ] ); ?></a></strong>
+																			" title="Edit &#8220;<?php echo htmlentities( $row[ $column ], ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ); ?>&#8221;"><?php echo wp_kses_post( $row[ $column ] ); ?></a></strong>
 										<?php
 									} else {
 										?>
@@ -2692,7 +2692,7 @@ class Exports_Reports_Admin_UI {
 														'action'   => 'delete',
 														'id'       => $id,
 														'_wpnonce' => wp_create_nonce( 'wp-admin-ui-delete' ),
-													] ) ) . '" onclick="if(confirm(\'You are about to delete this item \'' . htmlentities( $row[ $column ] ) . '\'\n \'Cancel\' to stop, \'OK\' to delete.\')){return true;}return false;">Delete</a></span>';
+													] ) ) . '" onclick="if(confirm(\'You are about to delete this item \'' . htmlentities( $row[ $column ], ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '\'\n \'Cancel\' to stop, \'OK\' to delete.\')){return true;}return false;">Delete</a></span>';
 										}
 										if ( is_array( $this->custom ) ) {
 											foreach ( $this->custom as $custom_action => $custom_data ) {
