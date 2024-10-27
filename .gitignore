@@ -15,25 +15,43 @@ $RECYCLE.BIN/
 *.sublime-project
 *.sublime-workspace
 
-# PhpStorm
-.idea
-
-# Eclipse
-*.pydevproject
-.project
-.metadata
-bin/
-build/
-tmp/
-tests/clover.xml
-
 # Dropbox
 .dropbox
 .dropbox.attr
 
 # SASS
-.sass-cache/*
+/.sass-cache/
 
-# Node
-node_modules/*
-/vendor/
+# PhpStorm
+/.idea/
+
+# Eclipse
+*.pydevproject
+.project
+.metadata
+/build/
+/tmp/
+
+# NPM / Composer
+/composer.lock
+/node_modules/
+/vendor/*
+!/vendor/vendor-prefixed/
+npm-debug.log
+pnpm-lock.yaml
+
+# PHPCS
+phpcs-report-*.txt
+
+# Tests - local config files
+codeception.yml
+tests/codeception/*.suite.yml
+tests/codeception/_support/_generated
+.env.local
+
+# Tests - local output files
+tests/codeception/_output
+/coverage/
+
+# Other files
+bin/strauss.phar

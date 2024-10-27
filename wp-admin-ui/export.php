@@ -14,10 +14,10 @@ if ( ! is_object( $wpdb ) ) {
 if ( isset( $_GET['exports_and_reports_download'] ) && isset( $_GET['_wpnonce'] ) && false !== wp_verify_nonce( $_GET['_wpnonce'], 'wp-admin-ui-export' ) ) {
 	do_action( 'wp_admin_ui_export_download' );
 
-	$file = WP_ADMIN_UI_EXPORT_DIR . '/' . str_replace( array( '/', '..' ), '', $_GET['exports_and_reports_export'] );
+	$file = WP_ADMIN_UI_EXPORT_DIR . '/' . str_replace( [ '/', '..' ], '', $_GET['exports_and_reports_export'] );
 	$file = realpath( $file );
 
-	$file_url = WP_ADMIN_UI_EXPORT_URL . '/' . str_replace( array( '/', '..' ), '', $_GET['exports_and_reports_export'] );
+	$file_url = WP_ADMIN_UI_EXPORT_URL . '/' . str_replace( [ '/', '..' ], '', $_GET['exports_and_reports_export'] );
 
 	if ( ! isset( $_GET['exports_and_reports_export'] ) || empty( $_GET['exports_and_reports_export'] ) || ! file_exists( $file ) ) {
 		wp_die( 'File not found.' );
