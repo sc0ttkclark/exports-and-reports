@@ -301,13 +301,19 @@ function exports_reports_menu() {
 }
 
 /**
- * Override the export filename
+ * Reset settings for plugin.
  *
- * @param string      $export_file Export file name (example: export-file-name.csv)
- * @param string      $export_type Export type (csv/tsv/json/etc)
- * @param WP_Admin_UI $wp_admin_ui WP Admin UI object to get out any other reference data
- *
- * @return string New export file name
+ * @since 0.9.4
+ */
+function exports_reports_reset() {
+	update_option( 'exports_reports_version', EXPORTS_REPORTS_VERSION );
+
+	$token = md5( microtime() . wp_generate_password( 20 ) );
+	update_option( 'exports_reports_token', $token );
+}
+
+/**
+ * Output the plugin settings page.
  */
 function exports_reports_settings() {
 	if ( ! empty( $_POST['cronjob_token'] ) ) {
@@ -1363,6 +1369,8 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 	}
 
 	$admin->go();
+
+	return true;
 }
 
 add_action( 'wp_admin_ui_post_export', 'exports_reports_log', 10, 2 );
@@ -1371,32 +1379,26 @@ add_action( 'wp_admin_ui_post_remove_export', 'exports_reports_delete_log', 10, 
 /**
  * @param $args
  * @param $obj
- *
- * @return mixed
  */
 function exports_reports_log( $args, $obj ) {
 	/** @var wpdb $wpdb */ global $wpdb;
 
 	$filename = $args[1];
 
-	$result = $wpdb->insert( EXPORTS_REPORTS_TBL . 'log', [
+	$wpdb->insert( EXPORTS_REPORTS_TBL . 'log', [
 			'report_id' => $obj[0]->report_id,
 			'filename'  => $filename,
 			'created'   => date_i18n( 'Y-m-d H:i:s' ),
-		], [
-			'%d',
-			'%s',
-			'%s',
-		] );
-
-	return $result;
+	], [
+		'%d',
+		'%s',
+		'%s',
+	] );
 }
 
 /**
  * @param $args
  * @param $obj
- *
- * @return bool
  */
 function exports_reports_delete_log( $args, $obj ) {
 	/** @var wpdb $wpdb */ global $wpdb;
@@ -1414,12 +1416,8 @@ function exports_reports_delete_log( $args, $obj ) {
 				$filename,
 			] );
 
-		$result = $wpdb->query( $sql );
-
-		return $result;
+		$wpdb->query( $sql );
 	}
-
-	return false;
 }
 
 /**

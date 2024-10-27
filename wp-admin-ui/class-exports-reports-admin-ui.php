@@ -95,6 +95,7 @@ class Exports_Reports_Admin_UI {
 	var $sum_data = [];
 	var $full_data = [];
 	var $row = [];
+	var $temp_row = [];
 	var $default_none = false;
 	var $search_columns = [];
 	var $form_columns = [];
@@ -1261,8 +1262,8 @@ class Exports_Reports_Admin_UI {
 				if ( isset( $table['on'] ) ) {
 					$on = $this->sanitize( $table['on'] );
 				}
-				if ( isset( $table['is'] ) && isset( $row[ $table['is'] ] ) ) {
-					$is = $this->sanitize( $row[ $table['is'] ] );
+				if ( isset( $table['is'] ) && isset( $this->row[ $table['is'] ] ) ) {
+					$is = $this->sanitize( $this->row[ $table['is'] ] );
 				}
 				if ( isset( $table['what'] ) ) {
 					$what = [];
@@ -1494,6 +1495,8 @@ class Exports_Reports_Admin_UI {
 						] ) ) . '">click here to remove it</a>, otherwise the export will be deleted within 24 hours of generation.' );
 				echo '<script type="text/javascript">window.open("' . $this->export_url . urlencode( $export_file ) . '");</script>';
 			} elseif ( $this->export_type === 'pdf' ) {
+				require_once $this->base_dir . '/includes/export-pdf.php';
+
 				$export_file = apply_filters( 'wp_admin_ui_export_pdf_report_file', null, $this );
 
 				if ( ! $export_file ) {
