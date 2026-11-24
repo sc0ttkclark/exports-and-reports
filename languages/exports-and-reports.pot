@@ -122,7 +122,7 @@ msgid "Disable Export?"
 msgstr ""
 
 #: includes/admin-reports.php:71
-#: includes/admin-settings.php:180
+#: includes/admin-settings.php:198
 msgid "Export Formats"
 msgstr ""
 
@@ -371,215 +371,235 @@ msgstr ""
 msgid "Related WHERE / ORDER BY"
 msgstr ""
 
-#: includes/admin-settings.php:36
+#: includes/admin-settings.php:37
 msgid "Sorry, you are not allowed to manage the Exports and Reports settings."
 msgstr ""
 
-#: includes/admin-settings.php:95
+#: includes/admin-settings.php:106
 msgid "Checked: a request for a file in the directory by its address was refused."
 msgstr ""
 
-#: includes/admin-settings.php:96
+#: includes/admin-settings.php:107
 msgid "Checked: a file in the directory was served to a request for its address."
 msgstr ""
 
-#: includes/admin-settings.php:97
+#: includes/admin-settings.php:108
 msgid "The directory is outside the web root, where the web server cannot serve it."
 msgstr ""
 
-#: includes/admin-settings.php:98
+#: includes/admin-settings.php:109
 msgid "The directory is created with the first export and checked then."
 msgstr ""
 
-#: includes/admin-settings.php:99
+#: includes/admin-settings.php:110
 msgid "The plugin could not check whether the directory is served: the file for the check could not be written, or the site could not reach itself."
 msgstr ""
 
-#: includes/admin-settings.php:107
+#: includes/admin-settings.php:119
 msgid "Off"
 msgstr ""
 
-#: includes/admin-settings.php:108
+#: includes/admin-settings.php:120
 msgid "1 minute"
 msgstr ""
 
-#: includes/admin-settings.php:109
+#: includes/admin-settings.php:121
 msgid "5 minutes (the default)"
 msgstr ""
 
-#: includes/admin-settings.php:110
+#: includes/admin-settings.php:122
 msgid "15 minutes"
 msgstr ""
 
-#: includes/admin-settings.php:111
+#: includes/admin-settings.php:123
 msgid "1 hour"
 msgstr ""
 
 #. translators: %s: a number of minutes.
-#: includes/admin-settings.php:115
+#: includes/admin-settings.php:127
 #, php-format
 msgid "%s minute"
 msgid_plural "%s minutes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/admin-settings.php:123
+#: includes/admin-settings.php:135
 msgid "Exports and Reports - Settings"
 msgstr ""
 
-#: includes/admin-settings.php:127
+#: includes/admin-settings.php:139
 msgid "Your Exports directory has been cleaned up and all export files have been removed."
 msgstr ""
 
-#: includes/admin-settings.php:133
+#: includes/admin-settings.php:145
 msgid "Your Settings have been reset."
 msgstr ""
 
-#: includes/admin-settings.php:139
+#: includes/admin-settings.php:151
 msgid "The kept row counts are forgotten; the next page view of each report counts again."
 msgstr ""
 
-#: includes/admin-settings.php:146
+#: includes/admin-settings.php:158
 msgid "The web server serves the export directory."
 msgstr ""
 
-#: includes/admin-settings.php:147
+#: includes/admin-settings.php:159
 msgid "A file in it was served to a request for its address, without the plugin's access check: until an export is removed, anyone who has or guesses its address can download it."
 msgstr ""
 
-#: includes/admin-settings.php:156
+#: includes/admin-settings.php:174
 msgid "Your API token:"
 msgstr ""
 
-#: includes/admin-settings.php:158
+#: includes/admin-settings.php:176
 msgid "Copied"
 msgstr ""
 
-#: includes/admin-settings.php:158
+#: includes/admin-settings.php:176
 msgid "Copy"
 msgstr ""
 
-#: includes/admin-settings.php:160
+#: includes/admin-settings.php:178
 msgid "Copy it now and put it in your scripts and cronjobs: the plugin keeps only its hash, like a password, and cannot show it again."
 msgstr ""
 
-#: includes/admin-settings.php:168
+#: includes/admin-settings.php:186
 msgid "Clear Exports Directory"
 msgstr ""
 
-#: includes/admin-settings.php:170
+#: includes/admin-settings.php:188
 msgid "Clear Now"
 msgstr ""
 
 #. translators: %s: the export directory, relative to the WordPress directory.
-#: includes/admin-settings.php:174
+#: includes/admin-settings.php:192
 #, php-format
 msgid "This will remove all files from your Exports directory - %s"
 msgstr ""
 
-#: includes/admin-settings.php:188
+#: includes/admin-settings.php:206
 msgid "The formats the export buttons offer on every report; a report can narrow them further in its own settings. CSV, TSV and TXT are written row by row and suit very large reports; the other formats hold the whole report in memory while they are written."
 msgstr ""
 
-#: includes/admin-settings.php:192
+#: includes/admin-settings.php:210
 msgid "Row Count Cache"
 msgstr ""
 
-#: includes/admin-settings.php:199
+#: includes/admin-settings.php:217
 msgid "Forget the Counts Now"
 msgstr ""
 
-#: includes/admin-settings.php:200
+#: includes/admin-settings.php:218
 msgid "How long the row count of a report page (\"1,234 items\") is kept for the same query, search and filters. The count runs with the first page over every row the query matches, which costs a slow query as much again; while a count is kept, the page views that follow run the query without it. Rows added or removed meanwhile show in the count once it is counted again; the button makes every report count again now."
 msgstr ""
 
-#: includes/admin-settings.php:204
+#: includes/admin-settings.php:222
 msgid "Export Directory"
 msgstr ""
 
-#: includes/admin-settings.php:211
+#: includes/admin-settings.php:229
 msgid "Downloads are served by the plugin after an access check; the directory itself should not be reachable by URL."
 msgstr ""
 
-#: includes/admin-settings.php:213
+#: includes/admin-settings.php:231
 msgid "Apache: the plugin's .htaccess denies direct requests."
 msgstr ""
 
-#: includes/admin-settings.php:215
+#: includes/admin-settings.php:233
 msgid "Apache: the plugin writes an .htaccess that denies direct requests with the first export."
 msgstr ""
 
 #. translators: 1: the nginx location rule, 2: the EXPORTS_REPORTS_EXPORT_DIR constant.
-#: includes/admin-settings.php:221
+#: includes/admin-settings.php:239
 #, php-format
 msgid "nginx ignores .htaccess; add %1$s to the server block, or define %2$s in wp-config.php with a directory outside the web root, which works on any server."
 msgstr ""
 
-#: includes/admin-settings.php:232
+#: includes/admin-settings.php:250
 msgid "Cronjob/JSON API Token"
 msgstr ""
 
-#: includes/admin-settings.php:236
+#: includes/admin-settings.php:254
 msgid "Token access is on. The token is stored as a hash, like a password, so it cannot be shown here; generate a new one if it is lost."
 msgstr ""
 
-#: includes/admin-settings.php:238
+#: includes/admin-settings.php:256
 msgid "Token access is off: the REST routes answer logged-in users only. Generate a token to let a script or a cronjob in."
 msgstr ""
 
-#: includes/admin-settings.php:242
+#: includes/admin-settings.php:260
 msgid "Generate a New Token"
 msgstr ""
 
-#: includes/admin-settings.php:242
+#: includes/admin-settings.php:260
 msgid "Generate a Token"
 msgstr ""
 
-#: includes/admin-settings.php:244
+#: includes/admin-settings.php:262
 msgid "Turn Token Access Off"
 msgstr ""
 
-#: includes/admin-settings.php:247
+#: includes/admin-settings.php:265
 msgid "Or set a token of your own, then save the settings:"
 msgstr ""
 
-#. translators: 1: the Authorization header, 2: the token query parameter, both as code.
-#: includes/admin-settings.php:254
+#. translators: %d: a number of characters.
+#: includes/admin-settings.php:270
 #, php-format
-msgid "Keep the token secret: it lets a script or a cronjob run and download exports and read report data through the REST API, without a logged-in user. Send it as the header %1$s, or as a %2$s query parameter; the header is the better choice, since a query parameter ends up in server logs."
+msgid "At least %d characters: letters, digits and punctuation marks, without spaces. It is stored as you type it."
 msgstr ""
 
-#: includes/admin-settings.php:263
+#. translators: %s: the Authorization header, as code.
+#: includes/admin-settings.php:277
+#, php-format
+msgid "Keep the token secret: it lets a script or a cronjob run and download exports and read report data through the REST API, without a logged-in user. Send it with each request as the header %s:"
+msgstr ""
+
+#: includes/admin-settings.php:284
+msgid "An export downloaded with the token in the header"
+msgstr ""
+
+#: includes/admin-settings.php:288
+msgid "Take the token in the Authorization header only"
+msgstr ""
+
+#. translators: %s: the token query parameter, as code.
+#: includes/admin-settings.php:293
+#, php-format
+msgid "A token in the address ends up in server logs, proxies and histories. Until this box is ticked the routes still take it there, as %s at the end of an address, for the scripts that send it that way; tick the box once yours send the header. Ten wrong tokens from one address within a quarter of an hour make the routes refuse that address's tokens for as long."
+msgstr ""
+
+#: includes/admin-settings.php:301
 msgid "URL to Export (useful for Cronjobs):"
 msgstr ""
 
-#: includes/admin-settings.php:266
+#: includes/admin-settings.php:304
 msgid "URL to Export and then Download File:"
 msgstr ""
 
-#: includes/admin-settings.php:269
+#: includes/admin-settings.php:307
 msgid "URL to JSON API (paginated):"
 msgstr ""
 
-#: includes/admin-settings.php:272
+#: includes/admin-settings.php:310
 msgid "URL to JSON API (full data):"
 msgstr ""
 
-#: includes/admin-settings.php:278
+#: includes/admin-settings.php:316
 msgid "Reset All Settings"
 msgstr ""
 
-#: includes/admin-settings.php:280
+#: includes/admin-settings.php:318
 msgid "Reset Now"
 msgstr ""
 
 #. translators: %s: the export directory, relative to the WordPress directory.
-#: includes/admin-settings.php:284
+#: includes/admin-settings.php:322
 #, php-format
-msgid "This generates a new token, puts every export format back on and the row count cache back to five minutes, clears the export log and removes the export files from your Exports directory - %s. Groups and reports are kept."
+msgid "This generates a new token, takes the token in the address again as well as in the header, puts every export format back on and the row count cache back to five minutes, clears the export log and removes the export files from your Exports directory - %s. Groups and reports are kept."
 msgstr ""
 
-#: includes/admin-settings.php:290
+#: includes/admin-settings.php:328
 msgid "Save Settings"
 msgstr ""
 
@@ -992,7 +1012,7 @@ msgid "You are not allowed to export this report."
 msgstr ""
 
 #: includes/exports.php:425
-#: includes/rest-api.php:323
+#: includes/rest-api.php:458
 msgid "That export format is not offered for this report."
 msgstr ""
 
@@ -1020,34 +1040,52 @@ msgstr ""
 msgid "Loading the report…"
 msgstr ""
 
-#: includes/rest-api.php:119
+#: includes/rest-api.php:120
+msgid "Too many requests with a wrong token from this address. Try again in a quarter of an hour."
+msgstr ""
+
+#: includes/rest-api.php:135
+msgid "This site takes the token in the Authorization header only, not in the address."
+msgstr ""
+
+#: includes/rest-api.php:138
 msgid "Send the token or log in to read reports."
 msgstr ""
 
-#: includes/rest-api.php:126
-#: includes/rest-api.php:252
-#: includes/rest-api.php:315
+#: includes/rest-api.php:145
+#: includes/rest-api.php:387
+#: includes/rest-api.php:450
 msgid "No report with that id."
 msgstr ""
 
-#: includes/rest-api.php:133
+#: includes/rest-api.php:152
 msgid "You are not allowed to read this report."
 msgstr ""
 
-#: includes/rest-api.php:279
+#: includes/rest-api.php:254
+msgid "The token was not saved: use letters, digits and punctuation marks, without spaces."
+msgstr ""
+
+#. translators: %d: a number of characters.
+#: includes/rest-api.php:259
+#, php-format
+msgid "The token was not saved: a token of your own needs at least %d characters. Type a longer one, or generate one."
+msgstr ""
+
+#: includes/rest-api.php:414
 msgid "The report query failed."
 msgstr ""
 
-#: includes/rest-api.php:319
+#: includes/rest-api.php:454
 msgid "Exports are disabled for this report."
 msgstr ""
 
-#: includes/rest-api.php:344
+#: includes/rest-api.php:479
 msgid "The export failed."
 msgstr ""
 
-#: includes/rest-api.php:377
-#: includes/rest-api.php:419
+#: includes/rest-api.php:512
+#: includes/rest-api.php:554
 msgid "No such export of this report."
 msgstr ""
 

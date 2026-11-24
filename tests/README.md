@@ -81,8 +81,11 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
 - `Tests_REST_API` (`test-rest-api.php`): the report refused without the token or a user; full and paged
   data with the token parameter and the bearer token; the report access rules for users; export and
   download through the routes, the export logged; download authorisation following the log row and the
-  access rules; a disabled report hidden; an empty token saved from the settings page turning token
-  access off.
+  access rules; a disabled report hidden; the Settings page turning token access off and generating a
+  token; a typed token stored as typed, and one that is short or would be rewritten refused with the
+  reason; the token limited to the Authorization header by the Settings page's box; the page's examples
+  sending the header; ten wrong tokens from one address answered with 429 until the count runs out,
+  another address and a logged-in user not held up.
 - `Tests_Access` (`test-access.php`): the matrix of who reaches what. The rows are a subscriber, a user
   whose role the group names, a user with `exports_reports_view`, one with `exports_reports_settings`, an
   administrator and nobody; the columns are the report page, the REST data and export routes, the

@@ -305,37 +305,186 @@ class Tests_REST_API extends Exports_Reports_Test_Case {
 	}
 
 	/**
-	 * A token of the administrator's own, typed into the field: stored as a hash and shown once. The field
-	 * saved empty, as it always is since the token cannot be shown in it, changes nothing.
+	 * Saves the Settings page with the posted values and returns what it prints.
+	 *
+	 * @param array $post The posted values.
+	 * @return string
 	 */
-	public function test_a_token_of_ones_own_is_hashed_and_an_empty_field_changes_nothing() {
-		wp_set_current_user( $this->administrator );
-
+	protected function save_settings( array $post ) {
 		$_REQUEST = array( '_wpnonce' => wp_create_nonce( 'exports-reports-settings' ) );
-		$_POST    = array( 'cronjob_token' => 'My Own Token' );
+		$_POST    = $post;
 
 		ob_start();
 		exports_reports_settings();
 		$html = (string) ob_get_clean();
 
-		$_POST = array(
-			'cronjob_token'      => '',
-			'export_formats_set' => '1',
-			'export_formats'     => array( 'csv' ),
-		);
-
-		ob_start();
-		exports_reports_settings();
-		ob_end_clean();
-
 		$_POST    = array();
 		$_REQUEST = array();
 
-		$this->assertStringContainsString( '<code>my-own-token</code>', $html, 'the token is shown once, as stored (a slug, as before 1.2.0)' );
-		$this->assertTrue( exports_reports_token_matches( 'my-own-token' ) );
+		return $html;
+	}
+
+	/**
+	 * A token of the administrator's own, typed into the field: stored as a hash, as typed, and shown
+	 * once. The field saved empty, as it always is since the token cannot be shown in it, changes nothing.
+	 */
+	public function test_a_token_of_ones_own_is_hashed_as_typed_and_an_empty_field_changes_nothing() {
+		wp_set_current_user( $this->administrator );
+
+		$own  = 'My-Own_Token.0123456789+AbC';
+		$html = $this->save_settings( array( 'cronjob_token' => ' ' . $own . ' ' ) );
+
+		$this->save_settings(
+			array(
+				'cronjob_token'      => '',
+				'export_formats_set' => '1',
+				'export_formats'     => array( 'csv' ),
+			)
+		);
+
+		$this->assertStringContainsString( '<code>' . $own . '</code>', $html, 'the token is shown once, as typed: no lower case, no slug' );
+		$this->assertTrue( exports_reports_token_matches( $own ) );
+		$this->assertFalse( exports_reports_token_matches( strtolower( $own ) ), 'the token before 1.3.0 would have been this one' );
 		$this->assertFalse( exports_reports_token_matches( 'er-test-token' ) );
-		$this->assertTrue( exports_reports_token_matches( 'my-own-token' ), 'the empty field left the token alone' );
+		$this->assertTrue( exports_reports_token_matches( $own ), 'the empty field left the token alone' );
 		$this->assertFalse( exports_reports_token_matches( '' ) );
+	}
+
+	/**
+	 * A typed token that is short, or made of characters a header would not carry as typed, is refused
+	 * with the reason, and the token in use stays.
+	 */
+	public function test_a_typed_token_that_is_short_or_would_be_rewritten_is_refused() {
+		wp_set_current_user( $this->administrator );
+
+		$refused = array(
+			'My Own Token'                           => 'without spaces',
+			'short-token-of-23-chars'                => 'at least 24 characters',
+			'spaces in a token that is long enough'  => 'without spaces',
+			'<b>markup-in-a-token-long-enough</b>'   => 'without spaces',
+			"t\u{00f6}ken-with-an-umlaut-0123456789" => 'without spaces',
+		);
+
+		foreach ( $refused as $typed => $reason ) {
+			$html = $this->save_settings( array( 'cronjob_token' => wp_slash( $typed ) ) );
+
+			$this->assertStringContainsString( 'exports-reports-token-refused', $html, $typed );
+			$this->assertStringContainsString( $reason, $html, $typed );
+			$this->assertStringNotContainsString( 'exports-reports-token-notice', $html, $typed . ': no token is shown as saved' );
+			$this->assertTrue( exports_reports_token_matches( 'er-test-token' ), $typed . ': the token in use stays' );
+		}
+
+		$this->assertSame( 23, strlen( 'short-token-of-23-chars' ) );
+		$this->assertSame( '', exports_reports_token_problem( 'exactly-24-characters-ok' ) );
+		$this->assertSame( 24, EXPORTS_REPORTS_TOKEN_MIN_LENGTH );
+	}
+
+	/**
+	 * The Settings page's box: once ticked, the routes take the token in the Authorization header and
+	 * no longer in the address, and say so. Unticked, as on a site that has not chosen, both work.
+	 */
+	public function test_the_token_can_be_limited_to_the_authorization_header() {
+		$header = array( 'Authorization' => 'Bearer er-test-token' );
+
+		$this->assertFalse( exports_reports_token_header_only(), 'both ways until the site chooses' );
+		$this->assertSame( 200, $this->rest_request( 'GET', $this->route . '/data', array( 'token' => 'er-test-token' ) )->get_status() );
+
+		wp_set_current_user( $this->administrator );
+
+		$ticked = $this->save_settings(
+			array(
+				'token_header_set'  => '1',
+				'token_header_only' => '1',
+			)
+		);
+
+		wp_set_current_user( 0 );
+
+		$this->assertTrue( exports_reports_token_header_only() );
+		$this->assertSame( 1, preg_match( '/name="token_header_only" value="1"\s+checked/', $ticked ), 'the box shows the choice' );
+
+		$in_address = $this->rest_request( 'GET', $this->route . '/data', array( 'token' => 'er-test-token' ) );
+
+		$this->assertSame( 401, $in_address->get_status() );
+		$this->assertStringContainsString( 'Authorization header only', $in_address->get_data()['message'] );
+		$this->assertSame( 200, $this->rest_request( 'GET', $this->route . '/data', array(), $header )->get_status() );
+		$this->assertFalse( exports_reports_token_locked(), 'a token in the address is not counted as a wrong one' );
+
+		wp_set_current_user( $this->administrator );
+
+		$this->save_settings( array( 'token_header_set' => '1' ) );
+
+		wp_set_current_user( 0 );
+
+		$this->assertFalse( exports_reports_token_header_only(), 'unticked again' );
+		$this->assertSame( 200, $this->rest_request( 'GET', $this->route . '/data', array( 'token' => 'er-test-token' ) )->get_status() );
+	}
+
+	/**
+	 * The examples of the Settings page send the token in the header: the command carries it, and no
+	 * address does.
+	 */
+	public function test_the_settings_page_shows_the_header_first() {
+		wp_set_current_user( $this->administrator );
+
+		$html = $this->save_settings( array( 'generate_token' => '1' ) );
+
+		$this->assertSame( 1, preg_match( '#<code>([A-Za-z0-9]{32})</code>#', $html, $shown ) );
+		$this->assertStringContainsString( 'curl -H &quot;Authorization: Bearer ' . $shown[1] . '&quot;', $html, 'the command carries the new token in the header' );
+		$this->assertStringNotContainsString( 'token=' . $shown[1], $html, 'no address carries it' );
+		$this->assertStringNotContainsString( 'token=YOUR_TOKEN', $html );
+		$this->assertStringContainsString( '/export?type=YOUR_EXPORT_TYPE&#038;download=1"', $html, 'the addresses are there without it' );
+	}
+
+	/**
+	 * Ten wrong tokens from an address within a quarter of an hour, and the routes answer that address's
+	 * token requests with 429, the right token included, until the count runs out. Another address, and a
+	 * logged-in user without a token, are not held up.
+	 */
+	public function test_wrong_tokens_from_one_address_are_limited() {
+		$_SERVER['REMOTE_ADDR'] = '203.0.113.7';
+
+		for ( $attempt = 1; $attempt <= 10; $attempt++ ) {
+			$this->assertSame( 401, $this->rest_request( 'GET', $this->route . '/data', array( 'token' => 'wrong-' . $attempt ) )->get_status(), 'attempt ' . $attempt );
+		}
+
+		$this->assertTrue( exports_reports_token_locked() );
+
+		$right = $this->rest_request( 'GET', $this->route . '/data', array(), array( 'Authorization' => 'Bearer er-test-token' ) );
+
+		$this->assertSame( 429, $right->get_status(), 'the address waits, whatever it sends' );
+		$this->assertSame( 'exports_reports_too_many_attempts', $right->get_data()['code'] );
+
+		wp_set_current_user( $this->administrator );
+
+		$this->assertSame( 200, $this->rest_request( 'GET', $this->route . '/data' )->get_status(), 'a logged-in user without a token is not counted' );
+
+		wp_set_current_user( 0 );
+
+		$_SERVER['REMOTE_ADDR'] = '203.0.113.8';
+
+		$this->assertSame( 200, $this->rest_request( 'GET', $this->route . '/data', array( 'token' => 'er-test-token' ) )->get_status(), 'another address is not held up' );
+
+		$_SERVER['REMOTE_ADDR'] = '203.0.113.7';
+
+		delete_transient( exports_reports_token_failures_key() );
+
+		$this->assertSame( 200, $this->rest_request( 'GET', $this->route . '/data', array( 'token' => 'er-test-token' ) )->get_status(), 'once the count has run out the token works again' );
+
+		add_filter( 'exports_reports_token_failure_limit', '__return_zero' );
+
+		for ( $attempt = 1; $attempt <= 12; $attempt++ ) {
+			$this->rest_request( 'GET', $this->route . '/data', array( 'token' => 'wrong-' . $attempt ) );
+		}
+
+		$unlimited = exports_reports_token_locked();
+
+		remove_filter( 'exports_reports_token_failure_limit', '__return_zero' );
+		delete_transient( exports_reports_token_failures_key() );
+
+		unset( $_SERVER['REMOTE_ADDR'] );
+
+		$this->assertFalse( $unlimited, 'a limit of 0 is no limit' );
 	}
 
 	/**

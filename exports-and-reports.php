@@ -44,6 +44,9 @@ if ( ! defined( 'EXPORTS_REPORTS_EXPORT_URL' ) ) {
 define( 'EXPORTS_REPORTS_EXPORT_ACTION', 'exports_reports_export' );
 define( 'EXPORTS_REPORTS_EXPORT_NONCE', 'exports-reports-export' );
 
+// The fewest characters a token typed into the Settings page may have; a generated one has 32.
+define( 'EXPORTS_REPORTS_TOKEN_MIN_LENGTH', 24 );
+
 /**
  * The plugin's tables as properties of $wpdb ($wpdb->exports_reports_groups, $wpdb->exports_reports_reports and
  * $wpdb->exports_reports_log), named the way core names its own, so a statement writes them in place. Set again
