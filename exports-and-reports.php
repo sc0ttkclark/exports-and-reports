@@ -11,8 +11,8 @@
  * Plugin URI:        https://github.com/sc0ttkclark/exports-and-reports
  * Description:       Define custom exports / reports for users by creating each export / report and defining the fields as well as custom MySQL queries to run.
  * Version:           1.2.7
- * Author:            Scott Kingsley Clark
- * Author URI:        https://www.scottkclark.com/
+ * Author:            Scott Kingsley Clark, Daniel Caspi
+ * Author URI:        https://www.element26.net/
  * Text Domain:       exports-and-reports
  * Domain Path:       /languages
  * License:           GPL v2 or later
