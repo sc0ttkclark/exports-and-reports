@@ -27,6 +27,16 @@ function exports_reports_tests_emphasis( $value ) {
 }
 
 /**
+ * A function a plugin defines and the site has not listed as a display function.
+ *
+ * @param mixed $value The value.
+ * @return string
+ */
+function exports_reports_tests_unlisted( $value ) {
+	return 'unlisted:' . $value;
+}
+
+/**
  * Thrown in place of the exit an admin-ajax handler ends with, so a test gets what the handler printed.
  */
 class Exports_Reports_Tests_Ajax_Stop extends Exception {
@@ -92,8 +102,20 @@ trait Exports_Reports_Test_Helpers {
 		$wpdb->last_error = '';
 
 		add_filter( 'query', array( $this, 'record_db_error' ) );
+		add_filter( 'exports_reports_display_callbacks', array( $this, 'list_display_functions' ) );
 
 		wp_mkdir_p( EXPORTS_REPORTS_EXPORT_DIR );
+	}
+
+	/**
+	 * Lists the suite's display functions, as a site's code lists its own (the
+	 * exports_reports_display_callbacks filter).
+	 *
+	 * @param string[] $callbacks The functions listed so far.
+	 * @return string[]
+	 */
+	public function list_display_functions( $callbacks ) {
+		return array_merge( (array) $callbacks, array( 'exports_reports_tests_shout', 'exports_reports_tests_emphasis' ) );
 	}
 
 	/**
@@ -101,6 +123,7 @@ trait Exports_Reports_Test_Helpers {
 	 */
 	protected function clean() {
 		remove_filter( 'query', array( $this, 'record_db_error' ) );
+		remove_filter( 'exports_reports_display_callbacks', array( $this, 'list_display_functions' ) );
 
 		$_REQUEST = array();
 	}

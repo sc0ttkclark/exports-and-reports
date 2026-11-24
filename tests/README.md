@@ -86,7 +86,13 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
   everything, a site's administrator getting the Manage screens as lists, with no form, no save and no
   Detect Fields, and the `exports_reports_site_admins_edit_reports` filter handing the reports back to
   the sites; administrators holding `exports_reports_full_access` through their
-  role, not user meta; display functions limited to plugin functions.
+  role, not user meta.
+- `Tests_Display_Functions` (`test-display-functions.php`): a Display function, and the helper of a
+  `{@field,helper}` tag, called only when the site lists it through `exports_reports_display_callbacks`
+  (not a function of another plugin, of WordPress or of PHP, listed or not); the functions the stored
+  definitions name recorded once, when the list is first asked for, and none after; the notice naming
+  them to a user who manages reports until one dismisses it with its nonce; the field editor flagging a
+  Display function that is not listed.
 - `Tests_Hooks` (`test-hooks.php`): the cases that attach callbacks to `exports_reports_*` hooks (their
   arguments one by one, the screen last) and to the `wp_admin_ui_*` names (the array form): a
   multi-statement definition prepared through `exports_reports_get_data_sql`, the count query through
@@ -105,7 +111,8 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
 
 `tests/phpunit/includes/` holds the base class and the helpers the classes share: the seeded table
 (created before each class, dropped after it), a report definition set up the way `exports_reports_view()`
-sets it up, the export files and the REST requests. The base class is declared for the fixture methods
+sets it up, group and report rows, the export files, the REST requests and the admin-ajax handlers, and
+the listing of the suite's own display functions. The base class is declared for the fixture methods
 of the test library in use (`setUp()`/`tearDown()` on WordPress 5.7 and 5.8, `set_up()`/`tear_down()` from
 5.9), and the test classes override `prepare()` and `clean()` instead.
 

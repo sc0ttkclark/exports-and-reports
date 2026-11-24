@@ -291,6 +291,10 @@ function exports_reports_upgrade() {
 function exports_reports_init() {
 	exports_reports_install_upgrade();
 
+	// The display functions the definitions named before 1.3.0 are recorded now, if a script's request has
+	// not done it already, so the notice about them is there for this page.
+	exports_reports_display_callbacks();
+
 	add_filter( 'members_get_capabilities', 'exports_reports_get_capabilities' );
 
 	if ( ! is_user_logged_in() ) {

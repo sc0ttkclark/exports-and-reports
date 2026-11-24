@@ -35,6 +35,8 @@ function exports_reports_uninstall_site() {
 	delete_option( 'exports_reports_export_formats' );
 	delete_option( 'exports_reports_count_cache' );
 	delete_option( 'exports_reports_count_cache_generation' );
+	delete_option( 'exports_reports_display_callbacks' );
+	delete_option( 'exports_reports_display_callbacks_notice' );
 
 	// The kept row counts (transients that would expire within the hour anyway).
 	$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_exports_reports_count_%' OR option_name LIKE '_transient_timeout_exports_reports_count_%'" );

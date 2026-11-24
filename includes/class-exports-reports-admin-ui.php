@@ -478,10 +478,17 @@ class Exports_Reports_Admin_UI {
 	}
 
 	/**
-	 * Whether a function named in a report definition may be called back with a value: a function
-	 * WordPress, a plugin or a theme defines. PHP's own functions are not called: none of them takes the
-	 * arguments the callbacks receive, and the variadic ones among them could reach anything. The
-	 * exports_reports_allowed_callback filter decides for a name this rule does not settle the way a site needs.
+	 * Whether a function named in a report definition (a field's Display function, the helper of a
+	 * {@field,helper} tag) may be called back with a value: a function the site lists
+	 * (exports_reports_display_callbacks()), which is one its code registered or one its definitions named
+	 * before the list existed. A definition is data, and whoever can write one could otherwise have any
+	 * function of WordPress, a plugin or a theme called with a value its query chooses, the ones that
+	 * delete or include a file among them. PHP's own functions are not called even when listed: none of
+	 * them takes the arguments the callbacks receive, and the variadic ones among them could reach
+	 * anything. The exports_reports_allowed_callback filter decides for a name these rules do not settle
+	 * the way a site needs.
+	 *
+	 * @since 1.3.0 A function the site lists, not any function WordPress, a plugin or a theme defines.
 	 *
 	 * @param mixed $callback The function name.
 	 *
@@ -490,8 +497,9 @@ class Exports_Reports_Admin_UI {
 	public function is_allowed_callback( $callback ) {
 		$allowed = false;
 
-		if ( is_string( $callback ) && '' !== $callback && function_exists( $callback ) ) {
-			$allowed = ! ( new ReflectionFunction( $callback ) )->isInternal();
+		if ( is_string( $callback ) && '' !== $callback && function_exists( $callback ) && function_exists( 'exports_reports_display_callbacks' ) ) {
+			$listed  = array_map( 'strtolower', exports_reports_display_callbacks() );
+			$allowed = in_array( strtolower( ltrim( $callback, '\\' ) ), $listed, true ) && ! ( new ReflectionFunction( $callback ) )->isInternal();
 		}
 
 		/**

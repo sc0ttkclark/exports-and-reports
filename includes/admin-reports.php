@@ -157,6 +157,16 @@ function exports_reports_report_field( $column, $attributes, $obj ) {
 	$field_data = json_decode( isset( $obj->row[ $column ] ) ? (string) $obj->row[ $column ] : '', true );
 	$fields     = is_array( $field_data ) ? array_values( $field_data ) : array();
 	$types      = exports_reports_field_types();
+	$unlisted   = array();
+
+	// A Display function the site does not list is not called; the editor says which.
+	foreach ( $fields as $field ) {
+		$callback = is_array( $field ) && isset( $field['custom_display'] ) ? trim( (string) $field['custom_display'] ) : '';
+
+		if ( '' !== $callback && ! $obj->is_allowed_callback( $callback ) ) {
+			$unlisted[ $callback ] = '<code>' . esc_html( $callback ) . '</code>';
+		}
+	}
 	?>
 	<div
 		class="er-fields"
@@ -170,6 +180,21 @@ function exports_reports_report_field( $column, $attributes, $obj ) {
 		data-detect-failed="<?php esc_attr_e( 'The request did not get through. Save the report and try again.', 'exports-and-reports' ); ?>"
 	>
 		<p class="description"><?php esc_html_e( 'Leave this empty to show every column the query returns. Drag a field by its handle to change the order. Detect Fields runs the query above for one row and adds a field for each column of the result that is not listed yet, with the data type that fits the column.', 'exports-and-reports' ); ?></p>
+		<?php if ( array() !== $unlisted ) { ?>
+			<div class="notice notice-warning inline er-fields__unlisted"><p>
+				<?php
+				echo wp_kses(
+					sprintf(
+						/* translators: 1: a list of function names, 2: the name of a filter. */
+						__( 'Not called, because the site does not list them as Display functions: %1$s. A plugin or a theme lists a function through the %2$s filter (see the plugin\'s readme).', 'exports-and-reports' ),
+						implode( ', ', $unlisted ),
+						'<code>exports_reports_display_callbacks</code>'
+					),
+					array( 'code' => array() )
+				);
+				?>
+			</p></div>
+		<?php } ?>
 		<div class="er-fields__list">
 			<?php
 			foreach ( $fields as $index => $field ) {
@@ -415,7 +440,7 @@ function exports_reports_report_field_row( $index, $field, $types ) {
 			<div class="er-field__grid">
 				<?php
 				$text( 'field_real_name', __( 'Real field', 'exports-and-reports' ), __( 'when the name is an alias', 'exports-and-reports' ) );
-				$text( 'field_custom_display', __( 'Display function', 'exports-and-reports' ), __( 'a function a plugin or theme defines', 'exports-and-reports' ) );
+				$text( 'field_custom_display', __( 'Display function', 'exports-and-reports' ), __( 'a function your code has listed', 'exports-and-reports' ) );
 				$text( 'width', __( 'Width', 'exports-and-reports' ), __( 'relative, for the PDF export', 'exports-and-reports' ) );
 				$text( 'field_filter_label', __( 'Filter label', 'exports-and-reports' ) );
 				$text( 'field_filter_default', __( 'Default filter value', 'exports-and-reports' ) );

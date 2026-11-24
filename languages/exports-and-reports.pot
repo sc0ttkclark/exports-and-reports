@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-24T21:58:35+00:00\n"
+"POT-Creation-Date: 2026-11-24T21:58:36+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: exports-and-reports\n"
@@ -174,194 +174,200 @@ msgstr ""
 msgid "Report"
 msgstr ""
 
-#: includes/admin-reports.php:165
+#: includes/admin-reports.php:175
 msgid "Remove this field from the report?"
 msgstr ""
 
-#: includes/admin-reports.php:166
+#: includes/admin-reports.php:176
 msgid "Running the query…"
 msgstr ""
 
 #. translators: 1: how many fields were added, 2: how many columns were listed already.
-#: includes/admin-reports.php:168
+#: includes/admin-reports.php:178
 #, php-format
 msgid "Fields added: %1$s. Already listed: %2$s."
 msgstr ""
 
-#: includes/admin-reports.php:169
-#: includes/admin-reports.php:211
+#: includes/admin-reports.php:179
+#: includes/admin-reports.php:236
 msgid "Type the query first."
 msgstr ""
 
-#: includes/admin-reports.php:170
+#: includes/admin-reports.php:180
 msgid "The request did not get through. Save the report and try again."
 msgstr ""
 
-#: includes/admin-reports.php:172
+#: includes/admin-reports.php:182
 msgid "Leave this empty to show every column the query returns. Drag a field by its handle to change the order. Detect Fields runs the query above for one row and adds a field for each column of the result that is not listed yet, with the data type that fits the column."
 msgstr ""
 
-#: includes/admin-reports.php:181
+#. translators: 1: a list of function names, 2: the name of a filter.
+#: includes/admin-reports.php:189
+#, php-format
+msgid "Not called, because the site does not list them as Display functions: %1$s. A plugin or a theme lists a function through the %2$s filter (see the plugin's readme)."
+msgstr ""
+
+#: includes/admin-reports.php:206
 msgid "Add Field"
 msgstr ""
 
-#: includes/admin-reports.php:182
+#: includes/admin-reports.php:207
 msgid "Detect Fields from the Query"
 msgstr ""
 
-#: includes/admin-reports.php:204
+#: includes/admin-reports.php:229
 msgid "You are not allowed to edit reports."
 msgstr ""
 
-#: includes/admin-reports.php:269
+#: includes/admin-reports.php:294
 msgid "The query is empty."
 msgstr ""
 
-#: includes/admin-reports.php:280
+#: includes/admin-reports.php:305
 msgid "The last statement of the query returns no rows."
 msgstr ""
 
-#: includes/admin-reports.php:350
+#: includes/admin-reports.php:375
 msgid "Text"
 msgstr ""
 
-#: includes/admin-reports.php:351
+#: includes/admin-reports.php:376
 msgid "Boolean (Checkbox)"
 msgstr ""
 
-#: includes/admin-reports.php:352
+#: includes/admin-reports.php:377
 msgid "Date"
 msgstr ""
 
-#: includes/admin-reports.php:353
+#: includes/admin-reports.php:378
 msgid "Time"
 msgstr ""
 
-#: includes/admin-reports.php:354
+#: includes/admin-reports.php:379
 msgid "Date + Time"
 msgstr ""
 
-#: includes/admin-reports.php:355
+#: includes/admin-reports.php:380
 msgid "Number (no decimal)"
 msgstr ""
 
-#: includes/admin-reports.php:356
+#: includes/admin-reports.php:381
 msgid "Decimal (two places)"
 msgstr ""
 
-#: includes/admin-reports.php:357
+#: includes/admin-reports.php:382
 msgid "Related"
 msgstr ""
 
-#: includes/admin-reports.php:391
+#: includes/admin-reports.php:416
 msgid "Drag to reorder"
 msgstr ""
 
-#: includes/admin-reports.php:392
+#: includes/admin-reports.php:417
 msgid "Field name (column or alias)"
 msgstr ""
 
-#: includes/admin-reports.php:394
+#: includes/admin-reports.php:419
 msgid "Data type"
 msgstr ""
 
-#: includes/admin-reports.php:401
+#: includes/admin-reports.php:426
 msgid "Label"
 msgstr ""
 
-#: includes/admin-reports.php:401
+#: includes/admin-reports.php:426
 msgid "defaults to the field name"
 msgstr ""
 
-#: includes/admin-reports.php:402
+#: includes/admin-reports.php:427
 msgid "Remove"
 msgstr ""
 
-#: includes/admin-reports.php:406
+#: includes/admin-reports.php:431
 msgid "Hide from report"
 msgstr ""
 
-#: includes/admin-reports.php:407
+#: includes/admin-reports.php:432
 msgid "Hide from export"
 msgstr ""
 
-#: includes/admin-reports.php:408
+#: includes/admin-reports.php:433
 msgid "Searchable"
 msgstr ""
 
-#: includes/admin-reports.php:409
+#: includes/admin-reports.php:434
 msgid "Filterable"
 msgstr ""
 
-#: includes/admin-reports.php:410
+#: includes/admin-reports.php:435
 msgid "Filter with HAVING"
 msgstr ""
 
-#: includes/admin-reports.php:414
+#: includes/admin-reports.php:439
 msgid "Advanced options"
 msgstr ""
 
-#: includes/admin-reports.php:417
+#: includes/admin-reports.php:442
 msgid "Real field"
 msgstr ""
 
-#: includes/admin-reports.php:417
+#: includes/admin-reports.php:442
 msgid "when the name is an alias"
 msgstr ""
 
-#: includes/admin-reports.php:418
+#: includes/admin-reports.php:443
 msgid "Display function"
 msgstr ""
 
-#: includes/admin-reports.php:418
-msgid "a function a plugin or theme defines"
+#: includes/admin-reports.php:443
+msgid "a function your code has listed"
 msgstr ""
 
-#: includes/admin-reports.php:419
+#: includes/admin-reports.php:444
 msgid "Width"
 msgstr ""
 
-#: includes/admin-reports.php:419
+#: includes/admin-reports.php:444
 msgid "relative, for the PDF export"
 msgstr ""
 
-#: includes/admin-reports.php:420
+#: includes/admin-reports.php:445
 msgid "Filter label"
 msgstr ""
 
-#: includes/admin-reports.php:421
+#: includes/admin-reports.php:446
 msgid "Default filter value"
 msgstr ""
 
-#: includes/admin-reports.php:422
+#: includes/admin-reports.php:447
 msgid "Ongoing date field"
 msgstr ""
 
-#: includes/admin-reports.php:422
+#: includes/admin-reports.php:447
 msgid "for a date range filter"
 msgstr ""
 
-#: includes/admin-reports.php:423
+#: includes/admin-reports.php:448
 msgid "Ongoing default filter value"
 msgstr ""
 
-#: includes/admin-reports.php:424
+#: includes/admin-reports.php:449
 msgid "Related table"
 msgstr ""
 
-#: includes/admin-reports.php:424
+#: includes/admin-reports.php:449
 msgid "related type only"
 msgstr ""
 
-#: includes/admin-reports.php:425
+#: includes/admin-reports.php:450
 msgid "Related field"
 msgstr ""
 
-#: includes/admin-reports.php:426
+#: includes/admin-reports.php:451
 msgid "Related ID field"
 msgstr ""
 
-#: includes/admin-reports.php:427
+#: includes/admin-reports.php:452
 msgid "Related WHERE / ORDER BY"
 msgstr ""
 
@@ -590,214 +596,214 @@ msgid "Reorder"
 msgstr ""
 
 #. translators: 1: a link to the export file, 2: a link that removes it.
-#: includes/class-exports-reports-admin-ui.php:648
+#: includes/class-exports-reports-admin-ui.php:656
 #, php-format
 msgid "<strong>Success:</strong> Your export is ready, the download should begin in a few moments. If it does not, %1$s.<br /><br />When you are done with your export, %2$s; otherwise the export will be deleted within 24 hours of generation."
 msgstr ""
 
 #. translators: %s: the export format (CSV, PDF, ...).
-#: includes/class-exports-reports-admin-ui.php:650
+#: includes/class-exports-reports-admin-ui.php:658
 #, php-format
 msgid "click here to download your %s export file"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:652
+#: includes/class-exports-reports-admin-ui.php:660
 msgid "click here to remove it"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1390
-#: includes/class-exports-reports-admin-ui.php:1476
-#: includes/class-exports-reports-admin-ui.php:1524
-#: includes/class-exports-reports-admin-ui.php:1551
-#: includes/class-exports-reports-admin-ui.php:1730
-#: includes/class-exports-reports-admin-ui.php:2158
-#: includes/class-exports-reports-admin-ui.php:2195
+#: includes/class-exports-reports-admin-ui.php:1398
+#: includes/class-exports-reports-admin-ui.php:1484
+#: includes/class-exports-reports-admin-ui.php:1532
+#: includes/class-exports-reports-admin-ui.php:1559
+#: includes/class-exports-reports-admin-ui.php:1738
+#: includes/class-exports-reports-admin-ui.php:2166
+#: includes/class-exports-reports-admin-ui.php:2203
 msgid "<strong>Error:</strong> Invalid Configuration - Missing \"table\" definition."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1393
-#: includes/class-exports-reports-admin-ui.php:1733
+#: includes/class-exports-reports-admin-ui.php:1401
+#: includes/class-exports-reports-admin-ui.php:1741
 msgid "<strong>Error:</strong> Invalid Configuration - Missing \"identifier\" definition."
 msgstr ""
 
 #. translators: %s: the item's name, as the screen calls it (Report, Report Group).
-#: includes/class-exports-reports-admin-ui.php:1482
+#: includes/class-exports-reports-admin-ui.php:1490
 #, php-format
 msgid "Add %s"
 msgstr ""
 
 #. translators: %s: the item's name, as the screen calls it (Report, Report Group).
-#: includes/class-exports-reports-admin-ui.php:1495
-#: includes/class-exports-reports-admin-ui.php:1531
+#: includes/class-exports-reports-admin-ui.php:1503
+#: includes/class-exports-reports-admin-ui.php:1539
 #, php-format
 msgid "<strong>Error:</strong> %s not found."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1498
+#: includes/class-exports-reports-admin-ui.php:1506
 msgid "Save Changes"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1554
-#: includes/class-exports-reports-admin-ui.php:2161
+#: includes/class-exports-reports-admin-ui.php:1562
+#: includes/class-exports-reports-admin-ui.php:2169
 msgid "<strong>Error:</strong> Invalid Configuration - Missing \"id\" definition."
 msgstr ""
 
 #. translators: %s: the item's name, as the screen calls it (Report, Report Group).
-#: includes/class-exports-reports-admin-ui.php:1563
+#: includes/class-exports-reports-admin-ui.php:1571
 #, php-format
 msgid "<strong>Deleted:</strong> %s has been deleted."
 msgstr ""
 
 #. translators: %s: the item's name, as the screen calls it (Report, Report Group).
-#: includes/class-exports-reports-admin-ui.php:1566
+#: includes/class-exports-reports-admin-ui.php:1574
 #, php-format
 msgid "<strong>Error:</strong> %s has not been deleted."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1582
+#: includes/class-exports-reports-admin-ui.php:1590
 msgid "<strong>Error:</strong> The form has expired; reload the page and try again."
 msgstr ""
 
 #. translators: %s: the item's name, as the screen calls it (Report, Report Group).
-#: includes/class-exports-reports-admin-ui.php:1686
+#: includes/class-exports-reports-admin-ui.php:1694
 #, php-format
 msgid "<strong>Success!</strong> %s created successfully."
 msgstr ""
 
 #. translators: %s: the item's name, as the screen calls it (Report, Report Group).
-#: includes/class-exports-reports-admin-ui.php:1689
+#: includes/class-exports-reports-admin-ui.php:1697
 #, php-format
 msgid "<strong>Success!</strong> %s saved successfully."
 msgstr ""
 
 #. translators: %s: the item's name, as the screen calls it (Report, Report Group).
-#: includes/class-exports-reports-admin-ui.php:1693
+#: includes/class-exports-reports-admin-ui.php:1701
 #, php-format
 msgid "<strong>Error:</strong> %s has not been created."
 msgstr ""
 
 #. translators: %s: the item's name, as the screen calls it (Report, Report Group).
-#: includes/class-exports-reports-admin-ui.php:1696
+#: includes/class-exports-reports-admin-ui.php:1704
 #, php-format
 msgid "<strong>Error:</strong> %s has not been saved."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1714
+#: includes/class-exports-reports-admin-ui.php:1722
 msgid "<strong>Error:</strong> The order was not saved: the page has expired, reload it and try again."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1749
+#: includes/class-exports-reports-admin-ui.php:1757
 msgid "<strong>Success!</strong> Order updated successfully."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1751
+#: includes/class-exports-reports-admin-ui.php:1759
 msgid "<strong>Error:</strong> Order has not been updated."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1853
+#: includes/class-exports-reports-admin-ui.php:1861
 #: includes/templates/list-filters.php:90
 #: includes/templates/view.php:62
 msgid "Yes"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1853
+#: includes/class-exports-reports-admin-ui.php:1861
 #: includes/templates/list-filters.php:91
 #: includes/templates/view.php:62
 msgid "No"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1963
-#: includes/class-exports-reports-admin-ui.php:1969
+#: includes/class-exports-reports-admin-ui.php:1971
+#: includes/class-exports-reports-admin-ui.php:1977
 msgid "<strong>Error:</strong> Your hosting configuration does not allow access to add files to your site."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1984
+#: includes/class-exports-reports-admin-ui.php:1992
 msgid "<strong>Error:</strong> The export link has expired. Go back to the report and use its export buttons again."
 msgstr ""
 
 #. translators: %s: the export directory.
-#: includes/class-exports-reports-admin-ui.php:1995
+#: includes/class-exports-reports-admin-ui.php:2003
 #, php-format
 msgid "<strong>Error:</strong> Your export directory (<strong>%s</strong>) did not exist and could not be created by the web server. Check the directory permissions and try again."
 msgstr ""
 
 #. translators: %s: the export directory.
-#: includes/class-exports-reports-admin-ui.php:2002
-#: includes/class-exports-reports-admin-ui.php:2054
+#: includes/class-exports-reports-admin-ui.php:2010
+#: includes/class-exports-reports-admin-ui.php:2062
 #, php-format
 msgid "<strong>Error:</strong> Your export directory (<strong>%s</strong>) needs to be writable for this plugin to work. Double-check it and try again."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2012
+#: includes/class-exports-reports-admin-ui.php:2020
 msgid "<strong>Error:</strong> That is not an export file."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2044
+#: includes/class-exports-reports-admin-ui.php:2052
 msgid "<strong>Success:</strong> Export removed successfully."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2059
+#: includes/class-exports-reports-admin-ui.php:2067
 msgid "<strong>Error:</strong> That file does not exist in the export directory."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2065
+#: includes/class-exports-reports-admin-ui.php:2073
 msgid "<strong>Error:</strong> That export format is not offered for this report."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2086
+#: includes/class-exports-reports-admin-ui.php:2094
 msgid "<strong>Error:</strong> Invalid export type."
 msgstr ""
 
 #. translators: %s: the database's error message.
-#: includes/class-exports-reports-admin-ui.php:2447
+#: includes/class-exports-reports-admin-ui.php:2455
 #, php-format
 msgid "<strong>Error:</strong> The report's query failed: %s"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2450
+#: includes/class-exports-reports-admin-ui.php:2458
 msgid "<strong>Error:</strong> The report's query failed. Ask an administrator to check its definition."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2584
+#: includes/class-exports-reports-admin-ui.php:2592
 msgid "The report returned no rows."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2589
+#: includes/class-exports-reports-admin-ui.php:2597
 msgid "<strong>Error:</strong> Invalid Configuration - Missing \"columns\" definition."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2688
+#: includes/class-exports-reports-admin-ui.php:2696
 msgid "The row count is kept for a while (Settings: Row Count Cache); rows added or removed since show once it is counted again."
 msgstr ""
 
 #. translators: %s: a length of time, e.g. "3 mins".
-#: includes/class-exports-reports-admin-ui.php:2691
+#: includes/class-exports-reports-admin-ui.php:2699
 #, php-format
 msgid "(counted %s ago)"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2700
+#: includes/class-exports-reports-admin-ui.php:2708
 msgid "Go to the first page"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2701
+#: includes/class-exports-reports-admin-ui.php:2709
 msgid "Go to the previous page"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2705
+#: includes/class-exports-reports-admin-ui.php:2713
 msgid "Current page"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2705
-#: includes/class-exports-reports-admin-ui.php:2710
+#: includes/class-exports-reports-admin-ui.php:2713
+#: includes/class-exports-reports-admin-ui.php:2718
 msgid "of"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2715
+#: includes/class-exports-reports-admin-ui.php:2723
 msgid "Go to the next page"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2716
+#: includes/class-exports-reports-admin-ui.php:2724
 msgid "Go to the last page"
 msgstr ""
 
@@ -869,6 +875,16 @@ msgstr ""
 #: includes/class-exports-reports-list-table.php:639
 #, php-format
 msgid "%s this item"
+msgstr ""
+
+#. translators: 1: a list of function names, 2: the name of a filter.
+#: includes/display-functions.php:128
+#, php-format
+msgid "<strong>Exports and Reports:</strong> a report now calls a Display function only when the site lists it. The functions your reports name today were listed for you: %1$s. Check that each is one you want a report to call. A function you put into a field from now on is called once your code lists it through the %2$s filter (see the plugin's readme)."
+msgstr ""
+
+#: includes/display-functions.php:137
+msgid "Dismiss this notice"
 msgstr ""
 
 #: includes/exporters/class-exports-reports-admin-ui-export-pdf-legacy.php:215
