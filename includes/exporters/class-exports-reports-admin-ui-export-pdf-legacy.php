@@ -269,8 +269,13 @@ class Exports_Reports_Admin_UI_Export_PDF_Legacy extends ExportsReports__Prefixe
 	}
 
 	/**
-	 * The text of every cell: the display callback's output, formatted for the column type, as the
-	 * tc-lib-pdf engine shows it; the widths are measured on the same text.
+	 * The HTML of every cell, formatted for the column type; the widths are measured on its text. A value
+	 * the query returned is text, as the tc-lib-pdf engine shows it: its tags go and the rest is escaped,
+	 * so markup a table stores never reaches TCPDF's HTML renderer, which would fetch the address of an
+	 * image, or read a local path, on the server. What a display function returns is the administrator's
+	 * own markup; content() keeps the tags post content may have.
+	 *
+	 * @since 1.2.9 A value without a display function is text.
 	 *
 	 * @param Exports_Reports_Admin_UI $admin   The report, with full_data loaded.
 	 * @param array<string, array>     $columns The shown columns.
@@ -285,14 +290,17 @@ class Exports_Reports_Admin_UI_Export_PDF_Legacy extends ExportsReports__Prefixe
 			$row      = array();
 
 			foreach ( $columns as $column => $attributes ) {
-				$value = isset( $row_data[ $column ] ) ? $row_data[ $column ] : '';
+				$value    = isset( $row_data[ $column ] ) ? $row_data[ $column ] : '';
+				$callback = false !== $attributes['custom_display'] && function_exists( "{$attributes['custom_display']}" );
 
-				if ( false !== $attributes['custom_display'] && function_exists( "{$attributes['custom_display']}" ) ) {
+				if ( $callback ) {
 					$value               = $attributes['custom_display']( $value, $row_data, $column, $attributes, $admin );
 					$row_data[ $column ] = $value;
 				}
 
-				$row[ $column ] = (string) self::format_field( $attributes['type'], $value );
+				$cell = (string) self::format_field( $attributes['type'], $value );
+
+				$row[ $column ] = $callback ? $cell : esc_html( wp_strip_all_tags( $cell ) );
 			}
 
 			$cells[] = $row;
@@ -310,7 +318,7 @@ class Exports_Reports_Admin_UI_Export_PDF_Legacy extends ExportsReports__Prefixe
 	 *
 	 * @param Exports_Reports_Admin_UI $admin   The report, with full_data loaded.
 	 * @param array<string, array>     $columns The shown columns.
-	 * @param array<int, array>        $cells   The cell text, by row and column.
+	 * @param array<int, array>        $cells   The cells' HTML, by row and column.
 	 *
 	 * @return array<string, string> Column key => percentage with two decimals.
 	 */
@@ -326,7 +334,7 @@ class Exports_Reports_Admin_UI_Export_PDF_Legacy extends ExportsReports__Prefixe
 			}
 			$lengths = array();
 			foreach ( $rows as $row ) {
-				$lengths[] = mb_strlen( wp_strip_all_tags( isset( $row[ $column ] ) ? $row[ $column ] : '' ) );
+				$lengths[] = mb_strlen( html_entity_decode( wp_strip_all_tags( isset( $row[ $column ] ) ? $row[ $column ] : '' ), ENT_QUOTES, 'UTF-8' ) );
 			}
 			sort( $lengths );
 			$p90             = array() === $lengths ? 0 : $lengths[ (int) floor( 0.9 * ( count( $lengths ) - 1 ) ) ];

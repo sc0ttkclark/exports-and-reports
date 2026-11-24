@@ -304,6 +304,87 @@ class Tests_Writers extends Exports_Reports_Test_Case {
 		$this->assert_pdf_export( $this->pdf_export( $report ), PHP_VERSION_ID >= 80200 ? 8 : 6 );
 	}
 
+	/**
+	 * The HTML the TCPDF engine hands to TCPDF's writeHTML() for a report: the engine's own table, as
+	 * its content() builds it.
+	 *
+	 * @param Exports_Reports_Admin_UI $report The report, get_data( true ) already run.
+	 * @return string
+	 */
+	protected function tcpdf_html( $report ) {
+		require_once EXPORTS_REPORTS_DIR . 'includes/exporters/class-exports-reports-admin-ui-export-pdf-legacy.php';
+
+		$content = new ReflectionMethod( 'Exports_Reports_Admin_UI_Export_PDF_Legacy', 'content' );
+
+		if ( PHP_VERSION_ID < 80100 ) {
+			$content->setAccessible( true );
+		}
+
+		return (string) $content->invoke( null, $report );
+	}
+
+	/**
+	 * Markup a table stores is text to the TCPDF engine, as it is to the tc-lib-pdf engine: no tag of it
+	 * reaches writeHTML(), which would fetch the address of an image (or read a local path) on the server.
+	 * The file is still written.
+	 */
+	public function test_the_tcpdf_engine_prints_stored_markup_as_text() {
+		global $wpdb;
+
+		$stored = 'Seen <img src="http://example.invalid/x.png"> at <a href="https://example.invalid/">AT&T</a> when 1 < 2';
+		$sql    = (string) $wpdb->prepare( 'SELECT id, %s AS title, channel FROM ' . self::videos() . ' WHERE id <= 2 ORDER BY id', $stored ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- the test's own table.
+
+		list( $report ) = $this->run_report( $sql, 'TCPDF markup' );
+
+		$html = $this->tcpdf_html( $report );
+
+		$this->assertStringNotContainsString( '<img', $html, 'no image reaches TCPDF' );
+		$this->assertStringNotContainsString( '<a ', $html, 'no link reaches TCPDF' );
+		$this->assertStringNotContainsString( 'example.invalid', $html, 'the addresses went with their tags' );
+		$this->assertStringContainsString( 'Seen  at AT&amp;T when 1 &lt; 2', $html, 'the text is kept, escaped' );
+		$this->assertStringContainsString( '>beta<', $html, 'plain values are unchanged' );
+
+		add_filter( 'exports_reports_export_pdf_engine', array( $this, 'tcpdf_engine' ) );
+
+		$pdf = $this->pdf_export( $this->report( $sql, 'TCPDF markup' ) );
+
+		remove_filter( 'exports_reports_export_pdf_engine', array( $this, 'tcpdf_engine' ) );
+
+		$this->assertStringStartsWith( '%PDF-', $pdf['contents'], 'the export is written' );
+		$this->assertSame( 6, $pdf['producer'], 'by TCPDF' );
+	}
+
+	/**
+	 * What a display function returns is the administrator's own markup: the TCPDF engine keeps it.
+	 */
+	public function test_the_tcpdf_engine_keeps_the_markup_of_a_display_function() {
+		list( $report ) = $this->run_report(
+			'SELECT id, channel FROM ' . self::videos() . ' WHERE id = 1',
+			'TCPDF callback',
+			false,
+			array(
+				'columns' => array(
+					'id'      => array( 'label' => 'Id' ),
+					'channel' => array(
+						'label'          => 'Channel',
+						'custom_display' => 'exports_reports_tests_emphasis',
+					),
+				),
+			)
+		);
+
+		$this->assertStringContainsString( '<em>beta</em>', $this->tcpdf_html( $report ) );
+	}
+
+	/**
+	 * The exports_reports_export_pdf_engine callback that selects TCPDF.
+	 *
+	 * @return string
+	 */
+	public function tcpdf_engine() {
+		return 'tcpdf';
+	}
+
 	public function test_the_default_pdf_engine_follows_the_php_version() {
 		$this->assertSame( PHP_VERSION_ID >= 80200 ? 'tc-lib-pdf' : 'tcpdf', Exports_Reports_Admin_UI::pdf_engine() );
 	}

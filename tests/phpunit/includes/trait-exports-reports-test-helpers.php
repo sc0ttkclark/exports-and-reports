@@ -16,6 +16,16 @@ function exports_reports_tests_shout( $value ) {
 	return strtoupper( (string) $value );
 }
 
+/**
+ * A display function that returns markup of its own around the escaped value.
+ *
+ * @param mixed $value The value.
+ * @return string
+ */
+function exports_reports_tests_emphasis( $value ) {
+	return '<em>' . esc_html( (string) $value ) . '</em>';
+}
+
 trait Exports_Reports_Test_Helpers {
 
 	/**

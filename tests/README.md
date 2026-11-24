@@ -57,7 +57,9 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
   handling off; a number column as a numeric cell holding the whole value; the list and both PDF
   engines formatting numbers through one function, and text in a number or
   decimal column left as it is; a two-page PDF with the default engine (tc-lib-pdf on PHP 8.2 and later,
-  TCPDF below), the producer string naming it, and the default engine following the PHP version.
+  TCPDF below), the producer string naming it, and the default engine following the PHP version; the
+  TCPDF engine handing stored markup to TCPDF as text (no tag of it, the text escaped) and keeping the
+  markup of a display function.
 - `Tests_Export_Files` (`test-export-files.php`): `export()` needing the link nonce and `remove_export`
   leaving the protection files alone; the export directory carrying `.htaccess` and `index.php`; the
   download function streaming an export and refusing anything else; `.txt` exports served and the daily
