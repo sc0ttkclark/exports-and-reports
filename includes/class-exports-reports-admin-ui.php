@@ -1210,8 +1210,9 @@ class Exports_Reports_Admin_UI {
 	}
 
 	/**
-	 * The HTML a display function, a view function or the header callback may return: the tags of post
-	 * content, which the exports_reports_allowed_html filter may extend.
+	 * The HTML a display function, a view function or the header callback may return, and a column opted
+	 * in through exports_reports_html_values may hold: the tags of post content, which the
+	 * exports_reports_allowed_html filter may extend.
 	 *
 	 * @since 0.9.5
 	 *
@@ -1225,6 +1226,44 @@ class Exports_Reports_Admin_UI {
 		 * @param Exports_Reports_Admin_UI $admin   The report.
 		 */
 		return apply_filters( 'exports_reports_allowed_html', wp_kses_allowed_html( 'post' ), $this );
+	}
+
+	/**
+	 * Whether a column's value is shown as HTML, within the tags allowed_html() names, rather than as
+	 * text: when a display function wrote it, or when the exports_reports_html_values filter opts the
+	 * column in. A value the query returned is text otherwise, so markup a table stores (a link or an
+	 * image in a field a visitor filled in) is shown, not rendered.
+	 *
+	 * @since 1.2.9
+	 *
+	 * @param string $column        The column.
+	 * @param array  $attributes    Its attributes.
+	 * @param bool   $from_callback Whether a display function returned the value.
+	 *
+	 * @return bool
+	 */
+	public function shows_html( $column, $attributes, $from_callback = false ) {
+		if ( $from_callback ) {
+			return true;
+		}
+
+		/**
+		 * Filters whether the values of a column are shown as HTML on the report page and the view screen,
+		 * with the tags the exports_reports_allowed_html filter names. Off by default: a value the query
+		 * returned is shown as text. For a report whose tables hold markup of the site's own:
+		 *
+		 *     add_filter( 'exports_reports_html_values', function ( $html, $column, $attributes, $admin ) {
+		 *         return 12 === $admin->report_id && 'summary' === $column ? true : $html;
+		 *     }, 10, 4 );
+		 *
+		 * @since 1.2.9
+		 *
+		 * @param bool                     $html       Whether the values are shown as HTML.
+		 * @param string                   $column     The column.
+		 * @param array                    $attributes Its attributes.
+		 * @param Exports_Reports_Admin_UI $admin      The screen; its report_id names the report.
+		 */
+		return true === apply_filters( 'exports_reports_html_values', false, $column, $attributes, $this );
 	}
 
 	public function message( $msg ) {

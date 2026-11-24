@@ -60,6 +60,10 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
   TCPDF below), the producer string naming it, and the default engine following the PHP version; the
   TCPDF engine handing stored markup to TCPDF as text (no tag of it, the text escaped) and keeping the
   markup of a display function.
+- `Tests_Screen_Output` (`test-screen-output.php`): a link, an image and a script a table stores shown as
+  text on the report page, in the title column and the others, and on the view screen (whose list of a
+  related column's labels stays a list); the markup of a display function kept; the
+  `exports_reports_html_values` filter opting one column back in, within the allowed tags.
 - `Tests_Export_Files` (`test-export-files.php`): `export()` needing the link nonce and `remove_export`
   leaving the protection files alone; the export directory carrying `.htaccess` and `index.php`; the
   download function streaming an export and refusing anything else; `.txt` exports served and the daily

@@ -409,7 +409,10 @@ class Exports_Reports_List_Table extends WP_List_Table {
 	/**
 	 * The cells of a row: the title links to the view or edit screen and carries the row actions (or the
 	 * drag handle and the order field while reordering), a date is abbreviated, the others show their
-	 * value, each through field_value() and the column's display callback.
+	 * value, each through field_value() and the column's display callback. A value is printed as text
+	 * unless the screen shows the column as HTML (Exports_Reports_Admin_UI::shows_html()).
+	 *
+	 * @since 1.2.9 A value without a display function is escaped.
 	 *
 	 * @param array $item The row.
 	 */
@@ -421,15 +424,17 @@ class Exports_Reports_List_Table extends WP_List_Table {
 		$id    = ! empty( $row[ $admin->identifier ] ) ? $row[ $admin->identifier ] : 0;
 
 		foreach ( $this->shown as $column => $attributes ) {
-			$value = isset( $row[ $column ] ) ? $row[ $column ] : '';
-			$value = $admin->field_value( $value, $column, $attributes );
+			$value    = isset( $row[ $column ] ) ? $row[ $column ] : '';
+			$value    = $admin->field_value( $value, $column, $attributes );
+			$callback = false !== $attributes['custom_display'] && function_exists( "{$attributes['custom_display']}" );
 
-			if ( false !== $attributes['custom_display'] && function_exists( "{$attributes['custom_display']}" ) ) {
+			if ( $callback ) {
 				$value = $attributes['custom_display']( $value, $row, $column, $attributes, $admin );
 			}
 
 			$row[ $column ] = $value;
 			$value          = (string) $value;
+			$as_html        = $admin->shows_html( $column, $attributes, $callback );
 			$kind           = $attributes['kind'];
 			$classes        = array( $column, 'column-' . $column );
 
@@ -453,13 +458,13 @@ class Exports_Reports_List_Table extends WP_List_Table {
 			<td class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>" data-colname="<?php echo esc_attr( wp_strip_all_tags( (string) $attributes['label'] ) ); ?>">
 				<?php
 				if ( 'title' === $kind ) {
-					$this->title_cell( $row, $column, $id, $value, $column === $primary );
+					$this->title_cell( $row, $column, $id, $value, $column === $primary, $as_html );
 				} elseif ( 'date' === $kind ) {
 					?>
-					<abbr title="<?php echo esc_attr( $value ); ?>"><?php echo wp_kses( $value, $admin->allowed_html() ); ?></abbr>
+					<abbr title="<?php echo esc_attr( $value ); ?>"><?php $this->print_value( $value, $as_html ); ?></abbr>
 					<?php
 				} else {
-					echo wp_kses( $value, $admin->allowed_html() );
+					$this->print_value( $value, $as_html );
 				}
 				?>
 			</td>
@@ -468,17 +473,35 @@ class Exports_Reports_List_Table extends WP_List_Table {
 	}
 
 	/**
+	 * Prints a cell's value: as text, or with the tags the screen allows when the column is shown as HTML.
+	 *
+	 * @since 1.2.9
+	 *
+	 * @param string $value   The formatted value.
+	 * @param bool   $as_html Whether the screen shows the column as HTML.
+	 */
+	protected function print_value( $value, $as_html ) {
+		if ( $as_html ) {
+			echo wp_kses( $value, $this->admin->allowed_html() );
+		} else {
+			echo esc_html( $value );
+		}
+	}
+
+	/**
 	 * The content of the title cell.
+	 *
+	 * @since 1.2.9 The $as_html argument; the value is text without it.
 	 *
 	 * @param array  $row     The row, its earlier columns formatted.
 	 * @param string $column  The column.
 	 * @param mixed  $id      The row's identifier.
 	 * @param string $value   The formatted value.
 	 * @param bool   $primary Whether the column is the primary one, which carries the row actions.
+	 * @param bool   $as_html Whether the screen shows the column as HTML.
 	 */
-	protected function title_cell( $row, $column, $id, $value, $primary ) {
+	protected function title_cell( $row, $column, $id, $value, $primary, $as_html = false ) {
 		$admin = $this->admin;
-		$text  = wp_kses( $value, $admin->allowed_html() );
 		$plain = wp_strip_all_tags( $value );
 
 		if ( ! $this->reorder && $admin->view ) {
@@ -505,11 +528,11 @@ class Exports_Reports_List_Table extends WP_List_Table {
 
 		if ( '' !== $link ) {
 			?>
-			<strong><a class="row-title" href="<?php echo esc_url( $link ); ?>" title="<?php echo esc_attr( $title ); ?>"><?php echo wp_kses_post( $text ); ?></a></strong>
+			<strong><a class="row-title" href="<?php echo esc_url( $link ); ?>" title="<?php echo esc_attr( $title ); ?>"><?php $this->print_value( $value, $as_html ); ?></a></strong>
 			<?php
 		} else {
 			?>
-			<strong><?php echo wp_kses_post( $text ); ?></strong>
+			<strong><?php $this->print_value( $value, $as_html ); ?></strong>
 			<?php
 		}
 
