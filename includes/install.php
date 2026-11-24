@@ -251,7 +251,8 @@ function exports_reports_installed_version() {
  * Brings the tables and the stored version up to date when the plugin's version has changed. An
  * install from before 0.6 loses its API token (that version's had another shape); one from before 1.0
  * gets the capabilities on the administrator role, which the user_has_cap filter of the earlier
- * versions granted on each request; one from before 1.2.0 has its API token replaced by its hash.
+ * versions granted on each request; one from before 1.2.0 has its API token replaced by its hash; one
+ * from before 1.3.0 has the times of its export log moved to UTC.
  */
 function exports_reports_upgrade() {
 	$installed = exports_reports_installed_version();
@@ -278,6 +279,11 @@ function exports_reports_upgrade() {
 	if ( version_compare( $installed, '1.2.0', '<' ) ) {
 		// The API token stored in the clear becomes its hash; the token itself goes on working.
 		exports_reports_token_hash();
+	}
+
+	if ( version_compare( $installed, '1.3.0', '<' ) ) {
+		// The export log keeps UTC from here on; the rows it holds were written in the site's local time.
+		exports_reports_log_to_utc();
 	}
 }
 

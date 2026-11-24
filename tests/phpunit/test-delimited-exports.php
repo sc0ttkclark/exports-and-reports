@@ -161,13 +161,18 @@ class Tests_Delimited_Exports extends Exports_Reports_Test_Case {
 		}
 
 		$this->assertIsString( $file );
-		$this->assertSame( 1, preg_match( '/^unicode_sales_\d{2}-\d{2}-\d{4}_\d{2}-\d{2}-\d{2}_[A-Za-z0-9]{8}\.csv$/', $file ), $file );
+		$this->assertSame( 1, preg_match( '/^unicode_sales_\d{2}-\d{2}-\d{4}_\d{2}-\d{2}-\d{2}_[A-Za-z0-9]{24}\.csv$/', $file ), $file );
 		$this->assertSame( $file, sanitize_file_name( $file ), 'the download link reads the name back unchanged' );
 		$this->assertTrue( $exists, 'the file was written' );
 
 		$blank = $this->report( 'SELECT id FROM ' . self::videos() . ' WHERE id = 1', '报告' );
 
 		$this->assertStringStartsWith( 'export_', $blank->export_file_name( 'csv' ), 'nothing of the name survives: export_' );
+
+		$long = $this->report( 'SELECT id FROM ' . self::videos() . ' WHERE id = 1', str_repeat( 'Quarterly sales by region ', 12 ) );
+
+		$this->assertSame( 1, preg_match( '/^[a-z_]{90,100}_\d{2}-\d{2}-\d{4}_\d{2}-\d{2}-\d{2}_[A-Za-z0-9]{24}\.csv$/', $long->export_file_name( 'csv' ) ), 'a long name is cut, and the file name stays within what a file system and the log take' );
+		$this->assertNotSame( $long->export_file_name( 'csv' ), $long->export_file_name( 'csv' ), 'the random part differs from one export to the next' );
 	}
 
 	/**

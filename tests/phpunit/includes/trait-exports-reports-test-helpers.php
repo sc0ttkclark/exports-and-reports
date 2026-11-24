@@ -103,8 +103,36 @@ trait Exports_Reports_Test_Helpers {
 
 		add_filter( 'query', array( $this, 'record_db_error' ) );
 		add_filter( 'exports_reports_display_callbacks', array( $this, 'list_display_functions' ) );
+		add_filter( 'pre_http_request', array( $this, 'refuse_export_dir_request' ), 5, 3 );
 
 		wp_mkdir_p( EXPORTS_REPORTS_EXPORT_DIR );
+	}
+
+	/**
+	 * Answers a request for a file of the export directory by its address as a server that protects the
+	 * directory does, with a 403: the suite sends no request over the network, and the check of the
+	 * directory (exports_reports_probe_export_dir()) finds it protected unless a test answers otherwise.
+	 *
+	 * @param false|array|WP_Error $response The answer so far.
+	 * @param array                $args     The request's arguments.
+	 * @param string               $url      The address.
+	 * @return false|array|WP_Error
+	 */
+	public function refuse_export_dir_request( $response, $args, $url ) {
+		if ( false !== $response || 0 !== strpos( (string) $url, EXPORTS_REPORTS_EXPORT_URL ) ) {
+			return $response;
+		}
+
+		return array(
+			'headers'  => array(),
+			'body'     => 'Forbidden',
+			'response' => array(
+				'code'    => 403,
+				'message' => 'Forbidden',
+			),
+			'cookies'  => array(),
+			'filename' => null,
+		);
 	}
 
 	/**
@@ -124,6 +152,7 @@ trait Exports_Reports_Test_Helpers {
 	protected function clean() {
 		remove_filter( 'query', array( $this, 'record_db_error' ) );
 		remove_filter( 'exports_reports_display_callbacks', array( $this, 'list_display_functions' ) );
+		remove_filter( 'pre_http_request', array( $this, 'refuse_export_dir_request' ), 5 );
 
 		$_REQUEST = array();
 	}

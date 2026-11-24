@@ -544,9 +544,14 @@ class Exports_Reports_Admin_UI {
 
 	/**
 	 * The name of a new export file: the report's name as a slug of ASCII letters, digits and
-	 * underscores ('export' when nothing of it survives), the time, a random suffix and the extension.
-	 * A name the download link can carry as it is: export.php and the REST route read it back through
-	 * sanitize_file_name().
+	 * underscores ('export' when nothing of it survives; its first hundred characters when it is long),
+	 * the time, a random suffix and the extension. A name the download link can carry as it is:
+	 * export.php and the REST route read it back through sanitize_file_name(). The suffix is 24 random
+	 * letters and digits: where the web server serves the export directory in spite of the plugin's rules
+	 * (see exports_reports_export_dir_status()), the name is all that stands between a file and whoever
+	 * asks for it, and it must not be one to guess.
+	 *
+	 * @since 1.3.0 A suffix of 24 characters (8 before), and a long report name cut to a hundred.
 	 *
 	 * @param string $extension The extension, without the dot.
 	 *
@@ -554,13 +559,13 @@ class Exports_Reports_Admin_UI {
 	 */
 	public function export_file_name( $extension ) {
 		$slug = preg_replace( '/%[0-9a-f]{2}/i', '', sanitize_title( (string) $this->items ) );
-		$slug = trim( (string) preg_replace( '/[^a-z0-9]+/', '_', strtolower( (string) $slug ) ), '_' );
+		$slug = trim( substr( trim( (string) preg_replace( '/[^a-z0-9]+/', '_', strtolower( (string) $slug ) ), '_' ), 0, 100 ), '_' );
 
 		if ( '' === $slug ) {
 			$slug = 'export';
 		}
 
-		return $slug . '_' . date_i18n( 'm-d-Y_H-i-s' ) . '_' . wp_generate_password( 8, false ) . '.' . $extension;
+		return $slug . '_' . date_i18n( 'm-d-Y_H-i-s' ) . '_' . wp_generate_password( 24, false ) . '.' . $extension;
 	}
 
 	/**
@@ -2000,14 +2005,14 @@ class Exports_Reports_Admin_UI {
 		if ( ! file_exists( EXPORTS_REPORTS_EXPORT_DIR ) ) {
 			if ( ! $wp_filesystem->is_writable( $dir ) || ! $wp_filesystem->mkdir( EXPORTS_REPORTS_EXPORT_DIR ) ) {
 				/* translators: %s: the export directory. */
-				$this->error( sprintf( __( '<strong>Error:</strong> Your export directory (<strong>%s</strong>) did not exist and could not be created by the web server. Check the directory permissions and try again.', 'exports-and-reports' ), EXPORTS_REPORTS_EXPORT_DIR ) );
+				$this->export_dir_error( sprintf( __( '<strong>Error:</strong> Your export directory (<strong>%s</strong>) did not exist and could not be created by the web server. Check the directory permissions and try again.', 'exports-and-reports' ), EXPORTS_REPORTS_EXPORT_DIR ) );
 
 				return false;
 			}
 		}
 		if ( ! $wp_filesystem->is_writable( EXPORTS_REPORTS_EXPORT_DIR ) ) {
 			/* translators: %s: the export directory. */
-			$this->error( sprintf( __( '<strong>Error:</strong> Your export directory (<strong>%s</strong>) needs to be writable for this plugin to work. Double-check it and try again.', 'exports-and-reports' ), EXPORTS_REPORTS_EXPORT_DIR ) );
+			$this->export_dir_error( sprintf( __( '<strong>Error:</strong> Your export directory (<strong>%s</strong>) needs to be writable for this plugin to work. Double-check it and try again.', 'exports-and-reports' ), EXPORTS_REPORTS_EXPORT_DIR ) );
 
 			return false;
 		}
@@ -2018,6 +2023,14 @@ class Exports_Reports_Admin_UI {
 
 			if ( ! self::is_export_file_name( $remove_export ) ) {
 				$this->error( __( '<strong>Error:</strong> That is not an export file.', 'exports-and-reports' ) );
+
+				return false;
+			}
+
+			// A file of this screen's own report, by the export log: a user who may view one report does not
+			// remove the exports of another by naming them.
+			if ( ! $this->logged_export( $remove_export ) ) {
+				$this->error( __( '<strong>Error:</strong> That is not an export of this report.', 'exports-and-reports' ) );
 
 				return false;
 			}
@@ -2059,7 +2072,7 @@ class Exports_Reports_Admin_UI {
 					do_action( 'exports_reports_post_remove_export', $remove_export, false, $remove_export_path, $this );
 					$this->legacy_hook( 'post_remove_export', array( $remove_export, false, $remove_export_path ) );
 					/* translators: %s: the export directory. */
-					$this->error( sprintf( __( '<strong>Error:</strong> Your export directory (<strong>%s</strong>) needs to be writable for this plugin to work. Double-check it and try again.', 'exports-and-reports' ), EXPORTS_REPORTS_EXPORT_DIR ) );
+					$this->export_dir_error( sprintf( __( '<strong>Error:</strong> Your export directory (<strong>%s</strong>) needs to be writable for this plugin to work. Double-check it and try again.', 'exports-and-reports' ), EXPORTS_REPORTS_EXPORT_DIR ) );
 
 					return false;
 				}
@@ -2120,11 +2133,52 @@ class Exports_Reports_Admin_UI {
 	}
 
 	/**
+	 * Shows an error about the export directory: the message as given, which names the directory's path
+	 * on the server, to a user who manages reports; to anyone else, who can do nothing about the directory
+	 * and has no use for the path, a note to ask an administrator.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param string $msg The message, HTML, with the path.
+	 *
+	 * @return bool False, as error() returns.
+	 */
+	public function export_dir_error( $msg ) {
+		if ( function_exists( 'exports_reports_current_user_can_manage' ) && ! exports_reports_current_user_can_manage() ) {
+			$msg = __( '<strong>Error:</strong> The export could not be written: its directory is missing or cannot be written to. Ask an administrator to check the plugin\'s Settings page.', 'exports-and-reports' );
+		}
+
+		return $this->error( $msg );
+	}
+
+	/**
+	 * Whether the export log names a file as an export of this screen's report: the removal asks, as the
+	 * download does (exports_reports_user_can_download_export()). The class on its own, without the
+	 * plugin's log table, has nothing to ask.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param string $file The file name.
+	 *
+	 * @return bool
+	 */
+	protected function logged_export( $file ) {
+		global $wpdb;
+
+		if ( empty( $wpdb->exports_reports_log ) ) {
+			return true;
+		}
+
+		return 0 < (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->exports_reports_log} WHERE `report_id` = %d AND `filename` = %s", (int) $this->report_id, (string) $file ) );
+	}
+
+	/**
 	 * Keeps the export directory from being served directly: an .htaccess that denies every request
 	 * (Apache 2.4 and 2.2 syntax) and an index.php, written when missing and rewritten when the plugin's
 	 * rules have changed since (a file of the site's own is left alone). Downloads go through
 	 * exports_reports_send_export_file() after a nonce or token check; nginx needs the equivalent
-	 * location rule in the server configuration (see the readme).
+	 * location rule in the server configuration (see the readme). Whether the rules hold on this server
+	 * is what exports_reports_export_dir_status() finds out.
 	 *
 	 * @since 0.9.5
 	 */

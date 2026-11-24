@@ -80,7 +80,7 @@ add_action( 'admin_notices', 'exports_reports_display_callbacks_notice' );
 add_action( 'admin_init', 'exports_reports_dismiss_notice' );
 add_action( 'exports_reports_post_export', 'exports_reports_log', 10, 2 );
 add_action( 'exports_reports_post_remove_export', 'exports_reports_delete_log', 10, 4 );
-add_filter( 'robots_txt', 'exports_reports_robots_txt' );
+add_filter( 'site_status_tests', 'exports_reports_site_status_tests' );
 
 require_once EXPORTS_REPORTS_DIR . 'vendor/autoload.php';
 
@@ -94,4 +94,5 @@ require_once EXPORTS_REPORTS_DIR . 'includes/admin-reports.php';
 require_once EXPORTS_REPORTS_DIR . 'includes/reports.php';
 require_once EXPORTS_REPORTS_DIR . 'includes/display-functions.php';
 require_once EXPORTS_REPORTS_DIR . 'includes/exports.php';
+require_once EXPORTS_REPORTS_DIR . 'includes/export-dir-check.php';
 require_once EXPORTS_REPORTS_DIR . 'includes/rest-api.php';

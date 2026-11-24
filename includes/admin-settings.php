@@ -39,10 +39,13 @@ function exports_reports_settings() {
 	$cleared   = false;
 	$reset     = false;
 	$forgotten = false;
+	$saved     = false;
 	$new_token = '';
 
 	if ( isset( $_POST['cronjob_token'] ) || ! empty( $_POST['generate_token'] ) || ! empty( $_POST['disable_token'] ) || isset( $_POST['export_formats_set'] ) || isset( $_POST['count_cache'] ) || ! empty( $_POST['count_cache_forget'] ) || ! empty( $_POST['clear'] ) || ! empty( $_POST['reset'] ) ) {
 		check_admin_referer( 'exports-reports-settings' );
+
+		$saved = true;
 
 		if ( isset( $_POST['count_cache'] ) ) {
 			update_option( 'exports_reports_count_cache', absint( wp_unslash( $_POST['count_cache'] ) ) );
@@ -86,6 +89,15 @@ function exports_reports_settings() {
 		}
 	}
 
+	// Whether the web server serves the export directory: as found within the hour, or now when the form was saved.
+	$dir_status   = exports_reports_export_dir_status( $saved );
+	$dir_statuses = array(
+		'protected' => __( 'Checked: a request for a file in the directory by its address was refused.', 'exports-and-reports' ),
+		'served'    => __( 'Checked: a file in the directory was served to a request for its address.', 'exports-and-reports' ),
+		'outside'   => __( 'The directory is outside the web root, where the web server cannot serve it.', 'exports-and-reports' ),
+		'missing'   => __( 'The directory is created with the first export and checked then.', 'exports-and-reports' ),
+		'unknown'   => __( 'The plugin could not check whether the directory is served: the file for the check could not be written, or the site could not reach itself.', 'exports-and-reports' ),
+	);
 	$rest_base    = rest_url( 'exports-reports/v1/reports/YOUR_REPORT_ID' );
 	$token_on     = '' !== exports_reports_token_hash();
 	$token        = '' !== $new_token ? $new_token : 'YOUR_TOKEN'; // In the example addresses.
@@ -125,6 +137,16 @@ function exports_reports_settings() {
 		<?php if ( $forgotten ) : ?>
 			<div id="message" class="updated fade">
 				<p><?php esc_html_e( 'The kept row counts are forgotten; the next page view of each report counts again.', 'exports-and-reports' ); ?></p>
+			</div>
+		<?php endif; ?>
+
+		<?php if ( 'served' === $dir_status ) : ?>
+			<div class="notice notice-error inline exports-reports-dir-served">
+				<p>
+					<strong><?php esc_html_e( 'The web server serves the export directory.', 'exports-and-reports' ); ?></strong>
+					<?php esc_html_e( 'A file in it was served to a request for its address, without the plugin\'s access check: until an export is removed, anyone who has or guesses its address can download it.', 'exports-and-reports' ); ?>
+				</p>
+				<p><?php echo wp_kses( exports_reports_export_dir_advice(), array( 'code' => array() ) ); ?></p>
 			</div>
 		<?php endif; ?>
 
@@ -183,6 +205,9 @@ function exports_reports_settings() {
 					<td>
 						<code><?php echo esc_html( EXPORTS_REPORTS_EXPORT_DIR ); ?></code><br />
 						<span class="description">
+							<?php if ( isset( $dir_statuses[ $dir_status ] ) ) : ?>
+								<strong class="exports-reports-dir-status"><?php echo esc_html( $dir_statuses[ $dir_status ] ); ?></strong>
+							<?php endif; ?>
 							<?php esc_html_e( 'Downloads are served by the plugin after an access check; the directory itself should not be reachable by URL.', 'exports-and-reports' ); ?>
 							<?php if ( file_exists( EXPORTS_REPORTS_EXPORT_DIR . '/.htaccess' ) ) : ?>
 								<?php esc_html_e( 'Apache: the plugin\'s .htaccess denies direct requests.', 'exports-and-reports' ); ?>

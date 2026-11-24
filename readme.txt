@@ -93,6 +93,8 @@ In `wp-content/uploads/exports-and-reports` by default, a folder of the uploads 
 
 or define `EXPORTS_REPORTS_EXPORT_DIR` in wp-config.php with a writable directory outside the web root, which needs no server rule at all. The Settings page shows the directory in use.
 
+The plugin checks whether the rules hold: it writes a file into the directory, asks the site for it by its address and removes it. Tools > Site Health reports a directory the server serves as a critical issue, and the plugin's Settings page shows the same finding. An export is removed a day after it was written, or sooner with the button under its message; its name ends in 24 random characters.
+
 = Who can see what? =
 
 The plugin registers three capabilities: `exports_reports_full_access` (everything), `exports_reports_settings` (the Reports Admin screens) and `exports_reports_view` (every report). A group or a report can also be opened to roles on its edit screen, and a role can be given `exports_reports_view_group_ID` or `exports_reports_view_report_ID` for one group or one report. The administrator role receives the three capabilities when the plugin is activated (and on the upgrade to 1.0); a roles plugin such as Members can take them away or give them to other roles, and the plugin does not put them back until it is activated again. On a single site the capabilities alone decide: an administrator whose role has lost them is refused like anyone else. Super admins of a network always have full access.
@@ -129,7 +131,7 @@ The plugin's bundled libraries (`vendor/`) are part of the zip and of the reposi
 * Limit which User Roles have access to a Group or Report
 * Ability to clear entire export directory (based on logged export files)
 * Daily Export Cleanup via wp_cron
-* The export directory is not served by the web server; downloads go through the plugin after an access check
+* The export directory is not served by the web server; downloads go through the plugin after an access check, and Site Health reports a server that serves it anyway
 * Deletes its tables, options and export files on uninstall
 
 = Reporting =
@@ -168,6 +170,12 @@ The plugin's bundled libraries (`vendor/`) are part of the zip and of the reposi
 = 1.3.0 =
 * On a single site the plugin's capabilities alone decide who views and manages reports. The super-admin shortcut, which WordPress extends to every administrator of a single site, now applies on a network only, so a role that loses the capabilities loses the access. The Settings page follows the same capabilities instead of `manage_options`.
 * The Manage Groups and Manage Reports screens check the capability themselves.
+* Site Health and the Settings page check whether the web server serves the export directory, which only Apache protects on its own, and give the rule to add.
+* Export file names end in 24 random characters instead of 8.
+* The export log and the daily cleanup use UTC. An export was removed earlier or later than a day after it was written, by the site's distance from UTC.
+* An export can be removed only from the screen of its own report.
+* An error about the export directory shows its path on the server only to users who manage reports.
+* robots.txt no longer names the export directory; the `exports_reports_robots_txt()` function is gone.
 * A field's Display function, and the helper of a `{@field,helper}` tag, is called only when the site lists it through the new `exports_reports_display_callbacks` filter; a definition could name any function before. The functions your reports use at the time of the update are listed for you, and a notice names them.
 * On a network (multisite), groups and reports are created and edited by super admins only: a report's SQL reaches every site's tables. Site administrators still view the reports and keep the Settings page. `add_filter( 'exports_reports_site_admins_edit_reports', '__return_true' );` hands the editing back to the sites.
 

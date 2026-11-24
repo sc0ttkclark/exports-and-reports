@@ -52,8 +52,9 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
 - `Tests_Delimited_Exports` (`test-delimited-exports.php`): CSV streamed from an unbuffered result and
   buffered byte for byte the same, every value quoted, the byte order mark first, formula-like text
   neutralised; TSV; streaming only with plain columns, a custom display column through the buffered
-  path; ASCII file names for a report named outside ASCII; a streamed export with a search term over a
-  column expression containing `%d` matching the buffered one.
+  path; ASCII file names for a report named outside ASCII, ending in 24 random characters, a long name
+  cut; a streamed export with a search term over a column expression containing `%d` matching the
+  buffered one.
 - `Tests_Writers` (`test-writers.php`): XLSX, XML and JSON exports checked for their labels and rows; the
   XLSX worksheet holding no formula for the seeded formula-like title or for a value or label that starts
   with `=`, `+`, `-` or `@`, and holding one when `exports_reports_export_escape_formulas` turns the
@@ -71,7 +72,12 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
   leaving the protection files alone; the export directory carrying `.htaccess` and `index.php`; the
   download function streaming an export and refusing anything else; `.txt` exports served and the daily
   cleanup having a handler; deactivation clearing the cleanup event and the next admin request putting
-  it back; Clear Now removing export files only.
+  it back; Clear Now removing export files only; an export removed only from the screen of its own report,
+  by its log row; the log written in UTC and the cleanup counting the day in UTC under a site time zone
+  ten hours from it, with the rows of an earlier version converted; an error about the directory naming
+  its path to a user who manages reports only; no robots.txt line; the directory's check telling a served
+  directory from a protected one, an unreachable site and a directory outside the web root, and Site
+  Health and the Settings page reporting what it finds.
 - `Tests_REST_API` (`test-rest-api.php`): the report refused without the token or a user; full and paged
   data with the token parameter and the bearer token; the report access rules for users; export and
   download through the routes, the export logged; download authorisation following the log row and the
@@ -112,7 +118,8 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
 `tests/phpunit/includes/` holds the base class and the helpers the classes share: the seeded table
 (created before each class, dropped after it), a report definition set up the way `exports_reports_view()`
 sets it up, group and report rows, the export files, the REST requests and the admin-ajax handlers, and
-the listing of the suite's own display functions. The base class is declared for the fixture methods
+the listing of the suite's own display functions. A request for a file of the export directory by its
+address is answered with a 403 inside the suite, so no test reaches the network. The base class is declared for the fixture methods
 of the test library in use (`setUp()`/`tearDown()` on WordPress 5.7 and 5.8, `set_up()`/`tear_down()` from
 5.9), and the test classes override `prepare()` and `clean()` instead.
 
