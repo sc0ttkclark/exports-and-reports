@@ -209,6 +209,7 @@ The plugin's bundled libraries (`vendor/`) are part of the zip and of the reposi
 * New filters: `exports_reports_export_locale`, `exports_reports_export_locales`, `exports_reports_export_csv_delimiter`, `exports_reports_export_western_digits` and `exports_reports_use_intl`.
 * On the report pages and in PDF exports, numbers take the separators of the site's language, which changes nothing on an English site. A new Settings box, "Use the site's date and time formats", does the same for dates. The other export formats are not affected.
 * A negative number with a thousands separator (`-13,506.75`) is no longer wrapped like a formula in CSV, TSV and TXT.
+* The report form shows the group a report is in. It showed the first group, and saving the form moved the report there: check the group of reports edited on earlier versions.
 
 = 1.2.9 =
 * Security: the XLSX export writes a value that starts with `=` as text. It was written as a formula, so text a report merely stores (a title, a name someone typed into a form) ran in the spreadsheet of whoever opened the export. The CSV, TSV and TXT exports have neutralized such values since 0.9.2; XLSX, added in 0.8.0, never did. The cell shows the value as stored, with nothing added to it. The `exports_reports_export_escape_formulas` filter, which turns the handling off for the delimited exports, decides for XLSX as well. Versions 0.8.0 to 1.2.8 are affected.

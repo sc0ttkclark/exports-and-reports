@@ -153,6 +153,46 @@ class Tests_Request_Handling extends Exports_Reports_Test_Case {
 		$this->assertSame( "WHERE name <> 'O'Brien'", $saved[1]['related_sql'] );
 	}
 
+	/**
+	 * The report form shows the group a report is in. Its menu chose no option, so the browser showed the
+	 * first group, and saving the form for any other change moved the report there.
+	 */
+	public function test_the_report_form_shows_the_group_the_report_is_in() {
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+
+		if ( is_multisite() ) {
+			grant_super_admin( $user );
+		}
+
+		wp_set_current_user( $user );
+
+		$first  = $this->insert_group( array( 'name' => 'First group' ) );
+		$second = $this->insert_group( array( 'name' => 'Second group' ) );
+		$report = $this->insert_report( $second, array( 'page_orientation' => 'P' ) );
+
+		$_GET = array(
+			'action' => 'edit',
+			'id'     => (string) $report,
+		);
+
+		ob_start();
+		exports_reports_reports();
+		$html = (string) ob_get_clean();
+
+		$_GET = array();
+
+		if ( is_multisite() ) {
+			revoke_super_admin( $user );
+		}
+
+		wp_set_current_user( 0 );
+
+		$this->assertSame( 1, preg_match( '#<select name="group" id="admin_ui_group">(.*?)</select>#s', $html, $menu ), 'the form has the Group menu' );
+		$this->assertStringContainsString( '<option value="' . $second . '" selected=\'selected\'>Second group</option>', $menu[1] );
+		$this->assertStringContainsString( '<option value="' . $first . '">First group</option>', $menu[1] );
+		$this->assertStringContainsString( '<option value="P" selected=\'selected\'>Portrait</option>', $html, 'a menu whose values are not numbers' );
+	}
+
 	public function test_save_refuses_a_request_without_the_form_nonce() {
 		list( $ids, $screen ) = $this->groups_screen();
 

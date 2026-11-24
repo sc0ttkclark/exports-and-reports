@@ -128,7 +128,8 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
   filter value, `exports_reports_export_escape_formulas` turning the formula wrapping off, and
   `exports_reports_export_pdf_engine` selecting TCPDF.
 - `Tests_Request_Handling` (`test-request-handling.php`): the report field editor rendering the saved
-  fields and saving the posted rows in order, unslashed and sanitized; `save()`, `reorder()` and the
+  fields and saving the posted rows in order, unslashed and sanitized; the report form showing the group
+  a report is in as the chosen one; `save()`, `reorder()` and the
   settings form carrying and verifying their nonces; request values unslashed and sanitized on the way in;
   a page size that is not offered (0, 7, 100000000) falling back before the query runs, the sizes of the
   `exports_reports_limit` filter and the screen's own size taken; 85 rows at 10 a page as 9 pages with
