@@ -5,7 +5,7 @@ Tags: export, reports, csv, excel, sql
 Requires at least: 5.7
 Tested up to: 7.1
 Requires PHP: 7.2
-Stable tag: 1.2.8
+Stable tag: 1.2.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -429,6 +429,9 @@ The plugin's bundled libraries (`vendor/`) are part of the zip and of the reposi
 * First official release to the public as a plugin
 
 == Upgrade Notice ==
+
+= 1.2.9 =
+Security release: XLSX exports no longer write stored text as formulas, PDF exports on PHP below 8.2 print stored values as text, and the report page shows stored HTML as text. A column whose stored values are markup of your own is opted back in with the `exports_reports_html_values` filter.
 
 = 1.2.0 =
 The API token is now stored as a hash and cannot be shown again; the token you have keeps working. Row counts are kept for five minutes by default (Settings: Row Count Cache).
