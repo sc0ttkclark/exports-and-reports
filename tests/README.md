@@ -51,9 +51,19 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
   neutralised; TSV; streaming only with plain columns, a custom display column through the buffered
   path; ASCII file names for a report named outside ASCII; a streamed export with a search term over a
   column expression containing `%d` matching the buffered one.
-- `Tests_Writers` (`test-writers.php`): XLSX, XML and JSON exports checked for their labels and rows; a
-  two-page PDF with the default engine (tc-lib-pdf on PHP 8.2 and later, TCPDF below), the producer
-  string naming it, and the default engine following the PHP version.
+- `Tests_Writers` (`test-writers.php`): XLSX, XML and JSON exports checked for their labels and rows; the
+  XLSX worksheet holding no formula for the seeded formula-like title or for a value or label that starts
+  with `=`, `+`, `-` or `@`, and holding one when `exports_reports_export_escape_formulas` turns the
+  handling off; a number column as a numeric cell holding the whole value; the list and both PDF
+  engines formatting numbers through one function, and text in a number or
+  decimal column left as it is; a two-page PDF with the default engine (tc-lib-pdf on PHP 8.2 and later,
+  TCPDF below), the producer string naming it, and the default engine following the PHP version; the
+  TCPDF engine handing stored markup to TCPDF as text (no tag of it, the text escaped) and keeping the
+  markup of a display function.
+- `Tests_Screen_Output` (`test-screen-output.php`): a link, an image and a script a table stores shown as
+  text on the report page, in the title column and the others, and on the view screen (whose list of a
+  related column's labels stays a list); the markup of a display function kept; the
+  `exports_reports_html_values` filter opting one column back in, within the allowed tags.
 - `Tests_Export_Files` (`test-export-files.php`): `export()` needing the link nonce and `remove_export`
   leaving the protection files alone; the export directory carrying `.htaccess` and `index.php`; the
   download function streaming an export and refusing anything else; `.txt` exports served and the daily
@@ -76,7 +86,11 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
   `exports_reports_export_pdf_engine` selecting TCPDF.
 - `Tests_Request_Handling` (`test-request-handling.php`): the report field editor rendering the saved
   fields and saving the posted rows in order, unslashed and sanitized; `save()`, `reorder()` and the
-  settings form carrying and verifying their nonces; request values unslashed and sanitized on the way in.
+  settings form carrying and verifying their nonces; request values unslashed and sanitized on the way in;
+  a page size that is not offered (0, 7, 100000000) falling back before the query runs, the sizes of the
+  `exports_reports_limit` filter and the screen's own size taken; 85 rows at 10 a page as 9 pages with
+  their links (issue #32), each address escaped; `debug=1` answering a user who manages reports only and
+  wpdb's error display restored.
 
 `tests/phpunit/includes/` holds the base class and the helpers the classes share: the seeded table
 (created before each class, dropped after it), a report definition set up the way `exports_reports_view()`

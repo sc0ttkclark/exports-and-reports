@@ -103,16 +103,7 @@ class Exports_Reports_Exporter_Delimited extends Exports_Reports_Exporter {
 		$head   = array();
 		$stream = null;
 
-		/**
-		 * Filters whether values a spreadsheet would evaluate as formulas are written as text.
-		 *
-		 * @since 1.0.0 The arguments one by one; the array form stays with wp_admin_ui_export_escape_formulas.
-		 *
-		 * @param bool                    $escape True by default.
-		 * @param Exports_Reports_Admin_UI $admin  The screen.
-		 */
-		$escape_formulas = apply_filters( 'exports_reports_export_escape_formulas', true, $this->admin ); // Before the unbuffered result is open: a callback may query the database.
-		$escape_formulas = false !== $this->admin->legacy_hook( 'export_escape_formulas', array( $escape_formulas ) );
+		$escape_formulas = $this->escapes_formulas(); // Before the unbuffered result is open: a callback may query the database.
 
 		if ( '' !== $this->admin->stream_sql ) {
 			// Unbuffered, on wpdb's connection: the statement may read temporary tables and session variables

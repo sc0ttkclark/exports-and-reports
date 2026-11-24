@@ -695,7 +695,7 @@ class Exports_Reports_Admin_UI_Export_PDF {
 	 * @param string $type     The column type.
 	 * @param mixed  $raw_data The value.
 	 *
-	 * @return int|string
+	 * @return mixed A string for the types the plugin formats; the value as it came otherwise.
 	 */
 	public static function format_field( $type, $raw_data ) {
 		if ( 'date' === $type ) {
@@ -706,10 +706,9 @@ class Exports_Reports_Admin_UI_Export_PDF {
 			return date_i18n( 'Y/m/d g:i:s A', strtotime( (string) $raw_data ) );
 		} elseif ( 'bool' === $type ) {
 			return ( 1 === (int) $raw_data ? 'Yes' : 'No' );
-		} elseif ( 'number' === $type ) {
-			return (int) $raw_data;
-		} elseif ( 'decimal' === $type ) {
-			return number_format( (float) $raw_data, 2 );
+		} elseif ( 'number' === $type || 'decimal' === $type ) {
+			// As the screen formats it (Exports_Reports_Admin_UI::format_number()), a number column without thousands separators.
+			$raw_data = 'number' === $type ? Exports_Reports_Admin_UI::format_number( $raw_data, 0, '' ) : Exports_Reports_Admin_UI::format_number( $raw_data, 2 );
 		}
 
 		return $raw_data;

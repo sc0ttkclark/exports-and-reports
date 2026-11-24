@@ -1,9 +1,11 @@
 <?php
 /**
- * The view screen of a row: the heading and one row per view column.
+ * The view screen of a row: the heading and one row per view column. A value is printed as text unless a
+ * view function wrote it or the exports_reports_html_values filter opts its column in.
  *
  * @package Exports_And_Reports
  * @since   1.0.0
+ * @since   1.2.9 A value without a view function is escaped.
  *
  * @var Exports_Reports_Admin_UI $this The screen.
  */
@@ -48,6 +50,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php
 				continue;
 			}
+			// The row's value is text; the list a related column builds below is the screen's own markup.
+			$as_html = $this->shows_html( $column, $attributes );
 			if ( 'date' === $attributes['type'] ) {
 				$this->row[ $column ] = date_i18n( 'Y/m/d', strtotime( $this->row[ $column ] ) );
 			} elseif ( 'time' === $attributes['type'] ) {
@@ -57,9 +61,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 			} elseif ( 'bool' === $attributes['type'] ) {
 				$this->row[ $column ] = ( 1 === (int) $this->row[ $column ] ? __( 'Yes', 'exports-and-reports' ) : __( 'No', 'exports-and-reports' ) );
 			} elseif ( 'number' === $attributes['type'] ) {
-				$this->row[ $column ] = (int) ( $this->row[ $column ] );
+				$this->row[ $column ] = self::format_number( $this->row[ $column ], 0, '' );
 			} elseif ( 'decimal' === $attributes['type'] ) {
-				$this->row[ $column ] = number_format( $this->row[ $column ], 2 );
+				$this->row[ $column ] = self::format_number( $this->row[ $column ], 2 );
 			} elseif ( 'related' === $attributes['type'] && false !== $attributes['related'] ) {
 				$old_value            = $this->row[ $column ];
 				$this->row[ $column ] = '';
@@ -81,12 +85,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 						}
 					}
 					$this->row[ $column ] = '<ul><li>' . implode( '</li><li>', $this->row[ $column ] ) . '</li></ul>';
+					$as_html              = true;
 				} else {
 					$this->row[ $column ] = __( 'N/A', 'exports-and-reports' );
 				}
 			}
 			?>
-			<div id="admin_ui_<?php echo esc_attr( $column ); ?>"><?php echo wp_kses_post( $this->row[ $column ] ); ?></div>
+			<div id="admin_ui_<?php echo esc_attr( $column ); ?>"><?php echo $as_html ? wp_kses( (string) $this->row[ $column ], $this->allowed_html() ) : esc_html( (string) $this->row[ $column ] ); ?></div>
 			<?php
 			if ( ! empty( $attributes['comments'] ) && false === $attributes['comments_top'] ) {
 				?>

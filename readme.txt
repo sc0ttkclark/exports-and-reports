@@ -5,7 +5,7 @@ Tags: export, reports, csv, excel, sql
 Requires at least: 5.7
 Tested up to: 7.1
 Requires PHP: 7.2
-Stable tag: 1.2.8
+Stable tag: 1.2.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,7 +35,11 @@ A Report is defined by a Custom MySQL query and can be configured to display how
 
 **My report isn't working**
 
-As an admin, add &debug=1 to the end of the report URL to see the query that this plugin uses, take that query and use it in your own MySQL client or PHPMyAdmin to see if there are any errors in your own query.
+As a user who may manage reports (the settings capability or full access), add `&debug=1` to the end of the report URL to see the query the plugin runs, with the database's errors; take that query to your own MySQL client or phpMyAdmin to see whether the error is in your own query.
+
+= Why does my report show no page links? =
+
+A query with a LIMIT of its own and no `%%LIMIT%%` placeholder shows what it returns as one page: take the LIMIT out, or write `LIMIT %%LIMIT%%` where the page belongs. Otherwise the report pages by the size chosen under "Show per page"; a size an address asks for that is not among them is not taken, and the report's own size serves.
 
 = Where do the paging, the row count, a sort and a filter go in my query? =
 
@@ -61,6 +65,18 @@ Leave the field editor empty and the report shows every column the query returns
 
 Yes. The Settings page lists the formats the export buttons offer on every report; untick the ones the site does not need. A report can narrow that list further in its own settings (Export Formats), but not widen it. A format that is not offered is refused by the export and by the REST route, not only hidden. CSV, TSV and TXT are written row by row and suit very large reports; XLSX, XML, JSON and PDF hold the whole report in memory while they are written. Code can adjust a report's list with the `exports_reports_report_export_formats` filter.
 
+= Can a value in an export run as a formula in a spreadsheet? =
+
+No. A spreadsheet that opens a CSV, TSV or TXT file evaluates a value that starts with `=`, `+`, `-` or `@`, so those exports wrap such a value in a text formula that shows it and stays inert (numbers are left alone). The XLSX export writes every text value as a text cell, exactly as stored. A site that writes formulas into its reports on purpose turns this off with the `exports_reports_export_escape_formulas` filter, for all four formats.
+
+= My data holds HTML. Why does the report show it as text? =
+
+Because the values a report reads are shown as what they are. A table often holds text someone else typed (a form entry, a profile field), and a link or an image in it would otherwise render in the admin as if the site had put it there. Markup your own code writes still renders: what a field's Display function returns keeps the tags post content may have (the `exports_reports_allowed_html` filter extends them). For a column whose stored values are markup of the site's own, opt it back in:
+
+`add_filter( 'exports_reports_html_values', function ( $html, $column, $attributes, $admin ) { return 12 === $admin->report_id && 'summary' === $column ? true : $html; }, 10, 4 );`
+
+PDF exports print text as well; on PHP below 8.2, where TCPDF renders them, a Display function's output keeps its markup there too.
+
 = Where do the export files go, and who can download them? =
 
 In `wp-content/uploads/exports-and-reports` by default, a folder of the uploads directory; define `EXPORTS_REPORTS_EXPORT_DIR` and `EXPORTS_REPORTS_EXPORT_URL` in wp-config.php to move it, for example outside the web root. Every download goes through the plugin after a nonce or API token check, so the directory never needs to be reachable by URL. The plugin writes an .htaccess that keeps Apache from serving it; nginx ignores .htaccess, so either add the rule to the server block:
@@ -78,8 +94,8 @@ The plugin registers three capabilities: `exports_reports_full_access` (everythi
 Every hook is documented where it runs; these are the ones sites use most. Filters receive the value first and the report screen (`Exports_Reports_Admin_UI`) last.
 
 * The report query: `exports_reports_get_data_sql( $sql, $full, $admin )` and `exports_reports_get_data_sql_count( $sql, $full, $admin )` right before the query and its totals query run (return false to run nothing); `exports_reports_get_data_total( $total, $full, $admin )` for the row count and `exports_reports_count_cache_ttl( $seconds, $admin )` for how long it is kept; `exports_reports_data_filter_sql( $condition, $filter, $column, $field, $related_field, $value, $admin )` for the condition a filter adds.
-* Exports: `exports_reports_export_file( $file, $type, $extension, $items, $admin )` for the file name; `exports_reports_export_escape_formulas( $escape, $admin )`; `exports_reports_export_pdf_engine( $engine )` and `exports_reports_export_pdf_report_file( $file, $admin )`; the actions `exports_reports_pre_export( $admin )`, `exports_reports_post_export( $file, $admin )`, `exports_reports_pre_remove_export( $file, $path, $admin )`, `exports_reports_post_remove_export( $file, $removed, $path, $admin )` and `exports_reports_export_download`.
-* The screens: `exports_reports_report_options( $options, $report_id )` and `exports_reports_options( $options, $admin )` for a screen's settings; `exports_reports_setup_columns( $columns, $which, $init, $admin )` and `exports_reports_setup_column( $attributes, $column, $filterable, $admin )`; `exports_reports_row_actions( $links, $row, $admin )`; `exports_reports_limit( $sizes, $admin )` for the page sizes; `exports_reports_allowed_html( $allowed )` for the HTML a display callback may return; `exports_reports_allowed_callback( $allowed, $callback, $admin )` for the functions a field definition may name; the actions `exports_reports_pre_init( $options )`, `exports_reports_post_init( $options, $admin )`, `exports_reports_pre_save( $create, $admin )`, `exports_reports_post_save( $id, $data, $create, $admin )`, `exports_reports_pre_delete( $id, $admin )`, `exports_reports_post_delete( $id, $admin )`, `exports_reports_post_reorder( $id, $admin )`.
+* Exports: `exports_reports_export_file( $file, $type, $extension, $items, $admin )` for the file name; `exports_reports_export_escape_formulas( $escape, $admin )` for the CSV, TSV, TXT and XLSX exports; `exports_reports_export_pdf_engine( $engine )` and `exports_reports_export_pdf_report_file( $file, $admin )`; the actions `exports_reports_pre_export( $admin )`, `exports_reports_post_export( $file, $admin )`, `exports_reports_pre_remove_export( $file, $path, $admin )`, `exports_reports_post_remove_export( $file, $removed, $path, $admin )` and `exports_reports_export_download`.
+* The screens: `exports_reports_report_options( $options, $report_id )` and `exports_reports_options( $options, $admin )` for a screen's settings; `exports_reports_setup_columns( $columns, $which, $init, $admin )` and `exports_reports_setup_column( $attributes, $column, $filterable, $admin )`; `exports_reports_row_actions( $links, $row, $admin )`; `exports_reports_limit( $sizes, $admin )` for the page sizes; `exports_reports_allowed_html( $allowed )` for the HTML a display callback may return and `exports_reports_html_values( $html, $column, $attributes, $admin )` to show a column's stored values as HTML instead of text; `exports_reports_allowed_callback( $allowed, $callback, $admin )` for the functions a field definition may name; the actions `exports_reports_pre_init( $options )`, `exports_reports_post_init( $options, $admin )`, `exports_reports_pre_save( $create, $admin )`, `exports_reports_post_save( $id, $data, $create, $admin )`, `exports_reports_pre_delete( $id, $admin )`, `exports_reports_post_delete( $id, $admin )`, `exports_reports_post_reorder( $id, $admin )`.
 * Capabilities: `exports_reports_capabilities( $caps )`.
 
 Before 1.0 the `exports_reports_*` and `wp_admin_ui_*` hooks of the report screen passed their arguments as one array; callbacks on the `wp_admin_ui_*` names still receive that array, with a deprecation notice.
@@ -138,6 +154,14 @@ The plugin's bundled libraries (`vendor/`) are part of the zip and of the reposi
 == Changelog ==
 
 = 1.2.9 =
+* Security: the XLSX export writes a value that starts with `=` as text. It was written as a formula, so text a report merely stores (a title, a name someone typed into a form) ran in the spreadsheet of whoever opened the export. The CSV, TSV and TXT exports have neutralized such values since 0.9.2; XLSX, added in 0.8.0, never did. The cell shows the value as stored, with nothing added to it. The `exports_reports_export_escape_formulas` filter, which turns the handling off for the delimited exports, decides for XLSX as well. Versions 0.8.0 to 1.2.8 are affected.
+* Security: on PHP below 8.2, where PDF exports render with TCPDF, the values a report reads are printed as text. They went into TCPDF's HTML renderer with the tags post content may have, so an `<img>` stored in a table a report reads made the server fetch its address, or read a local image path, when someone exported the PDF. What a display function returns keeps its markup. The tc-lib-pdf engine of PHP 8.2 and later has always printed text and is not affected.
+* Security: the report page and the view screen show the values a report reads as text. They were printed with the tags post content may have, so a link or an image stored in a table a report reads (a field a subscriber or a visitor filled in) rendered in the admin as the site's own; no script ran. What a Display function returns keeps its markup, and the new `exports_reports_html_values` filter opts a column of a report back in where the stored values are markup of the site's own.
+* The page size an address asks for is taken only when it is one of the sizes offered (10, 25, 50, 100 and 200, or what the `exports_reports_limit` filter returns), and before the query runs. It was checked where the sizes are printed, after the query had run with it: `limit=100000000` read every row into one page, and a size that is not offered showed pages of one size under page links counted for another. A screen set up with a size of its own offers that size too. The `exports_reports_limit` filter runs when the screen is set up as well as when the sizes are printed.
+* `&debug=1` answers a user who may manage reports (the settings capability or full access) instead of one with `manage_options`, and the database's error display goes back to what it was once the queries have run.
+* The previous-page link of the paging escapes its address as an address, and the title of the last-page link lost a stray quote. The paging of 85 rows at 10 a page (issue #32) has its test: 9 pages, each linked.
+* The XLSX export writes a number column as a numeric cell holding the whole value. A value of 1,000 or more came out as the digits before its first thousands separator (1,400 as 1), and as text.
+* A number or decimal column whose value is no number (text, an empty string) shows the value as it is, on the list, on the view screen, in the totals and in every export; on PHP 8 formatting it stopped the report page and the export, and the PDF export showed it as 0. One function formats these columns everywhere, so the PDF export and the view screen round a fraction in a number column as the list does, where they cut it off.
 * The installation steps install the plugin from wordpress.org, where it is listed; the release zip from GitHub stays as the alternative.
 * The short description, the opening of the description and the plugin header say what the plugin does in one sentence; the tags are the common forms (export, reports, csv, excel, sql). The feature list no longer offers the WP Admin UI class to other plugins: the class has carried the plugin's own name since the rewrite.
 * The plugin header no longer carries the `GitHub Plugin URI` and `Primary Branch` headers of Git Updater: updates come from wordpress.org.
@@ -405,6 +429,9 @@ The plugin's bundled libraries (`vendor/`) are part of the zip and of the reposi
 * First official release to the public as a plugin
 
 == Upgrade Notice ==
+
+= 1.2.9 =
+Security release: XLSX exports no longer write stored text as formulas, PDF exports on PHP below 8.2 print stored values as text, and the report page shows stored HTML as text. A column whose stored values are markup of your own is opted back in with the `exports_reports_html_values` filter.
 
 = 1.2.0 =
 The API token is now stored as a hash and cannot be shown again; the token you have keeps working. Row counts are kept for five minutes by default (Settings: Row Count Cache).

@@ -346,4 +346,163 @@ class Tests_Request_Handling extends Exports_Reports_Test_Case {
 		$this->assertStringContainsString( 'value="O&#039;Brien x"', $hidden );
 		$this->assertStringNotContainsString( '\\', $hidden );
 	}
+
+	/**
+	 * The page of a report for a request, and what its table prints.
+	 *
+	 * @param array  $request The query string's variables.
+	 * @param string $sql     The report SQL.
+	 * @param array  $options Options added to the defaults.
+	 * @return array{0: Exports_Reports_Admin_UI, 1: string, 2: string} The screen, the statement it ran and the table.
+	 */
+	protected function page_for( array $request, $sql, $options = array() ) {
+		$_GET = $request;
+
+		$report    = $this->report( $sql, 'Paged', $options );
+		$statement = $report->query->statement();
+
+		ob_start();
+		$report->get_data();
+		$report->table();
+		$table = (string) ob_get_clean();
+
+		$_GET = array();
+
+		return array( $report, $statement['sql'], $table );
+	}
+
+	/**
+	 * A page size the screen does not offer never reaches the query: the screen's own size serves, for the
+	 * LIMIT and for the page links alike. It was checked when the sizes were printed, after the query had
+	 * run with whatever the address asked for.
+	 */
+	public function test_a_page_size_that_is_not_offered_falls_back_before_the_query_runs() {
+		$sql = 'SELECT id, title FROM ' . self::videos() . ' ORDER BY id';
+
+		foreach ( array( '0', '7', '100000000', 'abc' ) as $asked ) {
+			list( $report, $ran, $table ) = $this->page_for( array( 'limit' => $asked ), $sql );
+
+			$this->assertSame( 25, $report->limit, 'limit=' . $asked );
+			$this->assertStringContainsString( 'LIMIT 0,25', $ran, 'limit=' . $asked );
+			$this->assertCount( 25, $report->data, 'limit=' . $asked );
+			$this->assertStringContainsString( '<span class="total-pages">3</span>', $table, 'sixty rows at 25 a page, limit=' . $asked );
+		}
+
+		list( $report, $ran ) = $this->page_for( array( 'limit' => '50' ), $sql );
+
+		$this->assertSame( 50, $report->limit, 'a size the screen offers is taken' );
+		$this->assertStringContainsString( 'LIMIT 0,50', $ran );
+
+		list( $unset ) = $this->page_for( array( 'limit' => '7' ), $sql, array( 'limit' => 0 ) );
+
+		$this->assertSame( Exports_Reports_Admin_UI::DEFAULT_LIMIT, $unset->limit, 'a screen set up with no size takes the default' );
+		$this->assertSame( 25, Exports_Reports_Admin_UI::DEFAULT_LIMIT );
+	}
+
+	/**
+	 * The sizes a site offers through exports_reports_limit are the ones taken, and a screen set up with
+	 * a size of its own offers that size too.
+	 */
+	public function test_the_page_sizes_offered_follow_the_filter_and_the_screens_own_size() {
+		$sql   = 'SELECT id, title FROM ' . self::videos() . ' ORDER BY id';
+		$sizes = static function () {
+			return array( 5, 15 );
+		};
+
+		add_filter( 'exports_reports_limit', $sizes );
+
+		list( $fifteen )           = $this->page_for( array( 'limit' => '15' ), $sql, array( 'limit' => 5 ) );
+		list( $ten )               = $this->page_for( array( 'limit' => '10' ), $sql, array( 'limit' => 5 ) );
+		list( $own, $ran, $table ) = $this->page_for( array(), $sql, array( 'limit' => 12 ) );
+
+		remove_filter( 'exports_reports_limit', $sizes );
+
+		$this->assertSame( 15, $fifteen->limit );
+		$this->assertSame( 5, $ten->limit, 'ten is not offered here' );
+		$this->assertSame( 12, $own->limit, 'the size the screen was set up with' );
+		$this->assertStringContainsString( 'LIMIT 0,12', $ran );
+		$this->assertStringContainsString( '<span class="page-numbers current">12</span>', $table, 'and it is among the sizes shown' );
+		$this->assertStringContainsString( '<span class="total-pages">5</span>', $table, 'sixty rows at 12 a page' );
+	}
+
+	/**
+	 * Issue #32: 85 rows at 10 a page are 9 pages, with the links to reach them.
+	 */
+	public function test_eighty_five_rows_at_ten_a_page_are_nine_pages() {
+		global $wpdb;
+
+		for ( $i = 61; $i <= 85; $i++ ) {
+			$wpdb->insert(
+				self::$videos_table,
+				array(
+					'channel'   => 'delta',
+					'title'     => 'Video ' . $i,
+					'revenue'   => 1,
+					'published' => '2021-06-01',
+				)
+			);
+		}
+
+		list( $report, $ran, $table ) = $this->page_for(
+			array(
+				'page'  => 'exports-reports-group-1',
+				'limit' => '10',
+				'pg'    => '3',
+			),
+			'SELECT id, title FROM ' . self::videos() . ' ORDER BY id'
+		);
+
+		$wpdb->query( 'DELETE FROM ' . self::videos() . ' WHERE id > 60' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- the test's own table.
+
+		$this->assertSame( 85, (int) $report->total );
+		$this->assertStringContainsString( 'LIMIT 20,10', $ran );
+		$this->assertCount( 10, $report->data );
+		$this->assertSame( 2, substr_count( $table, '<span class="total-pages">9</span>' ), 'above and below the table' );
+		$this->assertStringContainsString( 'pg=9', $table, 'the last page is linked' );
+
+		// The links of the paging: each address escaped as an address, each title closed where it ends.
+		$this->assertSame( 2, substr_count( $table, 'title="Go to the previous page" href="?page=exports-reports-group-1&#038;limit=10&#038;pg=2"' ) );
+		$this->assertSame( 2, substr_count( $table, 'title="Go to the last page" href="?page=exports-reports-group-1&#038;limit=10&#038;pg=9"' ) );
+	}
+
+	/**
+	 * debug=1 shows the statement and the database's errors to a user who manages reports, and to nobody
+	 * else; wpdb shows errors afterwards as it did before.
+	 */
+	public function test_debug_shows_the_query_to_a_user_who_manages_reports_and_restores_the_error_display() {
+		global $wpdb;
+
+		$sql     = 'SELECT id, title FROM ' . self::videos() . ' WHERE id = 1';
+		$manager = self::factory()->user->create( array( 'role' => 'editor' ) );
+
+		get_userdata( $manager )->add_cap( 'exports_reports_settings' );
+
+		$outputs = array();
+		$states  = array();
+
+		foreach ( array( 'manager' => $manager, 'subscriber' => self::factory()->user->create( array( 'role' => 'subscriber' ) ) ) as $who => $user ) {
+			wp_set_current_user( $user );
+
+			$_GET   = array( 'debug' => '1' );
+			$report = $this->report( $sql, 'Debug' );
+			$before = $wpdb->hide_errors();
+
+			ob_start();
+			$report->get_data();
+			$outputs[ $who ] = (string) ob_get_clean();
+			$states[ $who ]  = $wpdb->show_errors;
+
+			$wpdb->show_errors( $before );
+
+			$_GET = array();
+		}
+
+		wp_set_current_user( 0 );
+
+		$this->assertStringContainsString( '<textarea', $outputs['manager'] );
+		$this->assertStringContainsString( 'SQL_CALC_FOUND_ROWS id, title FROM', $outputs['manager'] );
+		$this->assertSame( '', $outputs['subscriber'], 'nothing for a user who only views reports' );
+		$this->assertFalse( $states['manager'], 'the error display is as it was before the query' );
+		$this->assertFalse( $states['subscriber'] );
+	}
 }

@@ -499,7 +499,7 @@ class Tests_Report_Queries extends Exports_Reports_Test_Case {
 	public function test_a_paged_view_with_a_totals_query_counts_every_row() {
 		global $wpdb;
 
-		$_GET['limit'] = '2';
+		$_GET['limit'] = '10'; // A size the screen offers; any other falls back to the screen's own.
 
 		$report = $this->view(
 			'SELECT id, revenue FROM ' . self::videos() . ' ORDER BY id',
@@ -509,9 +509,9 @@ class Tests_Report_Queries extends Exports_Reports_Test_Case {
 
 		$rows_in_table = (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . self::videos() ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		$this->assertGreaterThan( 2, $rows_in_table );
+		$this->assertGreaterThan( 10, $rows_in_table );
 		$this->assertSame( $rows_in_table, (int) $report->total );
-		$this->assertCount( 2, $report->data );
+		$this->assertCount( 10, $report->data );
 		$this->assertTrue( isset( $report->sum_data[0]['revenue'] ), 'the totals row is there' );
 	}
 

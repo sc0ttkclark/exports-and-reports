@@ -34,6 +34,15 @@ if ( ! defined( 'EXPORTS_REPORTS_EXPORT_DIR' ) ) {
  */
 class Exports_Reports_Admin_UI {
 
+	/**
+	 * The page size of a screen that is set up with none.
+	 *
+	 * @since 1.2.9
+	 *
+	 * @var int
+	 */
+	const DEFAULT_LIMIT = 25;
+
 	// base
 	public $table              = false;
 	public $identifier         = 'id';
@@ -47,7 +56,7 @@ class Exports_Reports_Admin_UI {
 	public $search_query       = false;
 	public $pagination         = true;
 	public $page               = 1;
-	public $limit              = 25;
+	public $limit              = self::DEFAULT_LIMIT;
 	public $order              = false;
 	public $order_dir          = 'DESC';
 	public $order_default      = false;
@@ -59,6 +68,15 @@ class Exports_Reports_Admin_UI {
 	/** @var int The report the instance shows: Exports and Reports sets it; 0 for an instance without one. */
 	public $report_id = 0;
 	public $num       = '';
+	/**
+	 * The page size the screen was set up with, before the request named one: what a size the screen
+	 * does not offer falls back to, and a size the screen always offers.
+	 *
+	 * @since 1.2.9
+	 *
+	 * @var int
+	 */
+	public $limit_default = self::DEFAULT_LIMIT;
 
 	// ui
 	public $item    = 'Item';
@@ -245,8 +263,15 @@ class Exports_Reports_Admin_UI {
 		if ( false !== $this->get_var( 'pg' ) ) {
 			$this->page = max( 1, absint( $this->get_var( 'pg' ) ) );
 		}
+		// The page size: the screen's own unless the request names one of the sizes offered. The query runs
+		// with it, so it is settled here, not where the sizes are printed.
+		$this->limit         = 0 < absint( $this->limit ) ? absint( $this->limit ) : self::DEFAULT_LIMIT;
+		$this->limit_default = $this->limit;
 		if ( false !== $this->get_var( 'limit' ) ) {
-			$this->limit = absint( $this->get_var( 'limit' ) );
+			$limit = absint( $this->get_var( 'limit' ) );
+			if ( in_array( $limit, $this->page_sizes(), true ) ) {
+				$this->limit = $limit;
+			}
 		}
 		$this->order_default     = $this->order;
 		$this->order_dir_default = $this->order_dir;
@@ -1210,8 +1235,9 @@ class Exports_Reports_Admin_UI {
 	}
 
 	/**
-	 * The HTML a display function, a view function or the header callback may return: the tags of post
-	 * content, which the exports_reports_allowed_html filter may extend.
+	 * The HTML a display function, a view function or the header callback may return, and a column opted
+	 * in through exports_reports_html_values may hold: the tags of post content, which the
+	 * exports_reports_allowed_html filter may extend.
 	 *
 	 * @since 0.9.5
 	 *
@@ -1225,6 +1251,44 @@ class Exports_Reports_Admin_UI {
 		 * @param Exports_Reports_Admin_UI $admin   The report.
 		 */
 		return apply_filters( 'exports_reports_allowed_html', wp_kses_allowed_html( 'post' ), $this );
+	}
+
+	/**
+	 * Whether a column's value is shown as HTML, within the tags allowed_html() names, rather than as
+	 * text: when a display function wrote it, or when the exports_reports_html_values filter opts the
+	 * column in. A value the query returned is text otherwise, so markup a table stores (a link or an
+	 * image in a field a visitor filled in) is shown, not rendered.
+	 *
+	 * @since 1.2.9
+	 *
+	 * @param string $column        The column.
+	 * @param array  $attributes    Its attributes.
+	 * @param bool   $from_callback Whether a display function returned the value.
+	 *
+	 * @return bool
+	 */
+	public function shows_html( $column, $attributes, $from_callback = false ) {
+		if ( $from_callback ) {
+			return true;
+		}
+
+		/**
+		 * Filters whether the values of a column are shown as HTML on the report page and the view screen,
+		 * with the tags the exports_reports_allowed_html filter names. Off by default: a value the query
+		 * returned is shown as text. For a report whose tables hold markup of the site's own:
+		 *
+		 *     add_filter( 'exports_reports_html_values', function ( $html, $column, $attributes, $admin ) {
+		 *         return 12 === $admin->report_id && 'summary' === $column ? true : $html;
+		 *     }, 10, 4 );
+		 *
+		 * @since 1.2.9
+		 *
+		 * @param bool                     $html       Whether the values are shown as HTML.
+		 * @param string                   $column     The column.
+		 * @param array                    $attributes Its attributes.
+		 * @param Exports_Reports_Admin_UI $admin      The screen; its report_id names the report.
+		 */
+		return true === apply_filters( 'exports_reports_html_values', false, $column, $attributes, $this );
 	}
 
 	public function message( $msg ) {
@@ -1698,6 +1762,33 @@ class Exports_Reports_Admin_UI {
 		$this->legacy_hook( 'post_reorder', array( $this->insert_id ) );
 	}
 
+	/**
+	 * A value of a number or decimal column, formatted: the one place that decides what a number is. A
+	 * number, or a string that reads as one, is rounded to the decimals given; NULL counts as 0, as it
+	 * always has; anything else (text, an empty string) comes back as it is: it is no number to format,
+	 * and PHP 8 stops on number_format() of one. field_value(), the view screen, the totals row and both
+	 * PDF engines format through here, so a value reads the same wherever it is shown.
+	 *
+	 * @since 1.2.9
+	 *
+	 * @param mixed  $value     The value from the row.
+	 * @param int    $decimals  The decimals to round to.
+	 * @param string $thousands The thousands separator; '' for none.
+	 *
+	 * @return mixed The number as a string, or the value as it came when it is no number.
+	 */
+	public static function format_number( $value, $decimals = 0, $thousands = ',' ) {
+		if ( null === $value ) {
+			$value = 0;
+		}
+
+		if ( ! is_numeric( $value ) ) {
+			return $value;
+		}
+
+		return number_format( (float) $value, $decimals, '.', $thousands );
+	}
+
 	public function field_value( $value, $field_name, $attributes ) {
 		global $wpdb;
 		if ( 'date' === $attributes['type'] ) {
@@ -1761,9 +1852,9 @@ class Exports_Reports_Admin_UI {
 		} elseif ( 'bool' === $attributes['type'] ) {
 			$value = ( 1 === (int) $value ? __( 'Yes', 'exports-and-reports' ) : __( 'No', 'exports-and-reports' ) );
 		} elseif ( 'number' === $attributes['type'] ) {
-			$value = number_format( $value, 0 );
+			$value = self::format_number( $value, 0 );
 		} elseif ( 'decimal' === $attributes['type'] ) {
-			$value = number_format( $value, 2 );
+			$value = self::format_number( $value, 2 );
 		}
 		if ( false !== $attributes['custom_relate'] ) {
 			$table = $attributes['custom_relate'];
@@ -2146,15 +2237,44 @@ class Exports_Reports_Admin_UI {
 			return false;
 		}
 
-		if ( current_user_can( 'manage_options' ) && 1 === (int) $this->get_var( 'debug', 0 ) ) {
+		// debug=1 in the address: the statement as it runs and the database's errors, for a user who manages
+		// reports (who wrote the query); the error display goes back to what it was once the queries have run.
+		$debug = 1 === (int) $this->get_var( 'debug', 0 ) && function_exists( 'exports_reports_current_user_can_manage' ) && exports_reports_current_user_can_manage();
+
+		if ( $debug ) {
 			echo "<textarea cols='130' rows='30'>" . esc_textarea( $wpdb->remove_placeholder_escape( $sql ) ) . '</textarea>';
 		}
 		if ( false !== $this->default_none && false === $this->search_query && false === $full && empty( $wheresql ) && empty( $havingsql ) ) {
 			return false;
 		}
-		if ( current_user_can( 'manage_options' ) && 1 === (int) $this->get_var( 'debug', 0 ) ) {
-			$wpdb->show_errors( true );
+
+		$shown = $debug ? $wpdb->show_errors( true ) : null;
+
+		try {
+			return $this->run_statement( $sql, $sql_count, $full, $count_key, $cached );
+		} finally {
+			if ( null !== $shown ) {
+				$wpdb->show_errors( $shown );
+			}
 		}
+	}
+
+	/**
+	 * Runs the report query get_data() assembled, and its totals query, and keeps the rows, the count and
+	 * the totals on the screen.
+	 *
+	 * @since 1.2.9 Out of get_data(), which restores wpdb's error display around it.
+	 *
+	 * @param string           $sql       The statement.
+	 * @param string           $sql_count The totals statement, or ''.
+	 * @param bool             $full      Whether every row is read, as for an export.
+	 * @param string           $count_key The transient of the kept row count, or ''.
+	 * @param array|int|false  $cached    The kept row count, or false.
+	 *
+	 * @return array The rows.
+	 */
+	protected function run_statement( $sql, $sql_count, $full, $count_key, $cached ) {
+		/** @global wpdb $wpdb */ global $wpdb;
 
 		$results           = array();
 		$total             = 0;
@@ -2536,7 +2656,7 @@ class Exports_Reports_Admin_UI {
 		$page          = $this->page;
 		$rows_per_page = $this->limit;
 		$total_rows    = $this->total;
-		$total_pages   = (int) ceil( $total_rows / $rows_per_page );
+		$total_pages   = (int) ceil( $total_rows / max( 1, (int) $rows_per_page ) );
 
 		$request_uri = $this->var_update(
 			array( 'pg' => '' ),
@@ -2578,7 +2698,7 @@ class Exports_Reports_Admin_UI {
 		if ( 1 < $total_pages ) {
 			?>
 			<a class="first-page<?php echo ( 1 < $this->page ) ? '' : ' disabled'; ?>" title="<?php esc_attr_e( 'Go to the first page', 'exports-and-reports' ); ?>" href="<?php echo esc_url( $request_uri . ( $append ? '&' : '?' ) . 'pg' . $this->num . '=1' ); ?>">&laquo;</a>
-			<a class="prev-page<?php echo ( 1 < $this->page ) ? '' : ' disabled'; ?>" title="<?php esc_attr_e( 'Go to the previous page', 'exports-and-reports' ); ?>" href="<?php echo esc_html( $request_uri . ( $append ? '&' : '?' ) . 'pg' . $this->num . '=' . max( $this->page - 1, 1 ) ); ?>">&lsaquo;</a>
+			<a class="prev-page<?php echo ( 1 < $this->page ) ? '' : ' disabled'; ?>" title="<?php esc_attr_e( 'Go to the previous page', 'exports-and-reports' ); ?>" href="<?php echo esc_url( $request_uri . ( $append ? '&' : '?' ) . 'pg' . $this->num . '=' . max( $this->page - 1, 1 ) ); ?>">&lsaquo;</a>
 			<?php
 			if ( true === $header ) {
 				?>
@@ -2593,45 +2713,65 @@ class Exports_Reports_Admin_UI {
 			}
 			?>
 			<a class="next-page<?php echo ( $this->page < $total_pages ) ? '' : ' disabled'; ?>" title="<?php esc_attr_e( 'Go to the next page', 'exports-and-reports' ); ?>" href="<?php echo esc_url( $request_uri . ( $append ? '&' : '?' ) . 'pg' . $this->num . '=' . min( $this->page + 1, $total_pages ) ); ?>">&rsaquo;</a>
-			<a class="last-page<?php echo ( $this->page < $total_pages ) ? '' : ' disabled'; ?>" title="<?php esc_attr_e( 'Go to the last page', 'exports-and-reports' ); ?>'" href="<?php echo esc_url( $request_uri . ( $append ? '&' : '?' ) . 'pg' . $this->num . '=' . $total_pages ); ?>">&raquo;</a>
+			<a class="last-page<?php echo ( $this->page < $total_pages ) ? '' : ' disabled'; ?>" title="<?php esc_attr_e( 'Go to the last page', 'exports-and-reports' ); ?>" href="<?php echo esc_url( $request_uri . ( $append ? '&' : '?' ) . 'pg' . $this->num . '=' . $total_pages ); ?>">&raquo;</a>
 			<?php
 		}
 	}
 
-	public function limit( $options = false ) {
+	/**
+	 * The page sizes the screen offers: 10, 25, 50, 100 and 200 unless the exports_reports_limit filter
+	 * says otherwise, and the size the screen was set up with when it is none of them. The request's
+	 * limit is taken only when it is one of these (see the constructor), and limit() prints them.
+	 *
+	 * @since 1.2.9 Out of limit(), so the request's size is checked before the query runs.
+	 *
+	 * @param int[]|false $options The sizes, or false for the default list.
+	 *
+	 * @return int[] In ascending order.
+	 */
+	public function page_sizes( $options = false ) {
 		/**
 		 * Filters the page sizes offered.
 		 *
 		 * @since 1.0.0 A filter; the value the callbacks return is used.
+		 * @since 1.2.9 Runs when the screen is set up as well: a size the request names is taken only when it is offered.
 		 *
 		 * @param int[]|false             $options The sizes, or false for the default list.
 		 * @param Exports_Reports_Admin_UI $admin   The screen.
 		 */
 		$options = apply_filters( 'exports_reports_limit', $options, $this );
 		$options = $this->legacy_hook( 'limit', array( $options ) );
-		if ( isset( $this->custom['limit'] ) && function_exists( "{$this->custom['limit']}" ) ) {
-			return call_user_func( $this->custom['limit'], $this );
-		}
 		if ( false === $options || ! is_array( $options ) || empty( $options ) ) {
 			$options = array( 10, 25, 50, 100, 200 );
 		}
-		if ( ! in_array( $this->limit, array_map( 'intval', $options ), true ) ) {
-			$this->limit = $options[1];
+		$sizes   = array_filter( array_map( 'absint', $options ) );
+		$sizes[] = (int) $this->limit_default;
+		$sizes   = array_values( array_unique( $sizes ) );
+		sort( $sizes );
+
+		return $sizes;
+	}
+
+	public function limit( $options = false ) {
+		$options = $this->page_sizes( $options );
+		if ( isset( $this->custom['limit'] ) && function_exists( "{$this->custom['limit']}" ) ) {
+			return call_user_func( $this->custom['limit'], $this );
 		}
 		foreach ( $options as $option ) {
-			if ( $this->limit === (int) $option ) {
-				echo ' <span class="page-numbers current">' . esc_html( $option ) . '</span>';
+			$size = (string) $option;
+			if ( $this->limit === $option ) {
+				echo ' <span class="page-numbers current">' . esc_html( $size ) . '</span>';
 			} else {
 				echo ' <a href="' . esc_url(
 					$this->var_update(
-						array( 'limit' => $option ),
+						array( 'limit' => $size ),
 						array(
 							'order',
 							'order_dir',
 							'search_query',
 						)
 					)
-				) . '">' . esc_html( $option ) . '</a>';
+				) . '">' . esc_html( $size ) . '</a>';
 			}
 		}
 	}

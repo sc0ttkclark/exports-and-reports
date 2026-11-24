@@ -125,9 +125,9 @@ $back         = $reordering;
 					<th scope="col" class="manage-column"><?php echo wp_kses_post( $label ); ?></th>
 					<?php
 					if ( 'number' === $attributes['type'] ) {
-						$total = (int) $this->totals[ $column ];
+						$total = self::format_number( $this->totals[ $column ], 0, '' );
 					} elseif ( 'decimal' === $attributes['type'] ) {
-						$total = number_format( $this->totals[ $column ], 2 );
+						$total = self::format_number( $this->totals[ $column ], 2 );
 					} else {
 						$total = $this->totals[ $column ];
 					}

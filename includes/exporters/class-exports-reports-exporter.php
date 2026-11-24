@@ -89,6 +89,32 @@ abstract class Exports_Reports_Exporter {
 	}
 
 	/**
+	 * Whether a value a spreadsheet would evaluate as a formula is written as text: true unless the
+	 * exports_reports_export_escape_formulas filter says otherwise. The delimited exports and the XLSX
+	 * export ask here, so one filter decides for every spreadsheet format. Ask before an unbuffered
+	 * result is open: a callback may query the database.
+	 *
+	 * @since 1.2.9 Out of Exports_Reports_Exporter_Delimited::write(), for the XLSX export as well.
+	 *
+	 * @return bool
+	 */
+	protected function escapes_formulas() {
+		/**
+		 * Filters whether values a spreadsheet would evaluate as formulas are written as text, in the CSV,
+		 * TSV, TXT and XLSX exports.
+		 *
+		 * @since 1.0.0 The arguments one by one; the array form stays with wp_admin_ui_export_escape_formulas.
+		 * @since 1.2.9 The XLSX export follows it too.
+		 *
+		 * @param bool                    $escape True by default.
+		 * @param Exports_Reports_Admin_UI $admin  The screen.
+		 */
+		$escape = apply_filters( 'exports_reports_export_escape_formulas', true, $this->admin );
+
+		return false !== $this->admin->legacy_hook( 'export_escape_formulas', array( $escape ) );
+	}
+
+	/**
 	 * The name of the file to write, through the screen's exports_reports_export_file filter.
 	 *
 	 * @return string
@@ -111,6 +137,7 @@ abstract class Exports_Reports_Exporter {
 
 require_once __DIR__ . '/class-exports-reports-exporter-delimited.php';
 require_once __DIR__ . '/class-exports-reports-exporter-xml.php';
+require_once __DIR__ . '/class-exports-reports-xlsx-writer.php';
 require_once __DIR__ . '/class-exports-reports-exporter-xlsx.php';
 require_once __DIR__ . '/class-exports-reports-exporter-json.php';
 require_once __DIR__ . '/class-exports-reports-exporter-pdf.php';
