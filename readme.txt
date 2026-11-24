@@ -176,14 +176,14 @@ The plugin's bundled libraries (`vendor/`) are part of the zip and of the reposi
 
 == Screenshots ==
 
-1. View the report, export data, search content, filter by date, and paginate through the records
+1. View the report, search and filter it, page through the records, and export them as raw values or in the number and date format of a language
 2. Create and manage report groups that can contain their own sets of reports
 3. Create and manage reports
 4. Specify the SQL query that selects the data; placeholders put the search, the filters, the sort and the page where you want them, and an optional totals query feeds the Totals row
 5. Specify the fields to display on the report and what kind of data they are, or detect them from the query
 6. Exports run in the background: the message with the download and the button that removes the file
 7. Set advanced field options to further customize how fields will be displayed, exported, searched, filtered, or related to other tables
-8. Manage plugin settings and get useful URLs for API access
+8. Manage plugin settings: the export formats, the dates of the screens, the row count cache, the check of the export directory and the API token with its URLs
 
 == Changelog ==
 
