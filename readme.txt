@@ -35,7 +35,11 @@ A Report is defined by a Custom MySQL query and can be configured to display how
 
 **My report isn't working**
 
-As an admin, add &debug=1 to the end of the report URL to see the query that this plugin uses, take that query and use it in your own MySQL client or PHPMyAdmin to see if there are any errors in your own query.
+As a user who may manage reports (the settings capability or full access), add `&debug=1` to the end of the report URL to see the query the plugin runs, with the database's errors; take that query to your own MySQL client or phpMyAdmin to see whether the error is in your own query.
+
+= Why does my report show no page links? =
+
+A query with a LIMIT of its own and no `%%LIMIT%%` placeholder shows what it returns as one page: take the LIMIT out, or write `LIMIT %%LIMIT%%` where the page belongs. Otherwise the report pages by the size chosen under "Show per page"; a size an address asks for that is not among them is not taken, and the report's own size serves.
 
 = Where do the paging, the row count, a sort and a filter go in my query? =
 
@@ -153,6 +157,9 @@ The plugin's bundled libraries (`vendor/`) are part of the zip and of the reposi
 * Security: the XLSX export writes a value that starts with `=` as text. It was written as a formula, so text a report merely stores (a title, a name someone typed into a form) ran in the spreadsheet of whoever opened the export. The CSV, TSV and TXT exports have neutralized such values since 0.9.2; XLSX, added in 0.8.0, never did. The cell shows the value as stored, with nothing added to it. The `exports_reports_export_escape_formulas` filter, which turns the handling off for the delimited exports, decides for XLSX as well. Versions 0.8.0 to 1.2.8 are affected.
 * Security: on PHP below 8.2, where PDF exports render with TCPDF, the values a report reads are printed as text. They went into TCPDF's HTML renderer with the tags post content may have, so an `<img>` stored in a table a report reads made the server fetch its address, or read a local image path, when someone exported the PDF. What a display function returns keeps its markup. The tc-lib-pdf engine of PHP 8.2 and later has always printed text and is not affected.
 * Security: the report page and the view screen show the values a report reads as text. They were printed with the tags post content may have, so a link or an image stored in a table a report reads (a field a subscriber or a visitor filled in) rendered in the admin as the site's own; no script ran. What a Display function returns keeps its markup, and the new `exports_reports_html_values` filter opts a column of a report back in where the stored values are markup of the site's own.
+* The page size an address asks for is taken only when it is one of the sizes offered (10, 25, 50, 100 and 200, or what the `exports_reports_limit` filter returns), and before the query runs. It was checked where the sizes are printed, after the query had run with it: `limit=100000000` read every row into one page, and a size that is not offered showed pages of one size under page links counted for another. A screen set up with a size of its own offers that size too. The `exports_reports_limit` filter runs when the screen is set up as well as when the sizes are printed.
+* `&debug=1` answers a user who may manage reports (the settings capability or full access) instead of one with `manage_options`, and the database's error display goes back to what it was once the queries have run.
+* The previous-page link of the paging escapes its address as an address, and the title of the last-page link lost a stray quote. The paging of 85 rows at 10 a page (issue #32) has its test: 9 pages, each linked.
 * The XLSX export writes a number column as a numeric cell holding the whole value. A value of 1,000 or more came out as the digits before its first thousands separator (1,400 as 1), and as text.
 * A number or decimal column whose value is no number (text, an empty string) shows the value as it is, on the list, on the view screen, in the totals and in every export; on PHP 8 formatting it stopped the report page and the export, and the PDF export showed it as 0. One function formats these columns everywhere, so the PDF export and the view screen round a fraction in a number column as the list does, where they cut it off.
 * The installation steps install the plugin from wordpress.org, where it is listed; the release zip from GitHub stays as the alternative.

@@ -86,7 +86,11 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
   `exports_reports_export_pdf_engine` selecting TCPDF.
 - `Tests_Request_Handling` (`test-request-handling.php`): the report field editor rendering the saved
   fields and saving the posted rows in order, unslashed and sanitized; `save()`, `reorder()` and the
-  settings form carrying and verifying their nonces; request values unslashed and sanitized on the way in.
+  settings form carrying and verifying their nonces; request values unslashed and sanitized on the way in;
+  a page size that is not offered (0, 7, 100000000) falling back before the query runs, the sizes of the
+  `exports_reports_limit` filter and the screen's own size taken; 85 rows at 10 a page as 9 pages with
+  their links (issue #32), each address escaped; `debug=1` answering a user who manages reports only and
+  wpdb's error display restored.
 
 `tests/phpunit/includes/` holds the base class and the helpers the classes share: the seeded table
 (created before each class, dropped after it), a report definition set up the way `exports_reports_view()`
