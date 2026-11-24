@@ -1,7 +1,7 @@
 === Exports and Reports ===
 Contributors: sc0ttkclark, dxdc
 Donate link: https://github.com/sponsors/dxdc
-Tags: exporting, reporting, csv, pdf, xml
+Tags: export, reports, csv, excel, sql
 Requires at least: 5.7
 Tested up to: 7.1
 Requires PHP: 7.2
@@ -9,13 +9,13 @@ Stable tag: 1.2.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Define custom exports / reports for users, based off of any custom MySQL SELECT query you define.
+Turn any MySQL SELECT query into a report your users can search, filter and export to CSV, XLSX, PDF, JSON or XML.
 
 == Description ==
 
-Define custom exports / reports for users, based off of any MySQL SELECT query you create. This plugin interacts with your SELECT query and does all the hard work for you: exporting, pagination, ordering, searching/filtering, and display formatting for you.
+Exports and Reports turns any MySQL SELECT query into a report page in the WordPress admin. You write the query; the plugin adds the search box, the filters, the sorting, the pagination, the display formatting and the export buttons around it.
 
-All you do is install the plugin, create your Groups, create your Reports, and hand it off to your clients. Exportable reports in CSV, TSV, pipe-separated TXT, XLSX, XML, JSON and PDF, from the admin screens or through the REST API with a token, for cronjobs.
+Create your Groups, add your Reports to them, choose which user roles may see each one, and hand them off to your clients or colleagues. Reports export to CSV, TSV, pipe-separated TXT, XLSX, XML, JSON and PDF, from the admin screens or through the REST API with a token, for cronjobs and scripts.
 
 Requires PHP 7.2 and WordPress 5.7 or later. PDF exports render with tc-lib-pdf on PHP 8.2 and later and with TCPDF below that.
 
@@ -103,7 +103,6 @@ The plugin's bundled libraries (`vendor/`) are part of the zip and of the reposi
 * Daily Export Cleanup via wp_cron
 * The export directory is not served by the web server; downloads go through the plugin after an access check
 * Deletes its tables, options and export files on uninstall
-* WP Admin UI - A class for plugins to manage data using the WordPress UI appearance
 
 = Reporting =
 * Filter by Date
@@ -140,6 +139,7 @@ The plugin's bundled libraries (`vendor/`) are part of the zip and of the reposi
 
 = 1.2.9 =
 * The installation steps install the plugin from wordpress.org, where it is listed; the release zip from GitHub stays as the alternative.
+* The short description, the opening of the description and the plugin header say what the plugin does in one sentence; the tags are the common forms (export, reports, csv, excel, sql). The feature list no longer offers the WP Admin UI class to other plugins: the class has carried the plugin's own name since the rewrite.
 
 = 1.2.8 =
 * The XML export stays parseable whatever the report returns: a value holding a CDATA terminator is split across two sections, and a column name XML does not allow becomes a valid element name.

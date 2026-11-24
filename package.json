@@ -1,7 +1,7 @@
 {
   "name": "exports-and-reports",
   "version": "1.2.8",
-  "description": "",
+  "description": "Turn any MySQL SELECT query into a report your users can search, filter and export to CSV, XLSX, PDF, JSON or XML.",
   "author": "SKC Development, LLC",
   "homepage": "https://skc.dev/",
   "bugs": "https://github.com/sc0ttkclark/exports-and-reports/issues",

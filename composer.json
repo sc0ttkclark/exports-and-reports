@@ -1,7 +1,7 @@
 {
   "name": "sc0ttkclark/exports-and-reports",
   "type": "wordpress-plugin",
-  "description": "Define custom exports / reports for users, based off of any custom MySQL SELECT query you define.",
+  "description": "Turn any MySQL SELECT query into a report your users can search, filter and export to CSV, XLSX, PDF, JSON or XML.",
   "license": "GPL-2.0-or-later",
   "require": {
     "composer/installers": "^2.2",

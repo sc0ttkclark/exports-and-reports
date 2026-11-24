@@ -26,7 +26,7 @@ msgstr ""
 
 #. Description of the plugin
 #: exports-and-reports.php
-msgid "Define custom exports / reports for users by creating each export / report and defining the fields as well as custom MySQL queries to run."
+msgid "Turn any MySQL SELECT query into a report your users can search, filter and export to CSV, XLSX, PDF, JSON or XML."
 msgstr ""
 
 #. Author of the plugin
