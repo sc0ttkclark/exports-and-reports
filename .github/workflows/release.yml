@@ -3,7 +3,7 @@ name: Release zip
 # puts it on a draft release for the tag given, creating the draft when there is none, so that the file
 # is attached before the release is published: the repository's releases are immutable, and an
 # immutable release takes no asset once it is published. With publish set, the run publishes the draft
-# itself; otherwise the draft waits for a look at https://github.com/Element26-Inc/exports-and-reports/releases.
+# itself; otherwise the draft waits for a look at https://github.com/sc0ttkclark/exports-and-reports/releases.
 #
 #   gh workflow run release.yml --ref main -f tag=1.0.1                   # build, attach to the draft
 #   gh workflow run release.yml --ref main -f tag=1.0.1 -f publish=true   # and publish it

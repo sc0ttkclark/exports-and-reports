@@ -141,6 +141,7 @@ The plugin's bundled libraries (`vendor/`) are part of the zip and of the reposi
 * The installation steps install the plugin from wordpress.org, where it is listed; the release zip from GitHub stays as the alternative.
 * The short description, the opening of the description and the plugin header say what the plugin does in one sentence; the tags are the common forms (export, reports, csv, excel, sql). The feature list no longer offers the WP Admin UI class to other plugins: the class has carried the plugin's own name since the rewrite.
 * The plugin header no longer carries the `GitHub Plugin URI` and `Primary Branch` headers of Git Updater: updates come from wordpress.org.
+* The package metadata names both maintainers, and the translation template and the release workflow point at the repository the plugin lives in (sc0ttkclark/exports-and-reports); composer.json no longer suggests WP-CLI for another plugin's commands.
 
 = 1.2.8 =
 * The XML export stays parseable whatever the report returns: a value holding a CDATA terminator is split across two sections, and a column name XML does not allow becomes a valid element name.

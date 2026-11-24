@@ -27,7 +27,7 @@ make_pot() {
 	php "$phar" --allow-root i18n make-pot . "$1" \
 		--domain=exports-and-reports \
 		--exclude=vendor,tests,node_modules,bin,build,languages,.github,.wordpress-org \
-		--headers='{"Report-Msgid-Bugs-To":"https://github.com/Element26-Inc/exports-and-reports/issues"}' \
+		--headers='{"Report-Msgid-Bugs-To":"https://github.com/sc0ttkclark/exports-and-reports/issues"}' \
 		--skip-audit
 }
 

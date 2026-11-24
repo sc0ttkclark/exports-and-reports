@@ -25,9 +25,6 @@
   },
   "minimum-stability": "stable",
   "prefer-stable": true,
-  "suggest": {
-    "wp-cli/wp-cli": "Enables access to Pods CLI commands."
-  },
   "scripts": {
     "strauss": [
       "test -f ./bin/strauss.phar || curl -fsSL --retry 3 -o bin/strauss.phar https://github.com/BrianHenryIE/strauss/releases/download/0.31.1/strauss.phar",

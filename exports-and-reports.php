@@ -3,8 +3,8 @@
  * Exports and Reports
  *
  * @package   ExportsReports
- * @author    Scott Kingsley Clark
- * @copyright 2024 Scott Kingsley Clark
+ * @author    Scott Kingsley Clark, Daniel Caspi
+ * @copyright 2024-2026 Scott Kingsley Clark, Daniel Caspi
  * @license   GPL v2 or later
  *
  * Plugin Name:       Exports and Reports
