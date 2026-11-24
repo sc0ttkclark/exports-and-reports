@@ -16,7 +16,7 @@ permissions:
 jobs:
   phpunit:
     # The oldest WordPress and PHP the plugin declares, one job on MariaDB and one on MySQL, and the current
-    # WordPress on a current PHP, on the current MariaDB and MySQL.
+    # WordPress on a current PHP, on the current MariaDB and MySQL, and once more as a network (multisite).
     strategy:
       fail-fast: false
       matrix:
@@ -41,7 +41,13 @@ jobs:
             db: 'mysql:8.4'
             phpunit: '^9.6'
             wp-phpunit: ''
-    name: PHPUnit on WordPress ${{ matrix.wordpress }}, PHP ${{ matrix.php }}, ${{ matrix.db }}
+          - wordpress: latest
+            php: '8.3'
+            db: 'mariadb:11.4'
+            phpunit: '^9.6'
+            wp-phpunit: ''
+            multisite: '1'
+    name: PHPUnit on WordPress ${{ matrix.wordpress }}, PHP ${{ matrix.php }}, ${{ matrix.db }}${{ matrix.multisite == '1' && ', as a network' || '' }}
     runs-on: ubuntu-24.04
     services:
       database:
@@ -139,5 +145,6 @@ jobs:
           WP_TESTS_DB_USER: root
           WP_TESTS_DB_PASSWORD: root
           WP_TESTS_DB_HOST: 127.0.0.1
+          WP_MULTISITE: ${{ matrix.multisite }}
         run: |
           "$RUNNER_TEMP/tools/vendor/bin/phpunit" --configuration phpunit.xml.dist

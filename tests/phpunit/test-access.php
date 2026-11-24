@@ -210,18 +210,20 @@ class Tests_Access extends Exports_Reports_Test_Case {
 	}
 
 	/**
-	 * The matrix on a single site: viewing through a role the group names or the view capability,
-	 * managing through the settings capability, both through the administrator role's capabilities.
+	 * The matrix: viewing through a role the group names or the view capability, managing through the
+	 * settings capability, both through the administrator role's capabilities. Detect Fields runs SQL, so
+	 * on a network it is for the super admins (the network case below).
 	 */
 	public function test_who_reaches_what() {
+		$writes  = ! is_multisite();
 		$viewer  = array( true, true, true, true, true, true, false, false, false );
 		$nothing = array( false, false, false, false, false, false, false, false, false );
 		$matrix  = array(
 			'subscriber'          => $nothing,
 			'role viewer'         => $viewer,
 			'view capability'     => $viewer,
-			'settings capability' => array( false, false, false, false, false, false, true, true, true ),
-			'administrator'       => array( true, true, true, true, true, true, true, true, true ),
+			'settings capability' => array( false, false, false, false, false, false, true, $writes, true ),
+			'administrator'       => array( true, true, true, true, true, true, true, $writes, true ),
 		);
 
 		foreach ( $matrix as $kind => $expect ) {
@@ -265,6 +267,97 @@ class Tests_Access extends Exports_Reports_Test_Case {
 
 		$this->assertTrue( current_user_can( 'exports_reports_full_access' ), 'a fresh install gives administrators access' );
 		$this->assertTrue( exports_reports_current_user_can_manage() );
+	}
+
+	/**
+	 * The Manage Reports screen as the current user gets it, for a request.
+	 *
+	 * @param array $get  The query string's variables.
+	 * @param array $post The posted variables.
+	 * @return string What the screen prints.
+	 */
+	protected function manage_reports( $get = array(), $post = array() ) {
+		$_GET  = $get;
+		$_POST = $post;
+
+		list( , $printed ) = $this->screen( 'exports_reports_reports' );
+
+		$_GET  = array();
+		$_POST = array();
+
+		return $printed;
+	}
+
+	/**
+	 * The report's name, as stored.
+	 *
+	 * @return string
+	 */
+	protected function report_name() {
+		global $wpdb;
+
+		return (string) $wpdb->get_var( $wpdb->prepare( "SELECT `name` FROM {$wpdb->exports_reports_reports} WHERE `id` = %d", $this->report_id ) );
+	}
+
+	/**
+	 * On a network a report's SQL reaches every site's tables, so its super admins write the groups and
+	 * the reports: a site's administrator views them, keeps the Settings page and gets the Manage screens
+	 * as lists, without the forms, the saves or Detect Fields.
+	 */
+	public function test_on_a_network_super_admins_edit_groups_and_reports() {
+		if ( ! is_multisite() ) {
+			$this->markTestSkipped( 'Needs a network: run the suite with WP_MULTISITE=1.' );
+		}
+
+		$everything = array( true, true, true, true, true, true, true, true, true );
+		$save       = array(
+			'action' => 'edit',
+			'do'     => 'save',
+			'id'     => (string) $this->report_id,
+		);
+
+		wp_set_current_user( $this->user_of_kind( 'super admin' ) );
+
+		$this->assertTrue( exports_reports_current_user_has_full_access() );
+		$this->assertTrue( exports_reports_current_user_can_edit_reports() );
+		$this->assert_reach( 'super admin', $everything );
+		$this->assertStringContainsString( 'action=add', $this->manage_reports(), 'a super admin gets the Add New button' );
+
+		wp_set_current_user( $this->user_of_kind( 'administrator' ) );
+
+		$this->assertTrue( exports_reports_current_user_can_manage() );
+		$this->assertFalse( exports_reports_current_user_can_edit_reports() );
+		$this->assert_reach( 'site administrator', array( true, true, true, true, true, true, true, false, true ) );
+
+		$list = $this->manage_reports();
+
+		$this->assertStringContainsString( 'Access report', $list, 'the list is shown' );
+		$this->assertStringContainsString( 'edited by the administrators of the network', $list );
+		$this->assertStringNotContainsString( 'action=add', $list );
+		$this->assertStringNotContainsString( 'action=edit', $list );
+		$this->assertStringNotContainsString( 'action=duplicate', $list );
+		$this->assertStringNotContainsString( 'action=delete', $list );
+
+		$form = $this->manage_reports(
+			$save,
+			array(
+				'_wpnonce'  => wp_create_nonce( 'exports-reports-form-save' ),
+				'name'      => 'Renamed by a site administrator',
+				'sql_query' => 'SELECT user_login, user_pass FROM wp_users',
+			)
+		);
+
+		$this->assertSame( 'Access report', $this->report_name(), 'a posted form saves nothing' );
+		$this->assertStringNotContainsString( 'name="sql_query"', $form, 'and the edit form is not shown' );
+
+		// A network that leaves the definitions to its sites says so.
+		add_filter( 'exports_reports_site_admins_edit_reports', '__return_true' );
+
+		$this->assertTrue( exports_reports_current_user_can_edit_reports() );
+		$this->assert_reach( 'site administrator of a network that leaves the reports to its sites', $everything );
+		$this->assertStringContainsString( 'action=add', $this->manage_reports() );
+
+		remove_filter( 'exports_reports_site_admins_edit_reports', '__return_true' );
 	}
 
 	public function test_administrators_hold_full_access_through_their_role_not_user_meta() {

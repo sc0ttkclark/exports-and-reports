@@ -39,43 +39,43 @@ msgstr ""
 msgid "https://www.element26.net/"
 msgstr ""
 
-#: includes/admin-groups.php:21
+#: includes/admin-groups.php:22
 msgid "Sorry, you are not allowed to manage report groups."
 msgstr ""
 
-#: includes/admin-groups.php:29
-#: includes/admin-reports.php:37
+#: includes/admin-groups.php:30
+#: includes/admin-reports.php:38
 msgid "Disabled"
 msgstr ""
 
-#: includes/admin-groups.php:33
-#: includes/admin-reports.php:41
+#: includes/admin-groups.php:34
+#: includes/admin-reports.php:42
 msgid "Date Created"
 msgstr ""
 
-#: includes/admin-groups.php:37
-#: includes/admin-reports.php:45
+#: includes/admin-groups.php:38
+#: includes/admin-reports.php:46
 msgid "Last Modified"
 msgstr ""
 
-#: includes/admin-groups.php:41
+#: includes/admin-groups.php:42
 msgid "Group ID"
 msgstr ""
 
-#: includes/admin-groups.php:53
-#: includes/admin-reports.php:100
+#: includes/admin-groups.php:54
+#: includes/admin-reports.php:101
 msgid "WP Roles with Access"
 msgstr ""
 
-#: includes/admin-groups.php:54
+#: includes/admin-groups.php:55
 msgid "Add the exports_reports_full_access capability to a role for full access to reports, exports_reports_settings for only access to settings, exports_reports_view for access to view all reports, exports_reports_view_group_{ID} for access to view a group and all of the reports within, or exports_reports_view_report_{ID} for access to view a single report"
 msgstr ""
 
-#: includes/admin-groups.php:71
+#: includes/admin-groups.php:72
 msgid "Report Group"
 msgstr ""
 
-#: includes/admin-groups.php:72
+#: includes/admin-groups.php:73
 msgid "Report Groups"
 msgstr ""
 
@@ -97,271 +97,271 @@ msgstr ""
 
 #: includes/admin-menus.php:66
 #: includes/admin-menus.php:87
-#: includes/admin-reports.php:131
+#: includes/admin-reports.php:132
 msgid "Reports"
 msgstr ""
 
-#: includes/admin-reports.php:24
+#: includes/admin-reports.php:25
 msgid "Sorry, you are not allowed to manage reports."
 msgstr ""
 
-#: includes/admin-reports.php:32
+#: includes/admin-reports.php:33
 msgid "Group"
 msgstr ""
 
-#: includes/admin-reports.php:49
+#: includes/admin-reports.php:50
 msgid "Report ID"
 msgstr ""
 
-#: includes/admin-reports.php:62
+#: includes/admin-reports.php:63
 msgid "Disabled?"
 msgstr ""
 
-#: includes/admin-reports.php:65
+#: includes/admin-reports.php:66
 msgid "Disable Export?"
 msgstr ""
 
-#: includes/admin-reports.php:70
+#: includes/admin-reports.php:71
 #: includes/admin-settings.php:158
 msgid "Export Formats"
 msgstr ""
 
-#: includes/admin-reports.php:74
+#: includes/admin-reports.php:75
 msgid "Leave every box empty to offer the formats enabled in Settings. A format turned off in Settings is not offered even when checked here. CSV, TSV and TXT are written row by row and suit very large reports; the other formats hold the whole report in memory while they are written."
 msgstr ""
 
-#: includes/admin-reports.php:78
+#: includes/admin-reports.php:79
 msgid "Default to No Results?"
 msgstr ""
 
-#: includes/admin-reports.php:80
+#: includes/admin-reports.php:81
 msgid "On = Show no results and require search; Off (default) = Show all results"
 msgstr ""
 
-#: includes/admin-reports.php:84
+#: includes/admin-reports.php:85
 msgid "PDF Report Page Orientation"
 msgstr ""
 
-#: includes/admin-reports.php:87
+#: includes/admin-reports.php:88
 msgid "Landscape"
 msgstr ""
 
-#: includes/admin-reports.php:88
+#: includes/admin-reports.php:89
 msgid "Portrait"
 msgstr ""
 
-#: includes/admin-reports.php:107
+#: includes/admin-reports.php:108
 msgid "SQL Query"
 msgstr ""
 
-#: includes/admin-reports.php:109
+#: includes/admin-reports.php:110
 msgid "Available Variables: %%WHERE%% %%HAVING%% %%ORDERBY%% %%LIMIT%%<br />(example: WHERE %%WHERE%% my_field=1)"
 msgstr ""
 
-#: includes/admin-reports.php:113
+#: includes/admin-reports.php:114
 msgid "SQL Query for Totals (advanced, optional)"
 msgstr ""
 
-#: includes/admin-reports.php:115
+#: includes/admin-reports.php:116
 msgid "Runs after the report query with the same search and filters and returns one row, whose values show in the Totals row under the last page of the report and as the totals of the REST data (for example SELECT SUM(amount) AS amount, COUNT(*) AS id FROM ...). It does not count the rows: the report query does.<br />Available Variables: %%WHERE%% %%HAVING%%<br />(example: WHERE %%WHERE%% my_field=1)"
 msgstr ""
 
-#: includes/admin-reports.php:119
+#: includes/admin-reports.php:120
 msgid "Fields (optional)"
 msgstr ""
 
-#: includes/admin-reports.php:130
+#: includes/admin-reports.php:131
 msgid "Report"
 msgstr ""
 
-#: includes/admin-reports.php:160
+#: includes/admin-reports.php:165
 msgid "Remove this field from the report?"
 msgstr ""
 
-#: includes/admin-reports.php:161
+#: includes/admin-reports.php:166
 msgid "Running the query…"
 msgstr ""
 
 #. translators: 1: how many fields were added, 2: how many columns were listed already.
-#: includes/admin-reports.php:163
+#: includes/admin-reports.php:168
 #, php-format
 msgid "Fields added: %1$s. Already listed: %2$s."
 msgstr ""
 
-#: includes/admin-reports.php:164
-#: includes/admin-reports.php:204
+#: includes/admin-reports.php:169
+#: includes/admin-reports.php:211
 msgid "Type the query first."
 msgstr ""
 
-#: includes/admin-reports.php:165
+#: includes/admin-reports.php:170
 msgid "The request did not get through. Save the report and try again."
 msgstr ""
 
-#: includes/admin-reports.php:167
+#: includes/admin-reports.php:172
 msgid "Leave this empty to show every column the query returns. Drag a field by its handle to change the order. Detect Fields runs the query above for one row and adds a field for each column of the result that is not listed yet, with the data type that fits the column."
 msgstr ""
 
-#: includes/admin-reports.php:176
+#: includes/admin-reports.php:181
 msgid "Add Field"
 msgstr ""
 
-#: includes/admin-reports.php:177
+#: includes/admin-reports.php:182
 msgid "Detect Fields from the Query"
 msgstr ""
 
-#: includes/admin-reports.php:197
+#: includes/admin-reports.php:204
 msgid "You are not allowed to edit reports."
 msgstr ""
 
-#: includes/admin-reports.php:262
+#: includes/admin-reports.php:269
 msgid "The query is empty."
 msgstr ""
 
-#: includes/admin-reports.php:273
+#: includes/admin-reports.php:280
 msgid "The last statement of the query returns no rows."
 msgstr ""
 
-#: includes/admin-reports.php:343
+#: includes/admin-reports.php:350
 msgid "Text"
 msgstr ""
 
-#: includes/admin-reports.php:344
+#: includes/admin-reports.php:351
 msgid "Boolean (Checkbox)"
 msgstr ""
 
-#: includes/admin-reports.php:345
+#: includes/admin-reports.php:352
 msgid "Date"
 msgstr ""
 
-#: includes/admin-reports.php:346
+#: includes/admin-reports.php:353
 msgid "Time"
 msgstr ""
 
-#: includes/admin-reports.php:347
+#: includes/admin-reports.php:354
 msgid "Date + Time"
 msgstr ""
 
-#: includes/admin-reports.php:348
+#: includes/admin-reports.php:355
 msgid "Number (no decimal)"
 msgstr ""
 
-#: includes/admin-reports.php:349
+#: includes/admin-reports.php:356
 msgid "Decimal (two places)"
 msgstr ""
 
-#: includes/admin-reports.php:350
+#: includes/admin-reports.php:357
 msgid "Related"
 msgstr ""
 
-#: includes/admin-reports.php:384
+#: includes/admin-reports.php:391
 msgid "Drag to reorder"
 msgstr ""
 
-#: includes/admin-reports.php:385
+#: includes/admin-reports.php:392
 msgid "Field name (column or alias)"
 msgstr ""
 
-#: includes/admin-reports.php:387
+#: includes/admin-reports.php:394
 msgid "Data type"
 msgstr ""
 
-#: includes/admin-reports.php:394
+#: includes/admin-reports.php:401
 msgid "Label"
 msgstr ""
 
-#: includes/admin-reports.php:394
+#: includes/admin-reports.php:401
 msgid "defaults to the field name"
 msgstr ""
 
-#: includes/admin-reports.php:395
+#: includes/admin-reports.php:402
 msgid "Remove"
 msgstr ""
 
-#: includes/admin-reports.php:399
+#: includes/admin-reports.php:406
 msgid "Hide from report"
 msgstr ""
 
-#: includes/admin-reports.php:400
+#: includes/admin-reports.php:407
 msgid "Hide from export"
 msgstr ""
 
-#: includes/admin-reports.php:401
+#: includes/admin-reports.php:408
 msgid "Searchable"
 msgstr ""
 
-#: includes/admin-reports.php:402
+#: includes/admin-reports.php:409
 msgid "Filterable"
 msgstr ""
 
-#: includes/admin-reports.php:403
+#: includes/admin-reports.php:410
 msgid "Filter with HAVING"
 msgstr ""
 
-#: includes/admin-reports.php:407
+#: includes/admin-reports.php:414
 msgid "Advanced options"
 msgstr ""
 
-#: includes/admin-reports.php:410
+#: includes/admin-reports.php:417
 msgid "Real field"
 msgstr ""
 
-#: includes/admin-reports.php:410
+#: includes/admin-reports.php:417
 msgid "when the name is an alias"
 msgstr ""
 
-#: includes/admin-reports.php:411
+#: includes/admin-reports.php:418
 msgid "Display function"
 msgstr ""
 
-#: includes/admin-reports.php:411
+#: includes/admin-reports.php:418
 msgid "a function a plugin or theme defines"
 msgstr ""
 
-#: includes/admin-reports.php:412
+#: includes/admin-reports.php:419
 msgid "Width"
 msgstr ""
 
-#: includes/admin-reports.php:412
+#: includes/admin-reports.php:419
 msgid "relative, for the PDF export"
 msgstr ""
 
-#: includes/admin-reports.php:413
+#: includes/admin-reports.php:420
 msgid "Filter label"
 msgstr ""
 
-#: includes/admin-reports.php:414
+#: includes/admin-reports.php:421
 msgid "Default filter value"
 msgstr ""
 
-#: includes/admin-reports.php:415
+#: includes/admin-reports.php:422
 msgid "Ongoing date field"
 msgstr ""
 
-#: includes/admin-reports.php:415
+#: includes/admin-reports.php:422
 msgid "for a date range filter"
 msgstr ""
 
-#: includes/admin-reports.php:416
+#: includes/admin-reports.php:423
 msgid "Ongoing default filter value"
 msgstr ""
 
-#: includes/admin-reports.php:417
+#: includes/admin-reports.php:424
 msgid "Related table"
 msgstr ""
 
-#: includes/admin-reports.php:417
+#: includes/admin-reports.php:424
 msgid "related type only"
 msgstr ""
 
-#: includes/admin-reports.php:418
+#: includes/admin-reports.php:425
 msgid "Related field"
 msgstr ""
 
-#: includes/admin-reports.php:419
+#: includes/admin-reports.php:426
 msgid "Related ID field"
 msgstr ""
 
-#: includes/admin-reports.php:420
+#: includes/admin-reports.php:427
 msgid "Related WHERE / ORDER BY"
 msgstr ""
 
@@ -547,6 +547,10 @@ msgstr ""
 
 #: includes/admin-settings.php:265
 msgid "Save Settings"
+msgstr ""
+
+#: includes/capabilities.php:147
+msgid "On a network, groups and reports are edited by the administrators of the network: the query of a report reaches the tables of every site. You can view the reports and change the settings of this site."
 msgstr ""
 
 #: includes/class-exports-reports-admin-ui.php:215

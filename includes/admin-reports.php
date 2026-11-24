@@ -16,6 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * the field_data column.
  *
  * @since 1.3.0 Checks the capability itself; the menu's registration is not the only thing between a user and the screen.
+ *              A list alone for a user who may not write the reports (a site's administrator on a network).
  */
 function exports_reports_reports() {
 	global $wpdb;
@@ -135,6 +136,10 @@ function exports_reports_reports() {
 		'duplicate'     => true,
 	);
 
+	if ( ! exports_reports_current_user_can_edit_reports() ) {
+		$admin_ui = array_merge( $admin_ui, exports_reports_list_only_options() );
+	}
+
 	$admin = new Exports_Reports_Admin_UI( $admin_ui );
 
 	$admin->go();
@@ -189,11 +194,13 @@ function exports_reports_report_field( $column, $attributes, $obj ) {
  * data type that fits each (exports_reports_detect_columns()).
  *
  * @since 1.2.0
+ * @since 1.3.0 For a user who may write reports: on a network, its super admins.
  */
 function exports_reports_ajax_detect_columns() {
 	check_ajax_referer( 'exports-reports-detect-columns' );
 
-	if ( ! exports_reports_current_user_can_manage() ) {
+	// The button runs the SQL it is sent: for whoever may write a report's SQL.
+	if ( ! exports_reports_current_user_can_edit_reports() ) {
 		wp_send_json_error( array( 'message' => __( 'You are not allowed to edit reports.', 'exports-and-reports' ) ), 403 );
 	}
 

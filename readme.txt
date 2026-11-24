@@ -19,7 +19,7 @@ Create your Groups, add your Reports to them, choose which user roles may see ea
 
 Requires PHP 7.2 and WordPress 5.7 or later. PDF exports render with tc-lib-pdf on PHP 8.2 and later and with TCPDF below that.
 
-Report queries are written by administrators and run as written: only users with the plugin's settings capability (administrators by default) can create or edit a report. The plugin adds its paging, sorting and filters around the query, with every request value passed as a prepared placeholder and the sort column checked against the report's columns; readers of a report cannot change its SQL.
+Report queries are written by administrators and run as written: only users with the plugin's settings capability (administrators by default; on a network, its super admins) can create or edit a report. The plugin adds its paging, sorting and filters around the query, with every request value passed as a prepared placeholder and the sort column checked against the report's columns; readers of a report cannot change its SQL.
 
 Please submit bug reports or contribute your own enhancements/fixes on [GitHub](https://github.com/sc0ttkclark/exports-and-reports).
 
@@ -89,6 +89,10 @@ or define `EXPORTS_REPORTS_EXPORT_DIR` in wp-config.php with a writable director
 
 The plugin registers three capabilities: `exports_reports_full_access` (everything), `exports_reports_settings` (the Reports Admin screens) and `exports_reports_view` (every report). A group or a report can also be opened to roles on its edit screen, and a role can be given `exports_reports_view_group_ID` or `exports_reports_view_report_ID` for one group or one report. The administrator role receives the three capabilities when the plugin is activated (and on the upgrade to 1.0); a roles plugin such as Members can take them away or give them to other roles, and the plugin does not put them back until it is activated again. On a single site the capabilities alone decide: an administrator whose role has lost them is refused like anyone else. Super admins of a network always have full access.
 
+On a network the groups and the reports are written by its super admins, because a report's query reaches the tables of every site. A site's administrators view the reports, get Manage Groups and Manage Reports as lists and keep the Settings page. A network that leaves the reports to its sites says so:
+
+`add_filter( 'exports_reports_site_admins_edit_reports', '__return_true' );`
+
 = Which hooks does the plugin offer? =
 
 Every hook is documented where it runs; these are the ones sites use most. Filters receive the value first and the report screen (`Exports_Reports_Admin_UI`) last.
@@ -96,7 +100,7 @@ Every hook is documented where it runs; these are the ones sites use most. Filte
 * The report query: `exports_reports_get_data_sql( $sql, $full, $admin )` and `exports_reports_get_data_sql_count( $sql, $full, $admin )` right before the query and its totals query run (return false to run nothing); `exports_reports_get_data_total( $total, $full, $admin )` for the row count and `exports_reports_count_cache_ttl( $seconds, $admin )` for how long it is kept; `exports_reports_data_filter_sql( $condition, $filter, $column, $field, $related_field, $value, $admin )` for the condition a filter adds.
 * Exports: `exports_reports_export_file( $file, $type, $extension, $items, $admin )` for the file name; `exports_reports_export_escape_formulas( $escape, $admin )` for the CSV, TSV, TXT and XLSX exports; `exports_reports_export_pdf_engine( $engine )` and `exports_reports_export_pdf_report_file( $file, $admin )`; the actions `exports_reports_pre_export( $admin )`, `exports_reports_post_export( $file, $admin )`, `exports_reports_pre_remove_export( $file, $path, $admin )`, `exports_reports_post_remove_export( $file, $removed, $path, $admin )` and `exports_reports_export_download`.
 * The screens: `exports_reports_report_options( $options, $report_id )` and `exports_reports_options( $options, $admin )` for a screen's settings; `exports_reports_setup_columns( $columns, $which, $init, $admin )` and `exports_reports_setup_column( $attributes, $column, $filterable, $admin )`; `exports_reports_row_actions( $links, $row, $admin )`; `exports_reports_limit( $sizes, $admin )` for the page sizes; `exports_reports_allowed_html( $allowed )` for the HTML a display callback may return and `exports_reports_html_values( $html, $column, $attributes, $admin )` to show a column's stored values as HTML instead of text; `exports_reports_allowed_callback( $allowed, $callback, $admin )` for the functions a field definition may name; the actions `exports_reports_pre_init( $options )`, `exports_reports_post_init( $options, $admin )`, `exports_reports_pre_save( $create, $admin )`, `exports_reports_post_save( $id, $data, $create, $admin )`, `exports_reports_pre_delete( $id, $admin )`, `exports_reports_post_delete( $id, $admin )`, `exports_reports_post_reorder( $id, $admin )`.
-* Capabilities: `exports_reports_capabilities( $caps )`.
+* Capabilities: `exports_reports_capabilities( $caps )`; `exports_reports_site_admins_edit_reports( $allowed, $site_id )` to let the sites of a network write their own groups and reports.
 
 Before 1.0 the `exports_reports_*` and `wp_admin_ui_*` hooks of the report screen passed their arguments as one array; callbacks on the `wp_admin_ui_*` names still receive that array, with a deprecation notice.
 
@@ -156,6 +160,7 @@ The plugin's bundled libraries (`vendor/`) are part of the zip and of the reposi
 = 1.3.0 =
 * On a single site the plugin's capabilities alone decide who views and manages reports. The super-admin shortcut, which WordPress extends to every administrator of a single site, now applies on a network only, so a role that loses the capabilities loses the access. The Settings page follows the same capabilities instead of `manage_options`.
 * The Manage Groups and Manage Reports screens check the capability themselves.
+* On a network (multisite), groups and reports are created and edited by super admins only: a report's SQL reaches every site's tables. Site administrators still view the reports and keep the Settings page. `add_filter( 'exports_reports_site_admins_edit_reports', '__return_true' );` hands the editing back to the sites.
 
 = 1.2.9 =
 * Security: the XLSX export writes a value that starts with `=` as text. It was written as a formula, so text a report merely stores (a title, a name someone typed into a form) ran in the spreadsheet of whoever opened the export. The CSV, TSV and TXT exports have neutralized such values since 0.9.2; XLSX, added in 0.8.0, never did. The cell shows the value as stored, with nothing added to it. The `exports_reports_export_escape_formulas` filter, which turns the handling off for the delimited exports, decides for XLSX as well. Versions 0.8.0 to 1.2.8 are affected.

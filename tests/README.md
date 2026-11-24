@@ -15,6 +15,9 @@ composer install
 composer test        # or vendor/bin/phpunit
 ```
 
+`WP_MULTISITE=1 composer test` runs the suite as a network, which the cases about a network's super admins
+need; they are skipped otherwise.
+
 `tests/phpunit/wp-tests-config.php` reads its settings from the environment, with these defaults:
 
 | Variable                   | Default                            | Meaning                                              |
@@ -79,7 +82,10 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
   administrator and nobody; the columns are the report page, the REST data and export routes, the
   admin-ajax export, the download, the removal, the Manage screens, Detect Fields and the Settings page.
   An administrator whose role has lost the capabilities refused at every one on a single site, and a
-  fresh install putting them back; administrators holding `exports_reports_full_access` through their
+  fresh install putting them back; on a network (skipped on a single site) a super admin reaching
+  everything, a site's administrator getting the Manage screens as lists, with no form, no save and no
+  Detect Fields, and the `exports_reports_site_admins_edit_reports` filter handing the reports back to
+  the sites; administrators holding `exports_reports_full_access` through their
   role, not user meta; display functions limited to plugin functions.
 - `Tests_Hooks` (`test-hooks.php`): the cases that attach callbacks to `exports_reports_*` hooks (their
   arguments one by one, the screen last) and to the `wp_admin_ui_*` names (the array form): a
@@ -106,10 +112,11 @@ of the test library in use (`setUp()`/`tearDown()` on WordPress 5.7 and 5.8, `se
 ## CI
 
 `.github/workflows/phpunit.yml` runs the suite on every pull request that touches PHP, the tests, the
-vendor tree or the fonts, on a matrix of four jobs: WordPress 5.7 on PHP 7.2 with MariaDB 10.11 and
+vendor tree or the fonts, on a matrix of five jobs: WordPress 5.7 on PHP 7.2 with MariaDB 10.11 and
 WordPress 5.8 on PHP 7.3 with MySQL 8.0 (the plugin's floors, with PHPUnit 7.5 and the matching
-`wp-phpunit` version), and the current WordPress on PHP 8.3 with MariaDB 11.4 and with MySQL 8.4 (PHPUnit
-9.6, the `wp-phpunit` version of the downloaded core). Each job downloads WordPress with WP-CLI, installs
+`wp-phpunit` version), the current WordPress on PHP 8.3 with MariaDB 11.4 and with MySQL 8.4 (PHPUnit
+9.6, the `wp-phpunit` version of the downloaded core), and the MariaDB 11.4 job once more as a network
+(`WP_MULTISITE=1`). Each job downloads WordPress with WP-CLI, installs
 PHPUnit, the Polyfills and the library in a Composer project of their own (the plugin's dev dependencies
 need PHP 8.2, and its runtime vendor tree is committed) and runs `phpunit.xml.dist` with the variables
 above pointing at the service database.

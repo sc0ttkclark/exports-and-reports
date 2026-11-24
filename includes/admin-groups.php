@@ -13,6 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * The Manage Groups page: an Exports_Reports_Admin_UI on the groups table.
  *
  * @since 1.3.0 Checks the capability itself; the menu's registration is not the only thing between a user and the screen.
+ *              A list alone for a user who may not write the groups (a site's administrator on a network).
  */
 function exports_reports_groups() {
 	global $wpdb;
@@ -75,6 +76,10 @@ function exports_reports_groups() {
 		'form_columns'  => $form_columns,
 		'duplicate'     => true,
 	);
+
+	if ( ! exports_reports_current_user_can_edit_reports() ) {
+		$admin_ui = array_merge( $admin_ui, exports_reports_list_only_options() );
+	}
 
 	$admin = new Exports_Reports_Admin_UI( $admin_ui );
 
