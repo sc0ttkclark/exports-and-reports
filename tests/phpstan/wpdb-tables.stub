@@ -1,0 +1,9 @@
+<?php
+/**
+ * The plugin's tables, set on $wpdb by exports_reports_tables() the way core sets $wpdb->posts.
+ *
+ * @property string $exports_reports_groups
+ * @property string $exports_reports_reports
+ * @property string $exports_reports_log
+ */
+class wpdb {}

@@ -15,6 +15,9 @@ tests/_support/_generated/* linguist-generated=true
 /.wordpress-org export-ignore
 /bin export-ignore
 /tests export-ignore
+# Composer's installer plugin runs at install time only; Strauss's alias file is not loaded by the plugin.
+/vendor/composer/installers export-ignore
+/vendor/composer/autoload_aliases.php export-ignore
 
 # Dot-files
 .babelrc export-ignore
@@ -36,8 +39,13 @@ tests/_support/_generated/* linguist-generated=true
 .travis.yml export-ignore
 
 # Other files
-composer.json export-ignore
 phpcs.xml export-ignore
 phpcs.xml.dist export-ignore
+phpunit.xml.dist export-ignore
 phpstan.neon export-ignore
+phpstan-legacy.neon export-ignore
+composer.lock export-ignore
+package.json export-ignore
+package-lock.json export-ignore
+.phpcs.compat-pdf.xml export-ignore
 README.md export-ignore

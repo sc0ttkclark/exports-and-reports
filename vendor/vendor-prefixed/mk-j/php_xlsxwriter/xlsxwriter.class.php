@@ -1,9 +1,7 @@
 <?php
 /*
  * @license MIT License
- * *
- * Modified by sc0ttkclark on 27-October-2024 using {@see https://github.com/BrianHenryIE/strauss}.
- */
+ * */
 
 class ExportsReports__Prefixed__XLSXWriter
 {
@@ -31,7 +29,7 @@ class ExportsReports__Prefixed__XLSXWriter
 
 	public function __construct()
 	{
-		defined('ENT_XML1') or define('ENT_XML1',16);//for php 5.3, avoid fatal error
+		defined('EXPORTS_REPORTS_PREFIXED_ENT_XML1') or define('EXPORTS_REPORTS_PREFIXED_ENT_XML1',16);//for php 5.3, avoid fatal error
 		date_default_timezone_get() or date_default_timezone_set('UTC');//php.ini missing tz, avoid warning
 		is_writeable($this->tempFilename()) or self::log("Warning: tempdir ".sys_get_temp_dir()." not writeable, use ->setTempDir()");
 		class_exists('ZipArchive') or self::log("Error: ZipArchive class does not exist");
@@ -767,7 +765,7 @@ class ExportsReports__Prefixed__XLSXWriter
 		//note, badchars does not include \t\n\r (\x09\x0a\x0d)
 		static $badchars = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x0b\x0c\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f\x7f";
 		static $goodchars = "                              ";
-		return strtr(htmlspecialchars((string)$val, ENT_QUOTES | ENT_XML1 | ENT_SUBSTITUTE), $badchars, $goodchars);//strtr appears to be faster than str_replace
+		return strtr(htmlspecialchars((string)$val, ENT_QUOTES | EXPORTS_REPORTS_PREFIXED_ENT_XML1 | ENT_SUBSTITUTE), $badchars, $goodchars);//strtr appears to be faster than str_replace
 	}
 	//------------------------------------------------------------------
 	public static function array_first_key(array $arr)

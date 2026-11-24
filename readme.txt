@@ -1,11 +1,11 @@
 === Exports and Reports ===
-Contributors: sc0ttkclark
-Donate link: https://github.com/sponsors/sc0ttkclark
+Contributors: sc0ttkclark, dxdc
+Donate link: https://github.com/sponsors/dxdc
 Tags: exporting, reporting, csv, pdf, xml
-Requires at least: 4.9
-Tested up to: 6.6
-Requires PHP: 8.0
-Stable tag: 0.9.4
+Requires at least: 5.7
+Tested up to: 7.1
+Requires PHP: 7.2
+Stable tag: 1.2.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,7 +15,11 @@ Define custom exports / reports for users, based off of any custom MySQL SELECT 
 
 Define custom exports / reports for users, based off of any MySQL SELECT query you create. This plugin interacts with your SELECT query and does all the hard work for you: exporting, pagination, ordering, searching/filtering, and display formatting for you.
 
-All you do is install the plugin, create your Groups, create your Reports, and hand it off to your clients. Exportable reports in CSV, TSV, XML, JSON, and custom delimiter separated formats.
+All you do is install the plugin, create your Groups, create your Reports, and hand it off to your clients. Exportable reports in CSV, TSV, pipe-separated TXT, XLSX, XML, JSON and PDF, from the admin screens or through the REST API with a token, for cronjobs.
+
+Requires PHP 7.2 and WordPress 5.7 or later. PDF exports render with tc-lib-pdf on PHP 8.2 and later and with TCPDF below that.
+
+Report queries are written by administrators and run as written: only users with the plugin's settings capability (administrators by default) can create or edit a report. The plugin adds its paging, sorting and filters around the query, with every request value passed as a prepared placeholder and the sort column checked against the report's columns; readers of a report cannot change its SQL.
 
 Please submit bug reports or contribute your own enhancements/fixes on [GitHub](https://github.com/sc0ttkclark/exports-and-reports).
 
@@ -33,14 +37,61 @@ A Report is defined by a Custom MySQL query and can be configured to display how
 
 As an admin, add &debug=1 to the end of the report URL to see the query that this plugin uses, take that query and use it in your own MySQL client or PHPMyAdmin to see if there are any errors in your own query.
 
+= Where do the paging, the row count, a sort and a filter go in my query? =
+
+Into the query's main SELECT: the one at the top level, after any WITH clauses, or inside the string of an `EXECUTE IMMEDIATE`. The row count (`SQL_CALC_FOUND_ROWS`) goes right after it, a sort from a column header goes before its own ORDER BY, a search or a filter joins its own WHERE (or HAVING, for a grouped column), and the page's LIMIT goes at its end. Subqueries, the queries of WITH clauses and window functions are left alone. Where you want them elsewhere, write `%%WHERE%%`, `%%HAVING%%`, `%%ORDERBY%%` or `%%LIMIT%%` at that spot. A query with a LIMIT of its own and no `%%LIMIT%%` shows what it returns as one page.
+
+= Can a report run more than one statement? =
+
+Yes. End each with a semicolon: session variables first (`SET @day = CURRENT_DATE();`), a dynamic statement if the report builds one (`EXECUTE IMMEDIATE CONCAT( ... );`), and last the query that returns the rows. They run in order on one connection, so the last statement reads what the ones before it set up. The plugin's paging, search and filters go into the last statement only.
+
+= How do scripts and cronjobs read a report? =
+
+Through the REST routes under `/wp-json/exports-reports/v1/reports/ID/` (the Settings page shows them), as a logged-in user who may view the report (cookie and nonce, or an application password) or with the API token from the Settings page, sent as the header `Authorization: Bearer TOKEN` or as a `token` query parameter; the header keeps the token out of server logs. The token is stored as a hash, like a password, so it is shown once, when you generate it or set one of your own; generate a new one if it is lost, or turn token access off. A fresh install has token access off.
+
+= Why does the row count lag behind the rows? =
+
+The count ("1,234 items") is kept for a while once a page of the report has run: five minutes unless the Settings page's Row Count Cache says otherwise, per query, search and filters. Counting runs the query over every row it matches, which on a slow report costs as much as the page itself, so the pages that follow run without it while the count is kept. Rows added or removed meanwhile show in the count once it is counted again; the Settings page's Forget the Counts Now button makes every report count again at once, and Off keeps no counts. Code can adjust the time per report with the `exports_reports_count_cache_ttl` filter.
+
+= How do I fill in the fields of a report? =
+
+Leave the field editor empty and the report shows every column the query returns, as text. To name them, set their data types or hide, search and filter on some, add the fields: the Detect Fields from the Query button runs the query for one row and adds a field for each column of the result that is not listed yet, with the data type that fits the column (dates, numbers, decimals, flags); Add Field adds one by hand.
+
+= Can I limit the export formats? =
+
+Yes. The Settings page lists the formats the export buttons offer on every report; untick the ones the site does not need. A report can narrow that list further in its own settings (Export Formats), but not widen it. A format that is not offered is refused by the export and by the REST route, not only hidden. CSV, TSV and TXT are written row by row and suit very large reports; XLSX, XML, JSON and PDF hold the whole report in memory while they are written. Code can adjust a report's list with the `exports_reports_report_export_formats` filter.
+
+= Where do the export files go, and who can download them? =
+
+In `wp-content/uploads/exports-and-reports` by default, a folder of the uploads directory; define `EXPORTS_REPORTS_EXPORT_DIR` and `EXPORTS_REPORTS_EXPORT_URL` in wp-config.php to move it, for example outside the web root. Every download goes through the plugin after a nonce or API token check, so the directory never needs to be reachable by URL. The plugin writes an .htaccess that keeps Apache from serving it; nginx ignores .htaccess, so either add the rule to the server block:
+
+`location ~* /wp-content/uploads/exports-and-reports/ { deny all; }`
+
+or define `EXPORTS_REPORTS_EXPORT_DIR` in wp-config.php with a writable directory outside the web root, which needs no server rule at all. The Settings page shows the directory in use.
+
+= Who can see what? =
+
+The plugin registers three capabilities: `exports_reports_full_access` (everything), `exports_reports_settings` (the Reports Admin screens) and `exports_reports_view` (every report). A group or a report can also be opened to roles on its edit screen, and a role can be given `exports_reports_view_group_ID` or `exports_reports_view_report_ID` for one group or one report. The administrator role receives the three capabilities when the plugin is activated (and on the upgrade to 1.0); a roles plugin such as Members can take them away or give them to other roles, and the plugin does not put them back until it is activated again. Super admins of a network always have full access.
+
+= Which hooks does the plugin offer? =
+
+Every hook is documented where it runs; these are the ones sites use most. Filters receive the value first and the report screen (`Exports_Reports_Admin_UI`) last.
+
+* The report query: `exports_reports_get_data_sql( $sql, $full, $admin )` and `exports_reports_get_data_sql_count( $sql, $full, $admin )` right before the query and its totals query run (return false to run nothing); `exports_reports_get_data_total( $total, $full, $admin )` for the row count and `exports_reports_count_cache_ttl( $seconds, $admin )` for how long it is kept; `exports_reports_data_filter_sql( $condition, $filter, $column, $field, $related_field, $value, $admin )` for the condition a filter adds.
+* Exports: `exports_reports_export_file( $file, $type, $extension, $items, $admin )` for the file name; `exports_reports_export_escape_formulas( $escape, $admin )`; `exports_reports_export_pdf_engine( $engine )` and `exports_reports_export_pdf_report_file( $file, $admin )`; the actions `exports_reports_pre_export( $admin )`, `exports_reports_post_export( $file, $admin )`, `exports_reports_pre_remove_export( $file, $path, $admin )`, `exports_reports_post_remove_export( $file, $removed, $path, $admin )` and `exports_reports_export_download`.
+* The screens: `exports_reports_report_options( $options, $report_id )` and `exports_reports_options( $options, $admin )` for a screen's settings; `exports_reports_setup_columns( $columns, $which, $init, $admin )` and `exports_reports_setup_column( $attributes, $column, $filterable, $admin )`; `exports_reports_row_actions( $links, $row, $admin )`; `exports_reports_limit( $sizes, $admin )` for the page sizes; `exports_reports_allowed_html( $allowed )` for the HTML a display callback may return; `exports_reports_allowed_callback( $allowed, $callback, $admin )` for the functions a field definition may name; the actions `exports_reports_pre_init( $options )`, `exports_reports_post_init( $options, $admin )`, `exports_reports_pre_save( $create, $admin )`, `exports_reports_post_save( $id, $data, $create, $admin )`, `exports_reports_pre_delete( $id, $admin )`, `exports_reports_post_delete( $id, $admin )`, `exports_reports_post_reorder( $id, $admin )`.
+* Capabilities: `exports_reports_capabilities( $caps )`.
+
+Before 1.0 the `exports_reports_*` and `wp_admin_ui_*` hooks of the report screen passed their arguments as one array; callbacks on the `wp_admin_ui_*` names still receive that array, with a deprecation notice.
+
 == Installation ==
 
-1. Unpack the entire contents of this plugin zip file into your `wp-content/plugins/` folder locally
-1. Upload to your site
-1. Navigate to `wp-admin/plugins.php` on your site (your WP plugin page)
+1. Download the plugin zip from the [GitHub releases](https://github.com/sc0ttkclark/exports-and-reports/releases) (the plugin is not listed on wordpress.org at the moment)
+1. Upload it through Plugins >> Add New >> Upload Plugin, or unpack it into your `wp-content/plugins/` folder
 1. Activate this plugin
+1. Create your Groups and Reports under Reports Admin; the Settings page shows the export directory and the API URLs
 
-OR you can just install it with WordPress by going to Plugins >> Add New >> and type this plugin's name
+The plugin's bundled libraries (`vendor/`) are part of the zip and of the repository, so a checkout works without Composer.
 
 == Features ==
 
@@ -50,12 +101,14 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 * Limit which User Roles have access to a Group or Report
 * Ability to clear entire export directory (based on logged export files)
 * Daily Export Cleanup via wp_cron
+* The export directory is not served by the web server; downloads go through the plugin after an access check
+* Deletes its tables, options and export files on uninstall
 * WP Admin UI - A class for plugins to manage data using the WordPress UI appearance
 
 = Reporting =
 * Filter by Date
-* Automatic Pagination
-* Show only the fields you want to show
+* Automatic Pagination, with the row count kept for a while on slow reports
+* Show only the fields you want to show; the field editor detects them from the query
 * Pre-display modification through custom defined function per field or row
 
 = Exporting =
@@ -65,25 +118,130 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 * XLSX - Excel format, using [PHP_XLSXWriter](https://github.com/mk-j/PHP_XLSXWriter)
 * XML - XML 1.0 UTF-8 data
 * JSON - JSON format
-* PDF - PDF printer friendly views, using [TCPDF](https://tcpdf.org/)
-* Custom - Custom delimiter separated Values (Update the report screen URL parameters to `&action=export&export_type=custom&export_delimiter=#` and change # to whatever delimiter you want)
+* PDF - PDF printer friendly views, using [tc-lib-pdf](https://github.com/tecnickcom/tc-lib-pdf) on PHP 8.2 and later and [TCPDF](https://tcpdf.org/) below that
 
-= Cronjob / JSON API =
-* Run the Export action for a specific report to any supported export type
+= REST API / Cronjob =
+* Run the Export action for a specific report to any supported export type, and download the file
 * Get paginated / full data from a report in JSON format
+* Routes under /wp-json/exports-reports/v1/reports/ID/ (data, export, exports/FILE), for a logged-in user who may view the report or for the API token from the Settings page, sent as "Authorization: Bearer TOKEN" or as ?token=; the header keeps the token out of URLs and server logs; the Settings page shows the URLs. The token is stored as a hash and shown once, when it is generated
 
 == Screenshots ==
 
 1. View the report, export data, search content, filter by date, and paginate through the records
 2. Create and manage report groups that can contain their own sets of reports
 3. Create and manage reports
-4. Specify the SQL query to use to select data from the database -- you can customize a special query used only for counting the total number of records
-5. Specify the fields to display on the report and what kind of data they are
-6. The list of supported data types for each field
+4. Specify the SQL query that selects the data; placeholders put the search, the filters, the sort and the page where you want them, and an optional totals query feeds the Totals row
+5. Specify the fields to display on the report and what kind of data they are, or detect them from the query
+6. Exports run in the background: the message with the download and the button that removes the file
 7. Set advanced field options to further customize how fields will be displayed, exported, searched, filtered, or related to other tables
 8. Manage plugin settings and get useful URLs for API access
 
 == Changelog ==
+
+= 1.2.8 =
+* The XML export stays parseable whatever the report returns: a value holding a CDATA terminator is split across two sections, and a column name XML does not allow becomes a valid element name.
+* The XML and JSON exports report a file that could not be written as an error instead of showing the success message.
+* The plugin header names both maintainers.
+
+= 1.2.7 =
+* The Manage Groups and Manage Reports lists sort as the Reports menu does, by weight and then by name, so groups or reports of equal weight no longer show in one order on the list and another in the menu.
+
+= 1.2.6 =
+* Spelling is American English throughout the readme, the release notes and the code comments.
+* The release notes of a release cover every version since the last published one, each with its upgrade notice, so the changelog of versions that stayed drafts reaches the releases page; the workflow also takes a notes_ref input, with which a draft's notes are rewritten from that ref's readme.
+
+= 1.2.5 =
+* The bars above and below a report, the report selector and the filter row lay out as flex rows with every control centered on the line, so an admin theme that changes the height of buttons or inputs (Flatty makes buttons 32px tall, say) leaves the "Export:" label, the row count and the page links centered. The count and the page links sat 6px above the buttons on a one-page report before, with or without a theme. The bar under a one-row report no longer ends in a lone separator.
+
+= 1.2.4 =
+* The hash of the file is gone again from the version the stylesheet and the scripts are served with: the plugin's version, which changes with every release, is enough, and the hash cost a read of each file on every admin page.
+
+= 1.2.3 =
+* A report whose fields are none of them searchable (or are dates and times, which the search skips) and has no filter shows no search box: it did nothing but push the table down. The page field of the pagination keeps its form.
+* The "Export:" label sits on the center line of its buttons.
+* The "Loading the report…" line goes as soon as the report is in the page, by a line of script printed right after it, instead of waiting for every script of the page to load.
+* The plugin's stylesheet and scripts are served with a hash of the file in their version, so a browser or a proxy fetches a changed file afresh even within one plugin version.
+
+= 1.2.2 =
+* The pagination says when a row count comes from an earlier page view ("counted 3 mins ago"); the Manage Groups and Manage Reports screens keep no count, and the uninstall removes the kept counts.
+* Detect Fields marks text columns searchable and the others not: a LIKE over a date or a number finds nothing worth its cost.
+* The report form's second query is labeled for what it does, "SQL Query for Totals": its row feeds the Totals row under the last page and the totals of the REST data; the row count comes from the report query.
+* The custom-delimiter export is gone. It was reachable only through an address, and no address has written an export since 1.1.2; CSV, TSV and the pipe-separated TXT remain.
+* A Copy button beside the token the Settings page shows once, the Save Settings button through the core helper, and the screenshots retaken.
+
+= 1.2.1 =
+* The example group and its two reports are written on a first install only when the groups and reports tables are empty. A site whose version option was missing while it had groups and reports of its own got the examples added on the next admin visit.
+
+= 1.2.0 =
+* The API token is stored as a hash, like a password, and shown once when it is generated or set. The Settings page has buttons to generate a token and to turn token access off, and a field for a token of your own; the example addresses carry a placeholder. A token an earlier version stored in the clear is replaced by its hash on the first request that uses it, so scripts and cronjobs keep working through the update. A fresh install has token access off until a token is generated.
+* The row count of a report page ("1,234 items") is kept for five minutes (Settings: Row Count Cache, from off to an hour) for the same query, search and filters. The count runs with the first page over every row the query matches, which costs a slow query as much again; while a count is kept, the page views that follow run the query without it. Rows added or removed meanwhile show in the count once it is counted again, which the Settings page's Forget the Counts Now button makes happen at once. The `exports_reports_count_cache_ttl` filter adjusts the time per report.
+* The report form's field editor has a Detect Fields from the Query button: it runs the query for one row and adds a field for each column of the result that is not listed yet, with the data type that fits the column.
+* The link that removes an export under the export's message is a button that posts, sent in the background like the exports themselves, so the page's address never names a file; the removal runs no query. A removal link from before this version, opened from the history, is noted and removes nothing.
+* The translation template ships as languages/exports-and-reports.pot, with the Domain Path header; bin/make-pot.sh rewrites it and the workflow checks it is current.
+
+= 1.1.4 =
+* The plugin's stylesheet loads in the head of its pages. It was enqueued from the page itself, which put it in the footer, so a report rendered unstyled first and snapped into shape when the stylesheet arrived.
+* On a report page the admin frame is sent as soon as WordPress has written it, before the report's query runs, and the loading note is a plain line under the report selector.
+
+= 1.1.3 =
+* The row count, a sort from a column header, a search or a filter and the page's LIMIT go into the query's main SELECT, found by depth: the one after the WITH clauses, or inside an `EXECUTE IMMEDIATE` string. They went to the first keyword in the text, which in a query with WITH clauses or window functions is the wrong one (the database refused `SQL_CALC_FOUND_ROWS` there, and a sort landed inside a window function). A query with a LIMIT of its own and no `%%LIMIT%%` placeholder shows what it returns as one page instead of a broken LIMIT.
+* When the report's query fails, the screen says so and shows the database's message to users who may edit reports; a query that returns no rows on a report without field definitions says that, instead of "Missing columns definition". The REST data route returns the message too.
+* The report page prints a note with a spinner while a slow query runs.
+* The page sizes are offered below the table as well as above it, and the table box no longer shrinks beside the search box.
+
+= 1.1.2 =
+* An export link from before 1.1.0 (the action and the format in the page's address), opened again from the history or a bookmark, no longer writes another file: the report shows with a note, and the Export buttons start a new one.
+* On a wide report the bars with the export buttons and the paging stay in place while the table scrolls sideways under them.
+
+= 1.1.1 =
+* The Settings page stores the export formats that are turned off rather than the ones that are on, so a format a later version adds is on everywhere until someone turns it off. The list 1.1.0 saved is converted on upgrade.
+
+= 1.1.0 =
+* The export formats offered can be limited: for the whole site on the Settings page, and per report in its settings (a report narrows the site's list, it cannot widen it). A format that is not offered is refused by the export and by the REST route, not only hidden. CSV, TSV and TXT are written row by row; the other formats hold the whole report in memory, which matters for very large reports.
+* The export buttons post a form, and the screen's script runs the export in the background: the page's address never changes, so going back or reloading never writes another file, and the note with the spinner shows at once. The form names the report outright (the group page's default report went unnamed before) and carries the search term and the sort order, so an export holds what the page shows, every row of it.
+* A report with more than ten columns lays its columns out by their content and scrolls sideways in its box instead of squeezing them into the window; long values end in an ellipsis.
+* The .htaccess and index.php that keep the export directory from being served are rewritten when the plugin's rules change, on upgrade and with each export; a file the site wrote itself is left alone.
+* On the Settings page the descriptions sit below their buttons.
+
+= 1.0.2 =
+* A report may be several statements: session variables set before the query, a dynamic statement prepared with `EXECUTE IMMEDIATE` (`SET @day = CURRENT_DATE(); EXECUTE IMMEDIATE CONCAT( ... )`). They run one at a time on the same connection, and the paging, the search and the filters go into the last one, the query that returns the rows. Such a report no longer stops with a syntax error at its second statement.
+* The row count above the list no longer shows 0 after a CSV, TSV or TXT export.
+* The page count in the list's paging carries thousands separators, like the row count.
+* The list shows a note while an export is being written.
+
+= 1.0.1 =
+* The plugin zip is attached to the GitHub release again: the release workflow builds it on GitHub into a draft release and publishes the release once the file is on it (1.0.0 was published before its zip could be attached).
+* The menu icons and the reorder screen's drag handle are Dashicons; the PNG icons and the page icon of the old admin design, which WordPress has hidden since 3.8, are gone.
+* The report list's search form compares its values with the page's query string through `URLSearchParams`, so a search that repeats the current values keeps its page and one that changes them starts on page 1.
+
+= 1.0.0 =
+* The capabilities (`exports_reports_full_access`, `exports_reports_settings`, `exports_reports_view`) sit on the administrator role: added on activation and on this upgrade, each site of a network on its own, and removed on uninstall. The filter that granted administrators full access on every request is gone (with the `exports_reports_full_access` filter it ran), so a site can take the capabilities away from a role. A network activation installs every site; a site added later installs on its first admin request.
+* The hooks of the report screen pass their arguments one by one, the screen last (`exports_reports_get_data_sql( $sql, $full, $admin )`, ...), instead of one array; the `wp_admin_ui_*` names keep the array, deprecated. `exports_reports_row_actions` receives the links by action and the row; `exports_reports_limit` is a filter.
+* The report list is a `WP_List_Table`: sortable column headers with their indicators, the row actions and the responsive toggle core's lists have; the search form wraps the table, so a new search starts on page 1.
+* The code is in classes by task: `Exports_Reports_Query` builds the report query and its count query, the export formats are classes under `includes/exporters/`, the screens' markup is under `includes/templates/`, and `Exports_Reports_Admin_UI` handles the request. Code that called `export_sv()`, `can_stream_export()`, `pdf_engine()`, `quote()`, `rows()` or `execute()` on the screen keeps working.
+* The stored version is the version itself, compared with `version_compare()`. The schema is written the way `dbDelta()` reads it, so an upgrade compares the columns instead of failing a `CREATE TABLE`.
+* An export that writes nothing (a declined query) no longer fires `exports_reports_post_export` or logs an empty file name.
+* Tests: a PHPUnit suite on the WordPress test library replaces the WP-CLI script, run in CI on WordPress 5.7 and 5.8 and the current release, on MariaDB and MySQL.
+
+= 0.9.5 =
+* Security: search and filter values reach the query through `$wpdb->prepare()` with LIKE wildcards escaped, and identifiers from the report definition are quoted as identifiers; the Settings page, the reorder form and the save path verify a nonce; the report field editor sanitises its inputs; the export directory is no longer served by the web server (an .htaccess and an index.php are written, downloads go through the plugin after a nonce or token check).
+* Added a REST API (`exports-reports/v1/reports/{id}/data`, `/export`, `/exports/{file}`): the cronjob token as a bearer token or as the `token` parameter, or the logged-in user's access. The old `api.php` endpoint is removed; cronjobs use these routes (the Settings page shows the URLs).
+* Added the `exports_reports_get_data_sql` and `exports_reports_get_data_sql_count` filters, applied to the report query and its count query right before they run.
+* CSV, TSV and pipe exports stream from an unbuffered result, so memory no longer grows with the table; every value is quoted, a UTF-8 byte order mark is written, and formula-like values are wrapped as text (`exports_reports_export_escape_formulas` turns that off).
+* Tabs around the `%%LIMIT%%` placeholder are handled like newlines.
+* PDF exports render with tc-lib-pdf on PHP 8.2 and later (TCPDF, deprecated by its author, stays the engine below 8.2); the `exports_reports_export_pdf_engine` filter can keep TCPDF on a newer PHP.
+* The plugin's tables use the site's character set and collation; existing tables are converted on upgrade.
+* Added uninstall.php. The capabilities filter is `exports_reports_capabilities`; the misspelled `export_reports_capabilites` still works with a deprecation notice.
+* The report form's field editor is rebuilt (one card per field with a drag handle, advanced options folded), the query fields use the WordPress code editor with SQL highlighting, and multiple-choice settings are checkbox lists.
+* The daily cleanup event has its handler, is cleared on deactivation and is put back when it is missing.
+* A sort column the request names must be one of the report's columns (its field definitions, or the names and aliases of its SELECT list); otherwise the report's own order applies. A report whose columns cannot be known before it runs takes the name as an identifier, which the database checks.
+* Export files live in the uploads directory (`wp-content/uploads/exports-and-reports` by default); the files the site's export log names move over from the old `wp-content/exports` on upgrade. `EXPORTS_REPORTS_EXPORT_DIR` and `EXPORTS_REPORTS_EXPORT_URL` relocate it; the `WP_ADMIN_UI_` names are still read.
+* The page view of a report with a count query (the totals row) counts every row again; it had stopped at the first page.
+* Every hook carries the plugin's prefix: `exports_reports_` replaces `wp_admin_ui_` in the filter and action names (`exports_reports_get_data_sql`, `exports_reports_export_file`, `exports_reports_post_export`, ...), and the download link's admin-ajax action is `exports_reports_export`. The old hook names still run their callbacks, with a deprecation notice.
+* The report screens escape the output of display, view and header callbacks with the post-content HTML rules (the `exports_reports_allowed_html` filter extends them), the screens' scripts are in an enqueued file with no inline handlers, and the table rows are striped by the admin styles. The window the export page opens carries the file again, and the delete links ask for confirmation again.
+* The files are arranged by kind: the PHP in `includes/` (the main file keeps the constants, the hooks and the requires), the scripts, styles, images and PDF font metrics under `assets/`, the schema in `includes/schema.sql`; the `wp-admin-ui` directory is gone. Code that required one of the plugin's files by path needs the new path.
+* Every string the admin screens show is translatable (text domain `exports-and-reports`), the screens' styles are in the stylesheet, and the release archive leaves the Node package metadata out.
+* Requires WordPress 5.7 (4.9 before) and PHP 7.2 (down from 8.0); tested up to WordPress 7.1.
 
 = 0.9.4 =
 * Fixed PHP compatibility issues.
@@ -238,3 +396,11 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 
 = 0.2 =
 * First official release to the public as a plugin
+
+== Upgrade Notice ==
+
+= 1.2.0 =
+The API token is now stored as a hash and cannot be shown again; the token you have keeps working. Row counts are kept for five minutes by default (Settings: Row Count Cache).
+
+= 1.0.0 =
+Administrators keep their access through capabilities placed on their role during the upgrade. Code hooked to the report screen's `exports_reports_*` filters of 0.9.5 must take positional arguments; callbacks on the `wp_admin_ui_*` names keep working.

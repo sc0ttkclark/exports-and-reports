@@ -1,0 +1,13 @@
+# Analysis below PHP 8.2, down to the plugin's floor of 7.2: the tc-lib-pdf export class and that library
+# are written for 8.2 and are never loaded there (TCPDF serves instead), so they are left out.
+includes:
+	- phpstan.neon
+parameters:
+	phpVersion: 70200
+	scanDirectories!:
+		- includes
+		- vendor/vendor-prefixed/mk-j
+		- vendor/vendor-prefixed/tecnickcom/tcpdf
+	excludePaths:
+		- includes/exporters/class-exports-reports-admin-ui-export-pdf.php
+		- includes/templates (?)

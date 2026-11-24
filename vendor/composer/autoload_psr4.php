@@ -6,5 +6,19 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'ExportsReports\\Prefixed\\Com\\Tecnick\\Unicode\\Data\\' => array($vendorDir . '/tecnickcom/tc-lib-unicode-data/src'),
+    'ExportsReports\\Prefixed\\Com\\Tecnick\\Unicode\\' => array($vendorDir . '/tecnickcom/tc-lib-unicode/src'),
+    'ExportsReports\\Prefixed\\Com\\Tecnick\\Pdf\\Sign\\' => array($vendorDir . '/tecnickcom/tc-lib-pdf-sign/src'),
+    'ExportsReports\\Prefixed\\Com\\Tecnick\\Pdf\\Parser\\' => array($vendorDir . '/tecnickcom/tc-lib-pdf-parser/src'),
+    'ExportsReports\\Prefixed\\Com\\Tecnick\\Pdf\\Page\\' => array($vendorDir . '/tecnickcom/tc-lib-pdf-page/src'),
+    'ExportsReports\\Prefixed\\Com\\Tecnick\\Pdf\\Image\\' => array($vendorDir . '/tecnickcom/tc-lib-pdf-image/src'),
+    'ExportsReports\\Prefixed\\Com\\Tecnick\\Pdf\\Graph\\' => array($vendorDir . '/tecnickcom/tc-lib-pdf-graph/src'),
+    'ExportsReports\\Prefixed\\Com\\Tecnick\\Pdf\\Font\\' => array($vendorDir . '/tecnickcom/tc-lib-pdf-font/src'),
+    'ExportsReports\\Prefixed\\Com\\Tecnick\\Pdf\\Filter\\' => array($vendorDir . '/tecnickcom/tc-lib-pdf-filter/src'),
+    'ExportsReports\\Prefixed\\Com\\Tecnick\\Pdf\\Encrypt\\' => array($vendorDir . '/tecnickcom/tc-lib-pdf-encrypt/src'),
+    'ExportsReports\\Prefixed\\Com\\Tecnick\\Pdf\\' => array($vendorDir . '/tecnickcom/tc-lib-pdf/src'),
+    'ExportsReports\\Prefixed\\Com\\Tecnick\\File\\' => array($vendorDir . '/tecnickcom/tc-lib-file/src'),
+    'ExportsReports\\Prefixed\\Com\\Tecnick\\Color\\' => array($vendorDir . '/tecnickcom/tc-lib-color/src'),
+    'ExportsReports\\Prefixed\\Com\\Tecnick\\Barcode\\' => array($vendorDir . '/tecnickcom/tc-lib-barcode/src'),
     'Composer\\Installers\\' => array($vendorDir . '/composer/installers/src/Composer/Installers'),
 );

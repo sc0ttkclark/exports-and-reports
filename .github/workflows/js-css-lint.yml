@@ -1,0 +1,37 @@
+name: JS and CSS lint
+on:
+  pull_request:
+    paths:
+      - '**.js'
+      - '**.css'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.nvmrc'
+      - '.github/workflows/js-css-lint.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: ESLint, Prettier and Stylelint with the WordPress rules
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The Node version .nvmrc names, with npm's cache kept between runs and keyed on the lockfile.
+      - name: Configure Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install @wordpress/scripts
+        run: npm ci --no-audit --no-fund
+
+      - name: Lint the scripts (ESLint with the WordPress plugin; Prettier runs through it)
+        run: npm run lint:js
+
+      - name: Lint the stylesheet (Stylelint with the WordPress config)
+        run: npm run lint:css

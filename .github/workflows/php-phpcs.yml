@@ -2,15 +2,18 @@ name: 'PHP CodeSniffer'
 on:
   pull_request:
     paths:
-      - 'wp-admin-ui/**.php'
+      - 'includes/**'
       - '*.php'
       - 'composer.json'
       - '.github/workflows/php-phpcs.yml'
+permissions:
+  contents: read
+  pull-requests: write
 jobs:
   phpcs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
@@ -22,7 +25,7 @@ jobs:
         id: get-composer-cache-dir
         run: |
           echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-      - uses: actions/cache@v2
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: composer-cache
         with:
           path: ${{ steps.get-composer-cache-dir.outputs.dir }}
@@ -30,31 +33,37 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
 
-      - uses: "shivammathur/setup-php@v2"
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
-          php-version: 7.4
-      - uses: "ramsey/composer-install@v2"
-
-      - name: "Give permissions"
-        run: |
-          sudo chown -R root:root $GITHUB_WORKSPACE
+          php-version: 8.3
+      - uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
+        with:
+          composer-options: "--no-scripts"
 
       # ------------------------------------------------------------------------------
-      # Get changed files
+      # The whole plugin (the files phpcs.xml lists), not only the changed lines
+      # ------------------------------------------------------------------------------
+      - name: Sniff the whole plugin
+        run: vendor/bin/phpcs --standard=phpcs.xml
+
+      # ------------------------------------------------------------------------------
+      # Get changed files (the plugin's own PHP; vendor/ is third-party code, and the tests under tests/ follow the
+      # test library's conventions, not the plugin's ruleset: PHPCompatibility covers them in the compatibility job)
       # ------------------------------------------------------------------------------
       - name: Get list of changed files
         id: files
         run: |
-          echo "CHANGED_FILES=$(git diff --name-only --diff-filter=AM ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep '\.php$' | tr '\n' ' ')" >> $GITHUB_ENV
+          echo "CHANGED_FILES=$(git diff --name-only --diff-filter=AM ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep '\.php$' | grep -v '^vendor/' | grep -v '^tests/' | paste -sd' ' - || true)" >> $GITHUB_ENV
 
       # ------------------------------------------------------------------------------
-      # PHPCS
+      # PHPCS, reported on the pull request; the repository token serves when no bot token is set
       # ------------------------------------------------------------------------------
-      - uses: reviewdog/action-setup@v1
+      - uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
         with:
-          reviewdog_version: latest # Optional. [latest,nightly,v.X.Y.Z]
+          reviewdog_version: latest
       - name: Run reviewdog
         env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
-          vendor/bin/phpcs --report=json ${CHANGED_FILES} | jq -r ' .files | to_entries[] | .key as $path | .value.messages[] as $msg | "\($path):\($msg.line):\($msg.column):`\($msg.source)`<br>\($msg.message)" ' | reviewdog -efm="%f:%l:%c:%m" -name="phpcs" -filter-mode="added" -fail-on-error=true -reporter=github-pr-review
+          if [ -z "${CHANGED_FILES}" ]; then echo "No PHP files changed."; exit 0; fi
+          ( vendor/bin/phpcs --report=json ${CHANGED_FILES} || true ) | jq -r ' .files | to_entries[] | .key as $path | .value.messages[] as $msg | "\($path):\($msg.line):\($msg.column):`\($msg.source)`<br>\($msg.message)" ' | reviewdog -efm="%f:%l:%c:%m" -name="phpcs" -filter-mode="added" -fail-level=any -reporter=github-pr-review

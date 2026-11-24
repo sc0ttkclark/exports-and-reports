@@ -1,0 +1,184 @@
+name: Release zip
+# Builds the plugin zip on the runner, from the branch the run is started on or from the ref given, and
+# puts it on a draft release for the tag given, creating the draft when there is none, so that the file
+# is attached before the release is published: the repository's releases are immutable, and an
+# immutable release takes no asset once it is published. With publish set, the run publishes the draft
+# itself; otherwise the draft waits for a look at https://github.com/Element26-Inc/exports-and-reports/releases.
+#
+#   gh workflow run release.yml --ref main -f tag=1.0.1                   # build, attach to the draft
+#   gh workflow run release.yml --ref main -f tag=1.0.1 -f publish=true   # and publish it
+#   gh workflow run release.yml --ref main -f tag=0.9.5 -f ref=dec0cfc10b2e67a0fb80dda930857408c559cdb8
+#                                                                          # an older commit, by its sha or tag
+#   gh workflow run release.yml --ref main -f tag=1.2.3 -f ref=1.2.3 -f notes_ref=main
+#                                                                          # a draft's notes rewritten from main's readme
+#
+# The run creates the tag on the commit it built when there is none. GitHub refuses the workflow's token
+# a tag on a commit whose workflow files differ from the branch the run was started on; such a tag is
+# pushed by hand first (git push origin <sha>:refs/tags/<tag>), and the run uses it.
+#
+# The release notes are the readme's changelog sections of every version since the last published release, each
+# with its upgrade notice (bin/release-notes.py): the readme of the commit built, or of notes_ref when given (a
+# draft's notes refreshed after a later correction).
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'The release tag (1.0.1); its version must be the one the plugin declares'
+        required: true
+        type: string
+      ref:
+        description: 'The commit or tag to build; empty builds the branch the run is started on'
+        required: false
+        type: string
+        default: ''
+      publish:
+        description: 'Publish the draft once the zip is attached'
+        required: false
+        type: boolean
+        default: false
+      notes_ref:
+        description: 'The branch, tag or commit whose readme gives the release notes; empty takes the one built'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  zip:
+    name: Build the plugin zip and attach it to the draft release
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Configure PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Determine the version
+        id: version
+        run: |
+          tag="${{ inputs.tag }}"
+          version="${tag#v}"
+          bin/check-version.sh "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "building $(git rev-parse --short HEAD) as $version"
+
+      - name: Check the vendor tree
+        run: bin/check-vendor.sh
+
+      - name: Build the zip
+        run: |
+          zip="exports-and-reports-${{ steps.version.outputs.version }}.zip"
+          git archive --format=zip -9 --prefix=exports-and-reports/ -o "$zip" HEAD
+          sha256sum "$zip" > "$zip.sha256"
+          echo "ZIP=$zip" >> "$GITHUB_ENV"
+          unzip -l "$zip" | tail -n1
+          cat "$zip.sha256"
+
+      - name: Check the packaged tree
+        run: |
+          rm -rf build && mkdir build && unzip -q "$ZIP" -d build
+          cd build/exports-and-reports
+          for f in tests .github bin phpcs.xml .phpcs.compat.xml .phpcs.compat-pdf.xml phpstan.neon phpstan-legacy.neon phpunit.xml.dist composer.lock package.json package-lock.json .gitattributes .gitignore; do
+            if [ -e "$f" ]; then echo "::error::$f is in the zip"; exit 1; fi
+          done
+          lint="$(find . -name '*.php' -print0 | xargs -0 -P 4 -n 1 php -l 2>&1 | grep -v '^No syntax errors' || true)"
+          if [ -n "$lint" ]; then echo "$lint"; echo "::error::a packaged PHP file does not parse on PHP $(php -r 'echo PHP_VERSION;')"; exit 1; fi
+          grep -q "^ \* Version:[[:space:]]*${{ steps.version.outputs.version }}$" exports-and-reports.php || { echo "::error::the packaged header does not declare ${{ steps.version.outputs.version }}"; exit 1; }
+          grep -q "^ \* Requires PHP:[[:space:]]*7\.2$" exports-and-reports.php || { echo "::error::the packaged header does not declare Requires PHP 7.2"; exit 1; }
+          php -r 'require "vendor/autoload.php"; require "vendor/vendor-prefixed/autoload.php"; exit( class_exists( "ExportsReports\\Prefixed\\Com\\Tecnick\\Pdf\\Tcpdf" ) && class_exists( "ExportsReports__Prefixed__TCPDF" ) && class_exists( "ExportsReports__Prefixed__XLSXWriter" ) ? 0 : 1 );' || { echo "::error::the packaged autoloaders do not resolve the bundled libraries"; exit 1; }
+          echo "packaged tree ok: $(find . -type f | wc -l) files"
+
+      - name: Configure PHP 7.2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '7.2'
+          coverage: none
+
+      - name: Check the packaged tree on PHP 7.2
+        # The tc-lib-pdf engine and its library load on PHP 8.2 and later only; everything else must parse on the floor.
+        # The engine is matched by name: it moved into includes/exporters/ in 1.0.0, and an older commit may be built.
+        run: |
+          cd build/exports-and-reports
+          lint="$(find . -name '*.php' -not -path './vendor/vendor-prefixed/tecnickcom/tc-lib-*' -not -name 'class-exports-reports-admin-ui-export-pdf.php' -print0 | xargs -0 -P 4 -n 1 php -l 2>&1 | grep -v '^No syntax errors' || true)"
+          if [ -n "$lint" ]; then echo "$lint"; echo "::error::a packaged PHP file the plugin loads on 7.2 does not parse there"; exit 1; fi
+          php -r 'require "vendor/autoload.php"; require "vendor/vendor-prefixed/autoload.php"; exit( class_exists( "ExportsReports__Prefixed__XLSXWriter" ) && class_exists( "ExportsReports__Prefixed__TCPDF" ) ? 0 : 1 );' || { echo "::error::the packaged autoloaders do not resolve the libraries the plugin uses on PHP 7.2"; exit 1; }
+          echo "packaged tree ok on PHP $(php -r 'echo PHP_VERSION;')"
+
+      - name: Upload the zip as a workflow artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: exports-and-reports-${{ steps.version.outputs.version }}
+          path: |
+            ${{ env.ZIP }}
+            ${{ env.ZIP }}.sha256
+          if-no-files-found: error
+
+      - name: Write the release notes from the readme
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          readme=readme.txt
+          if [ -n "${{ inputs.notes_ref }}" ]; then
+            # The notes from another ref's readme: a draft's notes refreshed once its changelog was corrected later.
+            git fetch --quiet --depth 1 origin "${{ inputs.notes_ref }}"
+            git show FETCH_HEAD:readme.txt > readme-notes.txt
+            readme=readme-notes.txt
+          fi
+          # The notes cover every version since the last published release: the sections of versions that stayed
+          # drafts (or were never built) would otherwise never reach a reader of the releases page.
+          since="$(gh release list --exclude-drafts --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName // ""')"
+          since="${since#v}"
+          echo "notes for ${{ steps.version.outputs.version }}, down to (not including) ${since:-the first version}"
+          python3 bin/release-notes.py "$readme" "${{ steps.version.outputs.version }}" "$since" > notes.md
+          if ! grep -q '[^[:space:]]' notes.md; then
+            echo "::error::$readme has no changelog section for ${{ steps.version.outputs.version }}"
+            exit 1
+          fi
+          cat notes.md
+
+      - name: Put the zip on the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ inputs.tag }}"
+          sha="${{ steps.version.outputs.sha }}"
+          if state="$(gh release view "$tag" --json isDraft --jq .isDraft 2>/dev/null)"; then
+            if [ "$state" != "true" ]; then
+              echo "::error::$tag is published already; a published release here is immutable and takes no asset. Release the next version instead."
+              exit 1
+            fi
+            gh release upload "$tag" "$ZIP" "$ZIP.sha256" --clobber
+            gh release edit "$tag" --title "${{ steps.version.outputs.version }}" --notes-file notes.md
+          else
+            # The tag first, on the commit that was built, and the draft against it: the workflow's token is
+            # refused a release that names a bare older commit as its target.
+            if git fetch --quiet origin "refs/tags/$tag:refs/tags/$tag" 2>/dev/null; then
+              existing="$(git rev-parse "$tag^{commit}")"
+              if [ "$existing" != "$sha" ]; then
+                echo "::error::$tag already points at $existing, not at the commit that was built ($sha)."
+                exit 1
+              fi
+            elif ! git push origin "$sha:refs/tags/$tag"; then
+              # GitHub refuses the workflow's token a tag on a commit whose workflow files differ from the
+              # branch the run was started on ("refusing to allow a GitHub App to create or update workflow").
+              echo "::error::The workflow's token could not create the tag $tag on $sha. Push it yourself and run the workflow again with the same inputs:  git push origin $sha:refs/tags/$tag"
+              exit 1
+            fi
+            gh release create "$tag" --draft --title "${{ steps.version.outputs.version }}" --notes-file notes.md "$ZIP" "$ZIP.sha256"
+          fi
+          gh release view "$tag" --json isDraft,assets --jq '"draft: \(.isDraft), assets: \([.assets[].name] | join(", "))"'
+
+      - name: Publish the release
+        if: ${{ inputs.publish }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "${{ inputs.tag }}" --draft=false --latest

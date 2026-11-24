@@ -1,0 +1,31 @@
+name: Translation template
+on:
+  pull_request:
+    paths:
+      - '**.php'
+      - '**.js'
+      - 'languages/**'
+      - 'bin/make-pot.sh'
+      - '.github/workflows/i18n.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  pot:
+    name: languages/exports-and-reports.pot matches the sources
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Configure PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      # The script downloads the pinned WP-CLI, checks it against its published checksum and writes the
+      # template to a temporary file; the committed one must read the same, the creation date aside.
+      - name: Compare the committed template with a fresh one
+        run: bin/make-pot.sh --check

@@ -2,43 +2,56 @@ name: 'PHP Static Analysis'
 on:
   pull_request:
     paths:
-      - 'wp-admin-ui/**.php'
+      - 'includes/**'
       - '*.php'
       - 'composer.json'
+      - 'phpstan.neon'
+      - 'phpstan-legacy.neon'
+      - 'composer.lock'
       - '.github/workflows/php-phpstan.yml'
 jobs:
   phpstan:
     strategy:
+      fail-fast: false
       matrix:
         phpVersion: [
           "7.4",
           "8.0",
           "8.1",
           "8.2",
-          "8.3"
+          "8.3",
+          "8.4"
         ]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       # ------------------------------------------------------------------------------
       # Checkout the repository
       # ------------------------------------------------------------------------------
       - name: Checkout the repository
-        uses: actions/checkout@v4
-      # ------------------------------------------------------------------------------
-      # Get the changed files in a space separated list.
-      # ------------------------------------------------------------------------------
-      - name: Get all changed files and use a space separator in the output
-        id: changed-files
-        uses: tj-actions/changed-files@v44
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          separator: " "
-          files: |
-            **.php
+          fetch-depth: 0
+      # ------------------------------------------------------------------------------
+      # The plugin's own changed PHP files (vendor/ is third-party code). A change to the
+      # configuration, the dependencies or this workflow analyzes every path in phpstan.neon.
+      # ------------------------------------------------------------------------------
+      - name: Decide what to analyze
+        id: changed-files
+        run: |
+          changed="$(git diff --name-only --diff-filter=AM ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})"
+          if grep -qxE 'phpstan\.neon|phpstan-legacy\.neon|composer\.json|composer\.lock|\.github/workflows/php-phpstan\.yml' <<< "$changed"; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "paths=" >> "$GITHUB_OUTPUT"
+          else
+            paths="$(grep '\.php$' <<< "$changed" | grep -v '^vendor/' | paste -sd' ' - || true)"
+            echo "run=$([ -n "$paths" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+            echo "paths=$paths" >> "$GITHUB_OUTPUT"
+          fi
       # ------------------------------------------------------------------------------
       # Set up PHP and run phpstan
       # ------------------------------------------------------------------------------
       - name: Configure PHP environment to run phpstan
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: ${{ matrix.phpVersion }}
       # ------------------------------------------------------------------------------
@@ -47,12 +60,23 @@ jobs:
       - name: Set php version ${{ matrix.phpVersion }} in composer
         run: composer config platform.php ${{ matrix.phpVersion }}
       # ------------------------------------------------------------------------------
-      # Install dependencies - ignoring php requirements
+      # The locked tools, for the matrix PHP version. The lock is resolved for PHP 8.2 (the PDF
+      # library's floor); below it the php requirement is ignored and phpstan-legacy.neon leaves the
+      # PDF export class out, which is also what the plugin does at run time. The committed
+      # prefixed copy serves the analysis, so the Strauss script does not run here.
       # ------------------------------------------------------------------------------
       - name: Install dependencies
-        run: composer i --ignore-platform-req=php+
+        run: |
+          if [ "$(printf '%s\n' "${{ matrix.phpVersion }}" 8.2 | sort -V | head -n1)" != "8.2" ]; then
+            composer install --ignore-platform-req=php --no-scripts
+            echo "PHPSTAN_CONFIG=phpstan-legacy.neon" >> "$GITHUB_ENV"
+          else
+            composer install --ignore-platform-req=php+ --no-scripts
+            echo "PHPSTAN_CONFIG=phpstan.neon" >> "$GITHUB_ENV"
+          fi
       # ------------------------------------------------------------------------------
       # Run phpstan
       # ------------------------------------------------------------------------------
       - name: Run phpstan
-        run: ./vendor/bin/phpstan analyse --error-format=table -c phpstan.neon ${{ steps.changed-files.outputs.all_changed_files }}
+        if: steps.changed-files.outputs.run == 'true'
+        run: ./vendor/bin/phpstan analyse --error-format=table -c "$PHPSTAN_CONFIG" ${{ steps.changed-files.outputs.paths }}

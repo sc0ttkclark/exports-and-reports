@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<ruleset name="PHP Compatibility of the PDF export">
+	<description>The PDF export class alone: it loads on PHP 8.2 and later only (tc-lib-pdf's floor).</description>
+	<config name="testVersion" value="8.2-"/>
+
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg name="report" value="full,summary"/>
+
+	<rule ref="PHPCompatibilityWP"/>
+</ruleset>

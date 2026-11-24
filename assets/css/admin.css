@@ -1,0 +1,294 @@
+.wrap .about,
+.wrap .about * {
+	font-size: 12px;
+}
+
+.wrap .about th {
+	font-weight: 700;
+}
+
+.wrap ul {
+	list-style-type: circle;
+	margin-left: 14px;
+	margin-top: 5px;
+}
+
+.wrap ul li {
+	list-style-type: circle;
+}
+
+.wrap dl dt {
+	font-weight: 700;
+	margin-bottom: 8px;
+	margin-top: 12px;
+}
+
+.wrap dl dd {
+	margin-left: 14px;
+	margin-top: 5px;
+}
+
+/* The report form's field editor. */
+.er-fields__list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	max-width: 980px;
+}
+
+.er-field {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 10px 12px;
+}
+
+.er-field--placeholder {
+	background: #f6f7f7;
+	border: 2px dashed #8c8f94;
+	min-height: 56px;
+}
+
+.er-field__bar {
+	align-items: flex-end;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 16px;
+}
+
+.er-field__handle {
+	color: #8c8f94;
+	cursor: move;
+	margin-bottom: 7px;
+}
+
+.er-field__bar label,
+.er-field__grid label {
+	color: #1d2327;
+	display: flex;
+	flex-direction: column;
+	font-size: 12px;
+	gap: 2px;
+}
+
+.er-field__bar .regular-text {
+	width: 220px;
+}
+
+.er-field__remove {
+	margin-bottom: 6px;
+	margin-left: auto;
+}
+
+.er-field__flags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 18px;
+	margin: 10px 0 0;
+}
+
+.er-field__flag {
+	font-size: 13px;
+}
+
+.er-field__advanced {
+	margin-top: 8px;
+}
+
+.er-field__advanced summary {
+	color: #2271b1;
+	cursor: pointer;
+}
+
+.er-field__grid {
+	display: grid;
+	gap: 8px 16px;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	margin-top: 8px;
+}
+
+.er-field__grid input {
+	width: 100%;
+}
+
+.er-fields__actions {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.er-fields__note {
+	color: #50575e;
+}
+
+/* A multiple-choice column of a form (roles with access). */
+.er-choices {
+	display: grid;
+	gap: 4px 12px;
+	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	max-width: 760px;
+}
+
+.er-choices label {
+	font-size: 13px;
+}
+
+/* The pagination's note on a row count kept from an earlier page view. */
+.exports-reports-counted {
+	color: #646970;
+	margin-left: 4px;
+}
+
+/* The Settings page. */
+.exports-reports-settings .exports-reports-url-label {
+	font-style: normal;
+}
+
+.exports-reports-settings .exports-reports-url {
+	width: 100%;
+}
+
+/* The report selector above a report, when the user may see more than one:
+   a flex row, its label and its select centered on one line whatever height an
+   admin theme gives the select. */
+.exports-reports-selector {
+	align-items: center;
+	background-color: #e7e7e7;
+	border: 1px solid #d7d7d7;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 10px;
+	margin: 15px 15px 0 5px;
+	padding: 5px 15px;
+}
+
+/* The filters and the search box: a flex row that wraps, each control
+   centered on the line; the search field and its button wrap as one. */
+.exports-reports-filters {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 8px;
+	justify-content: flex-end;
+	max-width: 100%;
+}
+
+.exports-reports-search {
+	align-items: center;
+	display: inline-flex;
+	gap: 6px;
+}
+
+/* The report screens' totals table. */
+.admin_ui_totals_heading {
+	text-align: center;
+}
+
+table.admin_ui_totals {
+	margin: 0 auto;
+	width: auto;
+}
+
+select.admin_ui_filter_multiple {
+	height: auto;
+}
+
+/* The reorder screen: taller rows and a drag handle. */
+.admin_ui_reorder_form table.widefat.fixed tbody tr {
+	height: 50px;
+}
+
+.dragme {
+	cursor: move;
+}
+
+/* The handle is a Dashicon: an icon font has no generic fallback. */
+/* stylelint-disable font-family-no-missing-generic-family-keyword */
+.dragme::before {
+	color: #787c82;
+	content: "\f545";
+	float: left;
+	font: 400 20px/1 dashicons;
+	margin: 1px 8px 0 0;
+}
+/* stylelint-enable font-family-no-missing-generic-family-keyword */
+
+/* The notes shown while a report loads or an export is written: the
+   spinner sits in the line, before the text. The loading line sits under
+   the report selector, aligned with its text. */
+.exports-reports-progress .spinner,
+.exports-reports-loading .spinner {
+	float: none;
+	margin: 0 8px 0 0;
+	vertical-align: middle;
+}
+
+.exports-reports-loading {
+	color: #50575e;
+	margin: 10px 15px 0 5px;
+	padding: 0 16px;
+}
+
+/* A table of many columns: each takes the width its content needs, long
+   values end in an ellipsis, and the table scrolls sideways in its box. */
+.exports-reports-table-scroll {
+	clear: both;
+	overflow-x: auto;
+}
+
+/* The bars with the buttons and the paging stay in place while the table
+   scrolls under them. They are flex rows: the buttons on the left, the paging
+   on the right, every control centered on the bar's middle line, so an admin
+   theme that changes the height of buttons or inputs leaves labels, counts
+   and page links centered (core sets the bar a fixed height and floats its
+   parts, which centers nothing). */
+.exports-reports-table-scroll .tablenav {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 12px;
+	height: auto;
+	left: 0;
+	min-height: 30px;
+	position: sticky;
+}
+
+.exports-reports-table-scroll .tablenav > .clear {
+	display: none;
+}
+
+.exports-reports-table-scroll .tablenav .actions {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	float: none;
+	gap: 4px;
+	padding: 0;
+}
+
+.exports-reports-table-scroll .tablenav .tablenav-pages {
+	float: none;
+	margin: 0 0 0 auto;
+	order: 2;
+}
+
+.wp-list-table.exports-reports-wide {
+	min-width: 100%;
+	table-layout: auto;
+	width: max-content;
+}
+
+.wp-list-table.exports-reports-wide th,
+.wp-list-table.exports-reports-wide td {
+	max-width: 24em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* The Settings page's format boxes sit in a row. */
+.exports-reports-formats label {
+	display: inline-block;
+	margin: 0 16px 4px 0;
+}

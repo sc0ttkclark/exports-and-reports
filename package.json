@@ -1,6 +1,6 @@
 {
   "name": "exports-and-reports",
-  "version": "0.9.4",
+  "version": "1.2.8",
   "description": "",
   "author": "SKC Development, LLC",
   "homepage": "https://skc.dev/",
@@ -11,8 +11,21 @@
   },
   "funding": {
     "type": "individual",
-    "url": "https://github.com/sponsors/sc0ttkclark"
+    "url": "https://github.com/sponsors/dxdc"
   },
   "license": "GPL-2.0+",
-  "contributors": "https://github.com/sc0ttkclark/exports-and-reports/graphs/contributors"
+  "contributors": "https://github.com/sc0ttkclark/exports-and-reports/graphs/contributors",
+  "scripts": {
+    "lint": "npm run lint:js && npm run lint:css",
+    "lint:js": "wp-scripts lint-js assets",
+    "lint:css": "wp-scripts lint-style 'assets/**/*.css'",
+    "format": "wp-scripts format assets && wp-scripts lint-style --fix 'assets/**/*.css'",
+    "makepot": "bin/make-pot.sh"
+  },
+  "engines": {
+    "node": ">=22.22"
+  },
+  "devDependencies": {
+    "@wordpress/scripts": "^37.0.0"
+  }
 }

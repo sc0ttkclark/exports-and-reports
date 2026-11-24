@@ -1,0 +1,45 @@
+name: Plugin Check
+on:
+  pull_request:
+    paths:
+      - '*.php'
+      - 'includes/**'
+      - 'assets/**'
+      - 'vendor/**'
+      - 'readme.txt'
+      - '.gitattributes'
+      - '.github/workflows/plugin-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  plugin-check:
+    name: wordpress.org Plugin Check
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # ------------------------------------------------------------------------------
+      # Check the tree a release ships: git archive applies the export-ignore entries of
+      # .gitattributes, the same list the wordpress.org deploy uses, so tests, tooling
+      # and workflow files are not part of what is checked.
+      # ------------------------------------------------------------------------------
+      - name: Export the plugin as a release ships it
+        run: |
+          mkdir -p build
+          git archive --format=tar --prefix=exports-and-reports/ HEAD | tar -x -C build
+
+      # ------------------------------------------------------------------------------
+      # Errors fail the job and every finding is annotated on the pull request. vendor/
+      # holds TCPDF and the prefixed XLSXWriter, third-party code outside the plugin's
+      # own standards.
+      # ------------------------------------------------------------------------------
+      - name: Run Plugin Check
+        uses: WordPress/plugin-check-action@10857da14b6c2246d15402b3e69f777edcf8c12e # v1.1.9
+        with:
+          build-dir: ./build/exports-and-reports
+          exclude-directories: vendor

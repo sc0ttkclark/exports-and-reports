@@ -33,11 +33,9 @@ $RECYCLE.BIN/
 /tmp/
 
 # NPM / Composer
-/composer.lock
 /node_modules/
 /vendor/*
 !/vendor/composer/
-!/vendor/tecnickcom/
 !/vendor/autoload.php
 !/vendor/vendor-prefixed/
 npm-debug.log
@@ -55,6 +53,8 @@ tests/codeception/_support/_generated
 # Tests - local output files
 tests/codeception/_output
 /coverage/
+.phpunit.result.cache
 
 # Other files
 bin/strauss.phar
+bin/wp-cli.phar

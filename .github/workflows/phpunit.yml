@@ -1,0 +1,143 @@
+name: 'PHPUnit'
+on:
+  pull_request:
+    paths:
+      - 'includes/**'
+      - '*.php'
+      - 'tests/**'
+      - 'vendor/**'
+      - 'assets/fonts/**'
+      - 'composer.lock'
+      - 'phpunit.xml.dist'
+      - '.github/workflows/phpunit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  phpunit:
+    # The oldest WordPress and PHP the plugin declares, one job on MariaDB and one on MySQL, and the current
+    # WordPress on a current PHP, on the current MariaDB and MySQL.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - wordpress: '5.7'
+            php: '7.2'
+            db: 'mariadb:10.11'
+            phpunit: '^7.5'
+            wp-phpunit: '5.7.*'
+          - wordpress: '5.8'
+            php: '7.3'
+            db: 'mysql:8.0'
+            phpunit: '^7.5'
+            wp-phpunit: '5.8.*'
+          - wordpress: latest
+            php: '8.3'
+            db: 'mariadb:11.4'
+            phpunit: '^9.6'
+            wp-phpunit: ''
+          - wordpress: latest
+            php: '8.3'
+            db: 'mysql:8.4'
+            phpunit: '^9.6'
+            wp-phpunit: ''
+    name: PHPUnit on WordPress ${{ matrix.wordpress }}, PHP ${{ matrix.php }}, ${{ matrix.db }}
+    runs-on: ubuntu-24.04
+    services:
+      database:
+        image: ${{ matrix.db }}
+        # The MariaDB images read the MYSQL_* names as well.
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wordpress_test
+        ports:
+          - 3306:3306
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mysqli, mbstring, zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install WP-CLI
+        run: |
+          curl -fsSLO https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+          chmod +x wp-cli.phar
+          sudo mv wp-cli.phar /usr/local/bin/wp
+          wp --version
+      - name: Wait for the database
+        run: |
+          for i in $(seq 1 60); do
+            if mysqladmin ping -h127.0.0.1 -P3306 -uroot -proot --silent 2>/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::the database service did not come up"
+          exit 1
+      - name: Let an older PHP authenticate against MySQL 8.0
+        # MySQL 8.0 authenticates with caching_sha2_password by default, which the mysqlnd of older PHP versions does not speak; root takes the native plugin.
+        if: startsWith(matrix.db, 'mysql:8.0')
+        run: mysql -h127.0.0.1 -P3306 -uroot -proot -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'root';"
+      - name: Download WordPress
+        run: |
+          mkdir -p "$RUNNER_TEMP/wp"
+          wp core download --path="$RUNNER_TEMP/wp" --version=${{ matrix.wordpress }}
+          wp core version --path="$RUNNER_TEMP/wp"
+      - name: Choose the test library version
+        id: wp
+        # The library tracks the WordPress version: the matrix names it for the floors, the downloaded core's major.minor for latest.
+        run: |
+          version="$(wp core version --path="$RUNNER_TEMP/wp")"
+          constraint='${{ matrix.wp-phpunit }}'
+          if [ -z "$constraint" ]; then
+            constraint="~$(echo "$version" | cut -d. -f1,2).0"
+          fi
+          echo "wp-phpunit=$constraint" >> "$GITHUB_OUTPUT"
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: |
+          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-tools-php${{ matrix.php }}-wp${{ matrix.wordpress }}-${{ steps.wp.outputs.wp-phpunit }}
+          restore-keys: |
+            ${{ runner.os }}-composer-tools-php${{ matrix.php }}-
+      - name: Install the test tooling
+        # A project of its own: the plugin's dev dependencies need PHP 8.2, and its runtime vendor tree is committed.
+        # Composer 2.11 refuses a package with a security advisory, which PHPUnit 7 carries; the WordPress 5.7 and
+        # 5.8 test libraries run on nothing newer, and a test runner never runs on a server.
+        run: |
+          mkdir -p "$RUNNER_TEMP/tools"
+          cat > "$RUNNER_TEMP/tools/composer.json" <<'EOF'
+          {
+            "require": {
+              "phpunit/phpunit": "${{ matrix.phpunit }}",
+              "yoast/phpunit-polyfills": "^1.1",
+              "wp-phpunit/wp-phpunit": "${{ steps.wp.outputs.wp-phpunit }}"
+            },
+            "config": {
+              "policy": {
+                "advisories": {
+                  "ignore": {
+                    "phpunit/phpunit": "The WordPress 5.7 and 5.8 test libraries run on PHPUnit 7; a test runner never runs on a server."
+                  }
+                }
+              }
+            }
+          }
+          EOF
+          composer update --working-dir="$RUNNER_TEMP/tools" --no-interaction --no-progress
+      - name: Run the test suite
+        env:
+          WP_PHPUNIT__DIR: ${{ runner.temp }}/tools/vendor/wp-phpunit/wp-phpunit
+          WP_PHPUNIT__TESTS_CONFIG: ${{ github.workspace }}/tests/phpunit/wp-tests-config.php
+          WP_TESTS_ABSPATH: ${{ runner.temp }}/wp/
+          WP_TESTS_DB_NAME: wordpress_test
+          WP_TESTS_DB_USER: root
+          WP_TESTS_DB_PASSWORD: root
+          WP_TESTS_DB_HOST: 127.0.0.1
+        run: |
+          "$RUNNER_TEMP/tools/vendor/bin/phpunit" --configuration phpunit.xml.dist
