@@ -8,7 +8,7 @@
     "mk-j/php_xlsxwriter": "^0.39",
     "php": ">=7.2",
     "tecnickcom/tc-lib-pdf": "^8.82",
-    "tecnickcom/tcpdf": "^6.11.4"
+    "tecnickcom/tcpdf": "^7.0.24"
   },
   "require-dev": {
     "dealerdirect/phpcodesniffer-composer-installer": "^1.0.0",
