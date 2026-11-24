@@ -1,5 +1,5 @@
 === Exports and Reports ===
-Contributors: sc0ttkclark
+Contributors: sc0ttkclark, dxdc
 Donate link: https://github.com/sponsors/sc0ttkclark
 Tags: exporting, reporting, csv, pdf, xml
 Requires at least: 5.7
