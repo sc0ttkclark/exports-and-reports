@@ -179,6 +179,7 @@ The plugin's bundled libraries (`vendor/`) are part of the zip and of the reposi
 * An export can be removed only from the screen of its own report.
 * An error about the export directory shows its path on the server only to users who manage reports.
 * robots.txt no longer names the export directory; the `exports_reports_robots_txt()` function is gone.
+* Development: the PHPUnit suite runs on pushes to `main`, and once more as a network.
 * Development: Plugin Check runs on pushes to `main` and in the release workflow, and `tests/README.md` lists the findings the code suppresses.
 * A token typed into the Settings page needs at least 24 characters and is stored as typed; `sanitize_title()` used to rewrite it. Tokens already in use keep working.
 * A new Settings box, "Take the token in the Authorization header only". Until it is ticked, the `token` query parameter still works.

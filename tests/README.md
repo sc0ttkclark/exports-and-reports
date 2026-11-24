@@ -170,8 +170,8 @@ reason beside it. A new suppression carries its reason the same way.
 
 ## CI
 
-`.github/workflows/phpunit.yml` runs the suite on every pull request that touches PHP, the tests, the
-vendor tree or the fonts, on a matrix of five jobs: WordPress 5.7 on PHP 7.2 with MariaDB 10.11 and
+`.github/workflows/phpunit.yml` runs the suite on every pull request, and every push to `main`, that
+touches PHP, the tests, the vendor tree or the fonts, on a matrix of five jobs: WordPress 5.7 on PHP 7.2 with MariaDB 10.11 and
 WordPress 5.8 on PHP 7.3 with MySQL 8.0 (the plugin's floors, with PHPUnit 7.5 and the matching
 `wp-phpunit` version), the current WordPress on PHP 8.3 with MariaDB 11.4 and with MySQL 8.4 (PHPUnit
 9.6, the `wp-phpunit` version of the downloaded core), and the MariaDB 11.4 job once more as a network

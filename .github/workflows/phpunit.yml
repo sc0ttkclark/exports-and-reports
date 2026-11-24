@@ -1,6 +1,19 @@
 name: 'PHPUnit'
+# On pull requests and on pushes to main.
 on:
   pull_request:
+    paths:
+      - 'includes/**'
+      - '*.php'
+      - 'tests/**'
+      - 'vendor/**'
+      - 'assets/fonts/**'
+      - 'composer.lock'
+      - 'phpunit.xml.dist'
+      - '.github/workflows/phpunit.yml'
+  push:
+    branches:
+      - main
     paths:
       - 'includes/**'
       - '*.php'
