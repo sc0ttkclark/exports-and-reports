@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-24T19:51:41+00:00\n"
+"POT-Creation-Date: 2026-11-24T20:32:41+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: exports-and-reports\n"
@@ -598,8 +598,8 @@ msgstr ""
 #: includes/class-exports-reports-admin-ui.php:1460
 #: includes/class-exports-reports-admin-ui.php:1487
 #: includes/class-exports-reports-admin-ui.php:1666
-#: includes/class-exports-reports-admin-ui.php:2067
-#: includes/class-exports-reports-admin-ui.php:2104
+#: includes/class-exports-reports-admin-ui.php:2094
+#: includes/class-exports-reports-admin-ui.php:2131
 msgid "<strong>Error:</strong> Invalid Configuration - Missing \"table\" definition."
 msgstr ""
 
@@ -626,7 +626,7 @@ msgid "Save Changes"
 msgstr ""
 
 #: includes/class-exports-reports-admin-ui.php:1490
-#: includes/class-exports-reports-admin-ui.php:2070
+#: includes/class-exports-reports-admin-ui.php:2097
 msgid "<strong>Error:</strong> Invalid Configuration - Missing \"id\" definition."
 msgstr ""
 
@@ -682,110 +682,110 @@ msgstr ""
 msgid "<strong>Error:</strong> Order has not been updated."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1762
+#: includes/class-exports-reports-admin-ui.php:1789
 #: includes/templates/list-filters.php:90
 #: includes/templates/view.php:58
 msgid "Yes"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1762
+#: includes/class-exports-reports-admin-ui.php:1789
 #: includes/templates/list-filters.php:91
 #: includes/templates/view.php:58
 msgid "No"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1872
-#: includes/class-exports-reports-admin-ui.php:1878
+#: includes/class-exports-reports-admin-ui.php:1899
+#: includes/class-exports-reports-admin-ui.php:1905
 msgid "<strong>Error:</strong> Your hosting configuration does not allow access to add files to your site."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1893
+#: includes/class-exports-reports-admin-ui.php:1920
 msgid "<strong>Error:</strong> The export link has expired. Go back to the report and use its export buttons again."
 msgstr ""
 
 #. translators: %s: the export directory.
-#: includes/class-exports-reports-admin-ui.php:1904
+#: includes/class-exports-reports-admin-ui.php:1931
 #, php-format
 msgid "<strong>Error:</strong> Your export directory (<strong>%s</strong>) did not exist and could not be created by the web server. Check the directory permissions and try again."
 msgstr ""
 
 #. translators: %s: the export directory.
-#: includes/class-exports-reports-admin-ui.php:1911
-#: includes/class-exports-reports-admin-ui.php:1963
+#: includes/class-exports-reports-admin-ui.php:1938
+#: includes/class-exports-reports-admin-ui.php:1990
 #, php-format
 msgid "<strong>Error:</strong> Your export directory (<strong>%s</strong>) needs to be writable for this plugin to work. Double-check it and try again."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1921
+#: includes/class-exports-reports-admin-ui.php:1948
 msgid "<strong>Error:</strong> That is not an export file."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1953
+#: includes/class-exports-reports-admin-ui.php:1980
 msgid "<strong>Success:</strong> Export removed successfully."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1968
+#: includes/class-exports-reports-admin-ui.php:1995
 msgid "<strong>Error:</strong> That file does not exist in the export directory."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1974
+#: includes/class-exports-reports-admin-ui.php:2001
 msgid "<strong>Error:</strong> That export format is not offered for this report."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:1995
+#: includes/class-exports-reports-admin-ui.php:2022
 msgid "<strong>Error:</strong> Invalid export type."
 msgstr ""
 
 #. translators: %s: the database's error message.
-#: includes/class-exports-reports-admin-ui.php:2327
+#: includes/class-exports-reports-admin-ui.php:2354
 #, php-format
 msgid "<strong>Error:</strong> The report's query failed: %s"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2330
+#: includes/class-exports-reports-admin-ui.php:2357
 msgid "<strong>Error:</strong> The report's query failed. Ask an administrator to check its definition."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2464
+#: includes/class-exports-reports-admin-ui.php:2491
 msgid "The report returned no rows."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2469
+#: includes/class-exports-reports-admin-ui.php:2496
 msgid "<strong>Error:</strong> Invalid Configuration - Missing \"columns\" definition."
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2568
+#: includes/class-exports-reports-admin-ui.php:2595
 msgid "The row count is kept for a while (Settings: Row Count Cache); rows added or removed since show once it is counted again."
 msgstr ""
 
 #. translators: %s: a length of time, e.g. "3 mins".
-#: includes/class-exports-reports-admin-ui.php:2571
+#: includes/class-exports-reports-admin-ui.php:2598
 #, php-format
 msgid "(counted %s ago)"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2580
+#: includes/class-exports-reports-admin-ui.php:2607
 msgid "Go to the first page"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2581
+#: includes/class-exports-reports-admin-ui.php:2608
 msgid "Go to the previous page"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2585
+#: includes/class-exports-reports-admin-ui.php:2612
 msgid "Current page"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2585
-#: includes/class-exports-reports-admin-ui.php:2590
+#: includes/class-exports-reports-admin-ui.php:2612
+#: includes/class-exports-reports-admin-ui.php:2617
 msgid "of"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2595
+#: includes/class-exports-reports-admin-ui.php:2622
 msgid "Go to the next page"
 msgstr ""
 
-#: includes/class-exports-reports-admin-ui.php:2596
+#: includes/class-exports-reports-admin-ui.php:2623
 msgid "Go to the last page"
 msgstr ""
 

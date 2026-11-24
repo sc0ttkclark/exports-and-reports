@@ -54,8 +54,10 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
 - `Tests_Writers` (`test-writers.php`): XLSX, XML and JSON exports checked for their labels and rows; the
   XLSX worksheet holding no formula for the seeded formula-like title or for a value or label that starts
   with `=`, `+`, `-` or `@`, and holding one when `exports_reports_export_escape_formulas` turns the
-  handling off; a two-page PDF with the default engine (tc-lib-pdf on PHP 8.2 and later, TCPDF below),
-  the producer string naming it, and the default engine following the PHP version.
+  handling off; a number column as a numeric cell holding the whole value; the list and both PDF
+  engines formatting numbers through one function, and text in a number or
+  decimal column left as it is; a two-page PDF with the default engine (tc-lib-pdf on PHP 8.2 and later,
+  TCPDF below), the producer string naming it, and the default engine following the PHP version.
 - `Tests_Export_Files` (`test-export-files.php`): `export()` needing the link nonce and `remove_export`
   leaving the protection files alone; the export directory carrying `.htaccess` and `index.php`; the
   download function streaming an export and refusing anything else; `.txt` exports served and the daily

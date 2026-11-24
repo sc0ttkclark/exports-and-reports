@@ -1698,6 +1698,33 @@ class Exports_Reports_Admin_UI {
 		$this->legacy_hook( 'post_reorder', array( $this->insert_id ) );
 	}
 
+	/**
+	 * A value of a number or decimal column, formatted: the one place that decides what a number is. A
+	 * number, or a string that reads as one, is rounded to the decimals given; NULL counts as 0, as it
+	 * always has; anything else (text, an empty string) comes back as it is: it is no number to format,
+	 * and PHP 8 stops on number_format() of one. field_value(), the view screen, the totals row and both
+	 * PDF engines format through here, so a value reads the same wherever it is shown.
+	 *
+	 * @since 1.2.9
+	 *
+	 * @param mixed  $value     The value from the row.
+	 * @param int    $decimals  The decimals to round to.
+	 * @param string $thousands The thousands separator; '' for none.
+	 *
+	 * @return mixed The number as a string, or the value as it came when it is no number.
+	 */
+	public static function format_number( $value, $decimals = 0, $thousands = ',' ) {
+		if ( null === $value ) {
+			$value = 0;
+		}
+
+		if ( ! is_numeric( $value ) ) {
+			return $value;
+		}
+
+		return number_format( (float) $value, $decimals, '.', $thousands );
+	}
+
 	public function field_value( $value, $field_name, $attributes ) {
 		global $wpdb;
 		if ( 'date' === $attributes['type'] ) {
@@ -1761,9 +1788,9 @@ class Exports_Reports_Admin_UI {
 		} elseif ( 'bool' === $attributes['type'] ) {
 			$value = ( 1 === (int) $value ? __( 'Yes', 'exports-and-reports' ) : __( 'No', 'exports-and-reports' ) );
 		} elseif ( 'number' === $attributes['type'] ) {
-			$value = number_format( $value, 0 );
+			$value = self::format_number( $value, 0 );
 		} elseif ( 'decimal' === $attributes['type'] ) {
-			$value = number_format( $value, 2 );
+			$value = self::format_number( $value, 2 );
 		}
 		if ( false !== $attributes['custom_relate'] ) {
 			$table = $attributes['custom_relate'];

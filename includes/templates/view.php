@@ -57,9 +57,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 			} elseif ( 'bool' === $attributes['type'] ) {
 				$this->row[ $column ] = ( 1 === (int) $this->row[ $column ] ? __( 'Yes', 'exports-and-reports' ) : __( 'No', 'exports-and-reports' ) );
 			} elseif ( 'number' === $attributes['type'] ) {
-				$this->row[ $column ] = (int) ( $this->row[ $column ] );
+				$this->row[ $column ] = self::format_number( $this->row[ $column ], 0, '' );
 			} elseif ( 'decimal' === $attributes['type'] ) {
-				$this->row[ $column ] = number_format( $this->row[ $column ], 2 );
+				$this->row[ $column ] = self::format_number( $this->row[ $column ], 2 );
 			} elseif ( 'related' === $attributes['type'] && false !== $attributes['related'] ) {
 				$old_value            = $this->row[ $column ];
 				$this->row[ $column ] = '';

@@ -148,6 +148,98 @@ class Tests_Writers extends Exports_Reports_Test_Case {
 		$this->assertStringContainsString( '<f>1+1</f>', $sheet );
 	}
 
+	/**
+	 * A number column is a numeric cell holding the whole value: the thousands separator the screen shows
+	 * is not part of it, a fraction is rounded as on screen, and a value that is no number stays text
+	 * (formatting one as a number stops PHP 8).
+	 */
+	public function test_xlsx_export_writes_a_number_column_as_the_whole_number() {
+		$sheet = $this->xlsx_sheet(
+			'SELECT id, id * 200 AS thousands, id * 200000 AS millions, 0 - id * 1000 AS minus, revenue AS rounded, title AS words, channel AS grade FROM ' . self::videos() . ' WHERE id = 7',
+			array(
+				'columns' => array(
+					'id'        => array( 'label' => 'Id' ),
+					'thousands' => array(
+						'label' => 'Thousands',
+						'type'  => 'number',
+					),
+					'millions'  => array(
+						'label' => 'Millions',
+						'type'  => 'number',
+					),
+					'minus'     => array(
+						'label' => 'Minus',
+						'type'  => 'number',
+					),
+					'rounded'   => array(
+						'label' => 'Rounded',
+						'type'  => 'number',
+					),
+					'words'     => array(
+						'label' => 'Words',
+						'type'  => 'number',
+					),
+					'grade'     => array(
+						'label' => 'Grade',
+						'type'  => 'decimal',
+					),
+				),
+			)
+		);
+
+		$this->assertStringContainsString( '<c r="A2" s="1" t="inlineStr"><is><t>7</t></is></c>', $sheet, 'a text column is text' );
+		$this->assertSame( 1, preg_match( '#<c r="B2" s="\d+" t="n"><v>1400</v></c>#', $sheet ), 'one thousand four hundred, not 1' );
+		$this->assertSame( 1, preg_match( '#<c r="C2" s="\d+" t="n"><v>1400000</v></c>#', $sheet ) );
+		$this->assertSame( 1, preg_match( '#<c r="D2" s="\d+" t="n"><v>-7000</v></c>#', $sheet ) );
+		$this->assertSame( 1, preg_match( '#<c r="E2" s="\d+" t="n"><v>11</v></c>#', $sheet ), '10.50 rounds as the screen rounds it' );
+		$this->assertSame( 1, preg_match( '#<c r="F2" s="\d+" t="inlineStr"><is><t>=1\+1</t></is></c>#', $sheet ), 'text in a number column stays text, and no formula' );
+		$this->assertStringContainsString( '<c r="G2" s="1" t="inlineStr"><is><t>beta</t></is></c>', $sheet, 'text in a decimal column is shown as it is' );
+	}
+
+	/**
+	 * One function decides what a number is, and every place that formats a number or decimal column
+	 * asks it: the list and the exports through field_value(), and both PDF engines. A value that is no
+	 * number reads as itself in each of them; NULL counts as 0, as it always has.
+	 */
+	public function test_a_number_reads_the_same_wherever_it_is_formatted() {
+		$this->assertSame( '1,401', Exports_Reports_Admin_UI::format_number( '1400.6' ) );
+		$this->assertSame( '1401', Exports_Reports_Admin_UI::format_number( 1400.6, 0, '' ) );
+		$this->assertSame( '1,234.50', Exports_Reports_Admin_UI::format_number( '1234.5', 2 ) );
+		$this->assertSame( '0', Exports_Reports_Admin_UI::format_number( null ) );
+		$this->assertSame( '', Exports_Reports_Admin_UI::format_number( '' ) );
+		$this->assertSame( 'n/a', Exports_Reports_Admin_UI::format_number( 'n/a', 2 ) );
+
+		$report  = $this->report( '', 'Numbers' );
+		$engines = array( 'Exports_Reports_Admin_UI_Export_PDF_Legacy' );
+
+		require_once EXPORTS_REPORTS_DIR . 'includes/exporters/class-exports-reports-admin-ui-export-pdf-legacy.php';
+
+		// The tc-lib-pdf engine loads on PHP 8.2 and later only.
+		if ( PHP_VERSION_ID >= 80200 ) {
+			require_once EXPORTS_REPORTS_DIR . 'includes/exporters/class-exports-reports-admin-ui-export-pdf.php';
+
+			$engines[] = 'Exports_Reports_Admin_UI_Export_PDF';
+		}
+
+		$values = array(
+			'1400.6' => array( '1,401', '1,400.60', '1401' ),
+			'n/a'    => array( 'n/a', 'n/a', 'n/a' ),
+			''       => array( '', '', '' ),
+		);
+
+		foreach ( $values as $value => $expect ) {
+			$value = (string) $value;
+
+			$this->assertSame( $expect[0], $report->field_value( $value, 'amount', $report->setup_column( 'amount', array( 'type' => 'number' ) ) ), 'the list, a number: ' . $value );
+			$this->assertSame( $expect[1], $report->field_value( $value, 'amount', $report->setup_column( 'amount', array( 'type' => 'decimal' ) ) ), 'the list, a decimal: ' . $value );
+
+			foreach ( $engines as $engine ) {
+				$this->assertSame( $expect[2], call_user_func( array( $engine, 'format_field' ), 'number', $value ), $engine . ', a number: ' . $value );
+				$this->assertSame( $expect[1], call_user_func( array( $engine, 'format_field' ), 'decimal', $value ), $engine . ', a decimal: ' . $value );
+			}
+		}
+	}
+
 	public function test_xml_export_writes_the_labels_and_the_rows() {
 		list( $path, $contents ) = $this->write_export( 'xml' );
 

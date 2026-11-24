@@ -16,7 +16,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * exports_reports_export_escape_formulas filter turns that off.
  *
  * @since 1.0.0 Out of Exports_Reports_Admin_UI::export().
- * @since 1.2.9 A value that starts with "=" is a text cell, not a formula.
+ * @since 1.2.9 A value that starts with "=" is a text cell, not a formula; a number column is a numeric cell
+ *              holding the whole value.
  */
 class Exports_Reports_Exporter_XLSX extends Exports_Reports_Exporter {
 
@@ -32,9 +33,18 @@ class Exports_Reports_Exporter_XLSX extends Exports_Reports_Exporter {
 		$export_file_location = $this->path( $export_file );
 		$columns              = $this->admin->exported_columns();
 		$header               = array();
+		$numbers              = array();
 
-		foreach ( $columns as $attributes ) {
-			$header[ $attributes['label'] ] = 'string';
+		foreach ( $columns as $key => $attributes ) {
+			// A number column the plugin formats itself is a numeric cell (the general format types a cell by its
+			// value); the others, and a number column a display function writes, are text.
+			$is_number = ! empty( $attributes['type'] ) && 'number' === $attributes['type'] && false === $attributes['custom_display'];
+
+			$header[ $attributes['label'] ] = $is_number ? 'GENERAL' : 'string';
+
+			if ( $is_number ) {
+				$numbers[ $key ] = true;
+			}
 		}
 
 		$writer           = new Exports_Reports_XLSX_Writer();
@@ -54,10 +64,16 @@ class Exports_Reports_Exporter_XLSX extends Exports_Reports_Exporter {
 			$row = array();
 
 			foreach ( $this->admin->export_row( $item, $columns ) as $key => $value ) {
-				$value = wp_strip_all_tags( (string) $value );
+				if ( isset( $numbers[ $key ] ) ) {
+					$number = self::whole_number( isset( $item[ $key ] ) ? $item[ $key ] : null );
 
-				// The cell is text unless the column is a number.
-				$row[] = ! empty( $columns[ $key ]['type'] ) && 'number' === $columns[ $key ]['type'] ? (int) $value : $value;
+					if ( null !== $number ) {
+						$row[] = $number;
+						continue;
+					}
+				}
+
+				$row[] = wp_strip_all_tags( (string) $value );
 			}
 
 			$writer->writeSheetRow( 'Sheet1', $row );
@@ -66,5 +82,31 @@ class Exports_Reports_Exporter_XLSX extends Exports_Reports_Exporter {
 		$wp_filesystem->put_contents( $export_file_location, (string) $writer->writeToString() );
 
 		return $export_file;
+	}
+
+	/**
+	 * The value of a number column as the digits a numeric cell holds, read from the row as the query
+	 * returned it: the screen's formatted value carries thousands separators, which are no part of the
+	 * number (casting "1,400" gave 1). An integer is kept digit for digit, whatever its size; a fraction
+	 * is rounded as the screen rounds it.
+	 *
+	 * @since 1.2.9
+	 *
+	 * @param mixed $value The value from the row.
+	 *
+	 * @return string|null The digits, or null when the value is no number (the cell is text then).
+	 */
+	protected static function whole_number( $value ) {
+		if ( is_int( $value ) || ( is_string( $value ) && 1 === preg_match( '/^-?(0|[1-9][0-9]*)$/', $value ) ) ) {
+			return (string) $value;
+		}
+
+		if ( ! is_numeric( $value ) ) {
+			return null;
+		}
+
+		$digits = number_format( (float) $value, 0, '', '' );
+
+		return '-0' === $digits ? '0' : $digits;
 	}
 }
