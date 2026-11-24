@@ -202,12 +202,12 @@ class Tests_Writers extends Exports_Reports_Test_Case {
 	 * number reads as itself in each of them; NULL counts as 0, as it always has.
 	 */
 	public function test_a_number_reads_the_same_wherever_it_is_formatted() {
-		$this->assertSame( '1,401', Exports_Reports_Admin_UI::format_number( '1400.6' ) );
-		$this->assertSame( '1401', Exports_Reports_Admin_UI::format_number( 1400.6, 0, '' ) );
-		$this->assertSame( '1,234.50', Exports_Reports_Admin_UI::format_number( '1234.5', 2 ) );
-		$this->assertSame( '0', Exports_Reports_Admin_UI::format_number( null ) );
-		$this->assertSame( '', Exports_Reports_Admin_UI::format_number( '' ) );
-		$this->assertSame( 'n/a', Exports_Reports_Admin_UI::format_number( 'n/a', 2 ) );
+		$this->assertSame( '1,401', Exports_Reports_Value_Format::raw()->number( '1400.6' ) );
+		$this->assertSame( '1401', Exports_Reports_Value_Format::raw()->number( 1400.6, 0, false ) );
+		$this->assertSame( '1,234.50', Exports_Reports_Value_Format::raw()->number( '1234.5', 2 ) );
+		$this->assertSame( '0', Exports_Reports_Value_Format::raw()->number( null ) );
+		$this->assertSame( '', Exports_Reports_Value_Format::raw()->number( '' ) );
+		$this->assertSame( 'n/a', Exports_Reports_Value_Format::raw()->number( 'n/a', 2 ) );
 
 		$report  = $this->report( '', 'Numbers' );
 		$engines = array( 'Exports_Reports_Admin_UI_Export_PDF_Legacy' );

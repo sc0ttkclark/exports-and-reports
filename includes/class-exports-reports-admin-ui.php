@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once __DIR__ . '/class-exports-reports-query.php';
+require_once __DIR__ . '/class-exports-reports-value-format.php';
 require_once __DIR__ . '/exporters/class-exports-reports-exporter.php';
 require_once __DIR__ . '/class-exports-reports-list-table.php';
 
@@ -152,6 +153,41 @@ class Exports_Reports_Admin_UI {
 	 * @var string[]
 	 */
 	public $export_formats = array( 'csv', 'tsv', 'pipe', 'xlsx', 'xml', 'json', 'pdf' );
+	/**
+	 * The language an export's numbers and dates are written for, as a WordPress locale (it_IT); '' for
+	 * the values as the plugin has always written them. A report's definition sets its default, the
+	 * Format menu beside the export buttons posts the choice of the person who exports, and a REST
+	 * request names its own or gets none.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @var string
+	 */
+	public $export_locale = '';
+	/**
+	 * The format the export form posted, for export() to remember; null when the request named none.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @var string|null
+	 */
+	protected $export_locale_posted = null;
+	/**
+	 * The format of the screens, once asked for; see screen_format().
+	 *
+	 * @since 1.3.0
+	 *
+	 * @var Exports_Reports_Value_Format|null
+	 */
+	protected $screen_format = null;
+	/**
+	 * The formats of exports, once asked for; see export_format().
+	 *
+	 * @since 1.3.0
+	 *
+	 * @var Exports_Reports_Value_Format[]
+	 */
+	protected $export_formats_made = array();
 	/**
 	 * Whether the request asked for an export through the page's address, the way the links before 1.1.0
 	 * did (action=export&export_type=...). Such a request writes nothing: the address is what a browser
@@ -303,6 +339,13 @@ class Exports_Reports_Admin_UI {
 				$this->export_type = $export_type;
 			} elseif ( false !== $this->get_var( 'export_type' ) || false !== $this->get_var( 'remove_export' ) ) {
 				$this->export_from_address = true;
+			}
+			// The Format menu's choice, one of the formats the menu offers; a form without the menu leaves the
+			// report's own default in place.
+			$export_locale = $posted_export ? $this->get_var( 'export_locale', false, false, 'post' ) : false;
+			if ( is_string( $export_locale ) ) {
+				$this->export_locale        = isset( $this->export_locales()[ $export_locale ] ) ? $export_locale : '';
+				$this->export_locale_posted = $this->export_locale;
 			}
 		}
 
@@ -621,17 +664,25 @@ class Exports_Reports_Admin_UI {
 	 * display function.
 	 *
 	 * @since 0.9.5
+	 * @since 1.3.0 The $format argument.
 	 *
-	 * @param array $item    The row as the query returned it.
-	 * @param array $columns exported_columns().
+	 * @param array                             $item    The row as the query returned it.
+	 * @param array                             $columns exported_columns().
+	 * @param Exports_Reports_Value_Format|null $format  How numbers and dates are written: export_format() for
+	 *                                                   the formats that follow the Format menu; null for the
+	 *                                                   values as the plugin has always written them.
 	 *
 	 * @return array<string, mixed> Keyed by column.
 	 */
-	public function export_row( array $item, array $columns ) {
+	public function export_row( array $item, array $columns, $format = null ) {
 		$row = array();
 
+		if ( ! $format instanceof Exports_Reports_Value_Format ) {
+			$format = Exports_Reports_Value_Format::raw();
+		}
+
 		foreach ( $columns as $key => $attributes ) {
-			$item[ $key ] = $this->field_value( $item[ $key ], $key, $attributes );
+			$item[ $key ] = $this->field_value( $item[ $key ], $key, $attributes, $format );
 
 			if ( false !== $attributes['custom_display'] && function_exists( "{$attributes['custom_display']}" ) ) {
 				$item[ $key ] = $attributes['custom_display']( $item[ $key ], $item, $key, $attributes, $this );
@@ -780,6 +831,156 @@ class Exports_Reports_Admin_UI {
 	 */
 	public function export_formats_offered() {
 		return array_intersect_key( self::format_labels(), array_flip( $this->allowed_export_types() ) );
+	}
+
+	/**
+	 * The formats the Format menu beside the export buttons offers: the plugin's own first, then the
+	 * languages an export can be written for.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @return array<string, string> The label of each format by its WordPress locale; '' is the plugin's own.
+	 */
+	public function export_locales() {
+		$locales = array( '' => __( 'Raw values', 'exports-and-reports' ) ) + Exports_Reports_Value_Format::locales();
+
+		/**
+		 * Filters the formats the Format menu beside the export buttons offers. The key '' is the plugin's
+		 * own format; the others are WordPress locales. With PHP's intl extension loaded a site can add any
+		 * language here, installed or not; one format alone and the menu is not shown.
+		 *
+		 * @since 1.3.0
+		 *
+		 * @param array<string, string>    $locales The label of each format by its locale.
+		 * @param Exports_Reports_Admin_UI $admin   The screen.
+		 */
+		$filtered = (array) apply_filters( 'exports_reports_export_locales', $locales, $this );
+		$locales  = array();
+
+		foreach ( $filtered as $locale => $label ) {
+			if ( '' === $locale || '' !== Exports_Reports_Value_Format::sanitize_locale( $locale ) ) {
+				$locales[ (string) $locale ] = (string) $label;
+			}
+		}
+
+		return $locales;
+	}
+
+	/**
+	 * The format the Format menu shows as chosen: the one this user last exported this report with, else
+	 * the report's own default.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @return string A key of export_locales().
+	 */
+	public function export_locale_shown() {
+		$kept   = $this->remembered_export_locales();
+		$report = (int) $this->report_id;
+		$locale = isset( $kept[ $report ] ) ? $kept[ $report ] : (string) $this->export_locale;
+
+		return isset( $this->export_locales()[ $locale ] ) ? $locale : '';
+	}
+
+	/**
+	 * The format each report was last exported with by the current user, on this site.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @return array<int, string> The format ('' for the plugin's own) by report id.
+	 */
+	protected function remembered_export_locales() {
+		$kept = get_current_user_id() ? get_user_option( 'exports_reports_export_locale' ) : false;
+
+		return is_array( $kept ) ? array_map( 'strval', $kept ) : array();
+	}
+
+	/**
+	 * Remembers the format the current user exported this report with, for the menu to show next time.
+	 * The last fifty reports are kept.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param string $locale The format: a WordPress locale, or '' for the plugin's own.
+	 */
+	protected function remember_export_locale( $locale ) {
+		$user = get_current_user_id();
+
+		if ( ! $user ) {
+			return;
+		}
+
+		$kept   = $this->remembered_export_locales();
+		$report = (int) $this->report_id;
+
+		if ( isset( $kept[ $report ] ) && $kept[ $report ] === $locale ) {
+			return;
+		}
+
+		unset( $kept[ $report ] );
+
+		$kept[ $report ] = (string) $locale;
+
+		update_user_option( $user, 'exports_reports_export_locale', array_slice( $kept, -50, null, true ) );
+	}
+
+	/**
+	 * How the screens write numbers and dates; see Exports_Reports_Value_Format::screen().
+	 *
+	 * @since 1.3.0
+	 *
+	 * @return Exports_Reports_Value_Format
+	 */
+	public function screen_format() {
+		if ( null === $this->screen_format ) {
+			$this->screen_format = Exports_Reports_Value_Format::screen();
+		}
+
+		return $this->screen_format;
+	}
+
+	/**
+	 * How the export being written writes numbers and dates: for the language of export_locale when one
+	 * is set and the exports_reports_export_locale filter leaves it; otherwise the plugin's own format
+	 * in a file, and the format of the screens in a document (the PDF). The answer is kept, so the
+	 * filter runs once for an export; an exporter asks before it reads its rows, since a callback on the
+	 * filter may query the database.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param bool $document Whether the export is a document that reads like the screen (the PDF).
+	 *
+	 * @return Exports_Reports_Value_Format
+	 */
+	public function export_format( $document = false ) {
+		$made = (string) $this->export_locale . ( $document ? '|document' : '|file' );
+
+		if ( isset( $this->export_formats_made[ $made ] ) ) {
+			return $this->export_formats_made[ $made ];
+		}
+
+		/**
+		 * Filters the language an export's numbers and dates are written for.
+		 *
+		 * @since 1.3.0
+		 *
+		 * @param string|false             $locale A WordPress locale (it_IT), or false for the values as the
+		 *                                         plugin has always written them: what the Format menu, the
+		 *                                         REST request's locale parameter or the report's default say.
+		 * @param Exports_Reports_Admin_UI $admin  The screen; its api property is true for a REST request.
+		 */
+		$locale = apply_filters( 'exports_reports_export_locale', '' === (string) $this->export_locale ? false : (string) $this->export_locale, $this );
+		$locale = Exports_Reports_Value_Format::sanitize_locale( $locale );
+
+		if ( '' !== $locale ) {
+			$format = Exports_Reports_Value_Format::locale( $locale );
+		} else {
+			$format = $document ? $this->screen_format() : Exports_Reports_Value_Format::raw();
+		}
+
+		$this->export_formats_made[ $made ] = $format;
+
+		return $format;
 	}
 
 	/**
@@ -1776,51 +1977,39 @@ class Exports_Reports_Admin_UI {
 	}
 
 	/**
-	 * A value of a number or decimal column, formatted: the one place that decides what a number is. A
-	 * number, or a string that reads as one, is rounded to the decimals given; NULL counts as 0, as it
-	 * always has; anything else (text, an empty string) comes back as it is: it is no number to format,
-	 * and PHP 8 stops on number_format() of one. field_value(), the view screen, the totals row and both
-	 * PDF engines format through here, so a value reads the same wherever it is shown.
+	 * A value as a column of its type shows it: a date, a time, a number or a decimal in the format
+	 * given, a flag as Yes or No, the names behind the ids of a related column.
 	 *
-	 * @since 1.2.9
+	 * @since 1.3.0 The $format argument; without it, the format of the screens.
 	 *
-	 * @param mixed  $value     The value from the row.
-	 * @param int    $decimals  The decimals to round to.
-	 * @param string $thousands The thousands separator; '' for none.
+	 * @param mixed                             $value      The value from the row.
+	 * @param string                            $field_name The column.
+	 * @param array                             $attributes The column's attributes.
+	 * @param Exports_Reports_Value_Format|null $format     How numbers and dates are written; null for screen_format().
 	 *
-	 * @return mixed The number as a string, or the value as it came when it is no number.
+	 * @return mixed
 	 */
-	public static function format_number( $value, $decimals = 0, $thousands = ',' ) {
-		if ( null === $value ) {
-			$value = 0;
+	public function field_value( $value, $field_name, $attributes, $format = null ) {
+		if ( ! $format instanceof Exports_Reports_Value_Format ) {
+			$format = $this->screen_format();
 		}
-
-		if ( ! is_numeric( $value ) ) {
-			return $value;
-		}
-
-		return number_format( (float) $value, $decimals, '.', $thousands );
-	}
-
-	public function field_value( $value, $field_name, $attributes ) {
-		global $wpdb;
 		if ( 'date' === $attributes['type'] ) {
 			if ( 'N/A' === $value || '0000-00-00' === $value || '0000-00-00 00:00:00' === $value ) {
 				$value = 'N/A';
 			} else {
-				$value = date_i18n( 'Y/m/d', strtotime( $value ) );
+				$value = $format->date( $value, 'date' );
 			}
 		} elseif ( 'time' === $attributes['type'] ) {
 			if ( 'N/A' === $value || '00:00:00' === $value || '0000-00-00 00:00:00' === $value ) {
 				$value = 'N/A';
 			} else {
-				$value = date_i18n( 'g:i:s A', strtotime( $value ) );
+				$value = $format->date( $value, 'time' );
 			}
 		} elseif ( 'datetime' === $attributes['type'] ) {
 			if ( 'N/A' === $value || '0000-00-00' === $value || '0000-00-00 00:00:00' === $value ) {
 				$value = 'N/A';
 			} else {
-				$value = date_i18n( 'Y/m/d g:i:s A', strtotime( $value ) );
+				$value = $format->date( $value, 'datetime' );
 			}
 		} elseif ( 'related' === $attributes['type'] && false !== $attributes['related'] ) {
 			$column_data = array();
@@ -1865,9 +2054,9 @@ class Exports_Reports_Admin_UI {
 		} elseif ( 'bool' === $attributes['type'] ) {
 			$value = ( 1 === (int) $value ? __( 'Yes', 'exports-and-reports' ) : __( 'No', 'exports-and-reports' ) );
 		} elseif ( 'number' === $attributes['type'] ) {
-			$value = self::format_number( $value, 0 );
+			$value = $format->number( $value, 0 );
 		} elseif ( 'decimal' === $attributes['type'] ) {
-			$value = self::format_number( $value, 2 );
+			$value = $format->number( $value, 2 );
 		}
 		if ( false !== $attributes['custom_relate'] ) {
 			$table = $attributes['custom_relate'];
@@ -2116,6 +2305,11 @@ class Exports_Reports_Admin_UI {
 			}
 
 			$this->export_ready( $export_file, $exporter->extension() );
+
+			// The Format menu shows this user's choice the next time they open the report.
+			if ( ! $this->api && null !== $this->export_locale_posted ) {
+				$this->remember_export_locale( $this->export_locale_posted );
+			}
 		}
 
 		$this->exported_file = $export_file;

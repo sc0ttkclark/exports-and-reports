@@ -80,6 +80,13 @@ function exports_reports_rest_routes() {
 					'type'    => 'boolean',
 					'default' => false,
 				),
+				// The language the export's numbers and dates are written for; without it, the values as the
+				// plugin has always written them, whatever the report's own default and the site's language.
+				'locale'   => array(
+					'type'    => 'string',
+					'default' => '',
+					'pattern' => '^([a-z]{2,3}(_[A-Za-z0-9]{2,12}){0,3})?$',
+				),
 			),
 		)
 	);
@@ -471,6 +478,9 @@ function exports_reports_rest_export( $request ) {
 	$admin->action      = 'export';
 	$admin->export_type = (string) $request['type'];
 
+	// A script reads what it asked for: the report's own default format does not apply to it.
+	$admin->export_locale = Exports_Reports_Value_Format::sanitize_locale( $request['locale'] );
+
 	ob_start();
 	$admin->export();
 	$error = exports_reports_rest_ui_error( (string) ob_get_clean() );
@@ -486,6 +496,8 @@ function exports_reports_rest_export( $request ) {
 			'report'   => (int) $report->id,
 			'name'     => $report->name,
 			'type'     => (string) $request['type'],
+			// XML and JSON hold the values as the plugin has always written them, whatever was asked for.
+			'locale'   => in_array( (string) $request['type'], array( 'xml', 'json' ), true ) ? '' : $admin->export_format( 'pdf' === (string) $request['type'] )->language(),
 			'file'     => $file,
 			'url'      => rest_url( sprintf( 'exports-reports/v1/reports/%d/exports/%s', (int) $report->id, rawurlencode( $file ) ) ),
 			'download' => (bool) $request['download'],

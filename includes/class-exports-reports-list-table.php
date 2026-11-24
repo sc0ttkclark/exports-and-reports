@@ -339,10 +339,21 @@ class Exports_Reports_List_Table extends WP_List_Table {
 			<?php
 			$offered = $this->admin->export && $this->has_items() ? $this->admin->export_formats_offered() : array();
 
-			// The buttons submit the export form of the list screen (manage.php), which their form attribute names.
+			// The buttons submit the export form of the list screen (manage.php), which their form attribute names;
+			// the Format menu before them belongs to the same form, and says how the export writes numbers and dates.
 			if ( ! empty( $offered ) ) {
+				$locales = $this->admin->export_locales();
+				$chosen  = $this->admin->export_locale_shown();
 				?>
 				<strong><?php esc_html_e( 'Export:', 'exports-and-reports' ); ?></strong>
+				<?php if ( 1 < count( $locales ) ) { ?>
+					<label for="exports-reports-export-locale" class="screen-reader-text"><?php esc_html_e( 'Format of numbers and dates', 'exports-and-reports' ); ?></label>
+					<select id="exports-reports-export-locale" class="exports-reports-export-locale" name="export_locale" form="exports-reports-export" title="<?php esc_attr_e( 'How the CSV, TSV, TXT and PDF exports write numbers and dates; in an XLSX export any language makes them number and date cells. XML and JSON always hold the raw values.', 'exports-and-reports' ); ?>">
+						<?php foreach ( $locales as $locale => $name ) { ?>
+							<option value="<?php echo esc_attr( $locale ); ?>"<?php selected( $chosen, $locale ); ?>><?php echo esc_html( $name ); ?></option>
+						<?php } ?>
+					</select>
+				<?php } ?>
 				<?php foreach ( $offered as $type => $text ) { ?>
 					<button type="submit" class="button" form="exports-reports-export" name="export_type" value="<?php echo esc_attr( $type ); ?>"><?php echo esc_html( $text ); ?></button>
 				<?php } ?>

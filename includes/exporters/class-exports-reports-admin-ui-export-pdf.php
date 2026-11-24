@@ -79,7 +79,7 @@ class Exports_Reports_Admin_UI_Export_PDF {
 		$title       = (string) $admin->items;
 		$filters     = self::filter_lines( $admin );
 		$legacy      = self::legacy_content( $admin );
-		$stamp       = date_i18n( 'm/d/Y H:i:s' );
+		$stamp       = $admin->export_format( true )->stamp();
 		$author      = wp_get_current_user()->display_name;
 
 		// The metric files live in the plugin, so the document is told to trust that directory.
@@ -352,7 +352,8 @@ class Exports_Reports_Admin_UI_Export_PDF {
 	 * @return array<int, array{cells: array<string, string>, sum: bool}>
 	 */
 	protected static function rows( $admin, $columns ) {
-		$rows = array();
+		$rows   = array();
+		$format = $admin->export_format( true );
 
 		foreach ( (array) $admin->full_data as $item ) {
 			$cells = array();
@@ -364,7 +365,7 @@ class Exports_Reports_Admin_UI_Export_PDF {
 					$value = $column['attributes']['custom_display']( $value, $item, $key, $column['attributes'], $admin );
 				}
 
-				$cells[ $key ] = html_entity_decode( wp_strip_all_tags( (string) self::format_field( $column['type'], $value ) ), ENT_QUOTES, 'UTF-8' );
+				$cells[ $key ] = html_entity_decode( wp_strip_all_tags( (string) self::format_field( $column['type'], $value, $format ) ), ENT_QUOTES, 'UTF-8' );
 			}
 
 			$rows[] = array(
@@ -692,23 +693,31 @@ class Exports_Reports_Admin_UI_Export_PDF {
 	}
 
 	/**
-	 * @param string $type     The column type.
-	 * @param mixed  $raw_data The value.
+	 * @since 1.3.0 The $format argument.
+	 *
+	 * @param string                            $type     The column type.
+	 * @param mixed                             $raw_data The value.
+	 * @param Exports_Reports_Value_Format|null $format   How numbers and dates are written: the screen's
+	 *                                                    format, or the one of the language the export is
+	 *                                                    written for (Exports_Reports_Admin_UI::export_format()).
+	 *                                                    Null for the screen's.
 	 *
 	 * @return mixed A string for the types the plugin formats; the value as it came otherwise.
 	 */
-	public static function format_field( $type, $raw_data ) {
-		if ( 'date' === $type ) {
-			return date_i18n( 'Y/m/d', strtotime( (string) $raw_data ) );
-		} elseif ( 'time' === $type ) {
-			return date_i18n( 'g:i:s A', strtotime( (string) $raw_data ) );
-		} elseif ( 'datetime' === $type ) {
-			return date_i18n( 'Y/m/d g:i:s A', strtotime( (string) $raw_data ) );
+	public static function format_field( $type, $raw_data, $format = null ) {
+		if ( ! $format instanceof Exports_Reports_Value_Format ) {
+			$format = Exports_Reports_Value_Format::screen();
+		}
+
+		if ( 'date' === $type || 'time' === $type || 'datetime' === $type ) {
+			return $format->date( $raw_data, $type );
 		} elseif ( 'bool' === $type ) {
 			return ( 1 === (int) $raw_data ? 'Yes' : 'No' );
-		} elseif ( 'number' === $type || 'decimal' === $type ) {
-			// As the screen formats it (Exports_Reports_Admin_UI::format_number()), a number column without thousands separators.
-			$raw_data = 'number' === $type ? Exports_Reports_Admin_UI::format_number( $raw_data, 0, '' ) : Exports_Reports_Admin_UI::format_number( $raw_data, 2 );
+		} elseif ( 'number' === $type ) {
+			// As the view screen writes it: a number column without thousands separators.
+			return $format->number( $raw_data, 0, false );
+		} elseif ( 'decimal' === $type ) {
+			return $format->number( $raw_data, 2 );
 		}
 
 		return $raw_data;

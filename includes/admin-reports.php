@@ -75,6 +75,13 @@ function exports_reports_reports() {
 		'comments'         => __( 'Leave every box empty to offer the formats enabled in Settings. A format turned off in Settings is not offered even when checked here. CSV, TSV and TXT are written row by row and suit very large reports; the other formats hold the whole report in memory while they are written.', 'exports-and-reports' ),
 	);
 
+	$form_columns['export_locale'] = array(
+		'label'    => __( 'Default Export Format', 'exports-and-reports' ),
+		'type'     => 'related',
+		'related'  => array( '' => __( 'Raw values', 'exports-and-reports' ) ) + Exports_Reports_Value_Format::locales(),
+		'comments' => __( 'What the Format menu beside the export buttons shows until a user chooses another: the raw values, as every version has written them, or the numbers and dates of a language. Exports through the REST API hold the raw values unless the request names a locale.', 'exports-and-reports' ),
+	);
+
 	$form_columns['default_none'] = array(
 		'label'    => __( 'Default to No Results?', 'exports-and-reports' ),
 		'type'     => 'bool',

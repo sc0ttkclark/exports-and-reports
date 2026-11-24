@@ -267,6 +267,14 @@ select.admin_ui_filter_multiple {
 	padding: 0;
 }
 
+/* The Format menu takes its place in the row of the export buttons, no wider
+   than a short language name: the list it opens shows the names in full. */
+.exports-reports-table-scroll .tablenav .actions .exports-reports-export-locale {
+	float: none;
+	margin: 0;
+	max-width: 11rem;
+}
+
 .exports-reports-table-scroll .tablenav .tablenav-pages {
 	float: none;
 	margin: 0 0 0 auto;

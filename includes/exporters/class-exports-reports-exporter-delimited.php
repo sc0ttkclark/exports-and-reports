@@ -52,14 +52,38 @@ class Exports_Reports_Exporter_Delimited extends Exports_Reports_Exporter {
 	}
 
 	/**
-	 * The delimiter between values, by the export type.
+	 * The delimiter between values, by the export type. A CSV export formatted for a language that writes
+	 * its decimals with a comma separates its values with semicolons, as the spreadsheets of that
+	 * language read a CSV file; the tab and the pipe stay.
+	 *
+	 * @since 1.3.0 The $format argument and the semicolon.
+	 *
+	 * @param Exports_Reports_Value_Format|null $format How the export writes its numbers; null for the plugin's own format.
 	 *
 	 * @return string
 	 */
-	public function delimiter() {
+	public function delimiter( $format = null ) {
 		$type = $this->admin->export_type;
 
-		return isset( self::DELIMITERS[ $type ] ) ? self::DELIMITERS[ $type ] : ',';
+		if ( isset( self::DELIMITERS[ $type ] ) && 'csv' !== $type ) {
+			return self::DELIMITERS[ $type ];
+		}
+
+		$comma_decimals = $format instanceof Exports_Reports_Value_Format && ',' === $format->decimal_point();
+
+		/**
+		 * Filters the delimiter between the values of a CSV export.
+		 *
+		 * @since 1.3.0
+		 *
+		 * @param string                   $delimiter A comma, or a semicolon when the export is formatted for a
+		 *                                            language that writes its decimals with a comma.
+		 * @param string                   $locale    The WordPress locale the export is formatted for, '' for none.
+		 * @param Exports_Reports_Admin_UI $admin     The screen.
+		 */
+		$delimiter = (string) apply_filters( 'exports_reports_export_csv_delimiter', $comma_decimals ? ';' : ',', $format instanceof Exports_Reports_Value_Format ? $format->language() : '', $this->admin );
+
+		return '' !== $delimiter ? $delimiter : ',';
 	}
 
 	/**
@@ -93,7 +117,9 @@ class Exports_Reports_Exporter_Delimited extends Exports_Reports_Exporter {
 	public function write() {
 		global $wpdb;
 
-		$export_delimiter = $this->delimiter();
+		// Before the unbuffered result is open: a callback on the format's filter may query the database.
+		$format           = $this->admin->export_format();
+		$export_delimiter = $this->delimiter( $format );
 
 		$export_file          = $this->file();
 		$export_file_location = $this->path( $export_file );
@@ -146,9 +172,15 @@ class Exports_Reports_Exporter_Delimited extends Exports_Reports_Exporter {
 		}
 
 		$columns = $this->admin->exported_columns();
+		$numbers = array();
 
-		foreach ( $columns as $attributes ) {
+		foreach ( $columns as $key => $attributes ) {
 			$head[] = $attributes['label'];
+
+			// The columns whose values the plugin itself writes as numbers.
+			if ( in_array( $attributes['type'], array( 'number', 'decimal' ), true ) && empty( $attributes['custom_display'] ) && empty( $attributes['custom_relate'] ) ) {
+				$numbers[ $key ] = true;
+			}
 		}
 
 		// A UTF-8 byte order mark so spreadsheet applications read the encoding right. With the first label
@@ -162,14 +194,17 @@ class Exports_Reports_Exporter_Delimited extends Exports_Reports_Exporter {
 		foreach ( $rows as $item ) {
 			$column_values = array();
 
-			foreach ( $this->admin->export_row( $item, $columns ) as $value ) {
+			foreach ( $this->admin->export_row( $item, $columns, $format ) as $key => $value ) {
 				$column_value = trim( str_replace( array( "\r", "\n" ), ' ', (string) $value ) );
 
 				// A value a spreadsheet would evaluate as a formula is wrapped in a string formula, which shows the
 				// text and stays inert. The leading characters are the ones spreadsheets act on; the tab and carriage
 				// return of the usual list cannot reach this point, the trim and the line-break replacement above take
-				// them. Numbers are left alone: a negative amount starts with "-".
-				if ( $escape_formulas && '' !== $column_value && ! is_numeric( $column_value ) && false !== strpos( '=+-@', $column_value[0] ) ) {
+				// them. Numbers are left alone: a negative amount starts with "-", and one the plugin wrote from a
+				// number of the row is a number however its language separates the thousands and the decimals.
+				$number = is_numeric( $column_value ) || ( isset( $numbers[ $key ] ) && ( ! isset( $item[ $key ] ) || is_numeric( $item[ $key ] ) ) );
+
+				if ( $escape_formulas && '' !== $column_value && ! $number && false !== strpos( '=+-@', $column_value[0] ) ) {
 					$column_value = '="" & "' . str_replace( '"', '""', $column_value ) . '"';
 				}
 

@@ -11,7 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Reset settings for plugin: every export format back on, the row count cache back to its default, the
- * token taken in the address again as well as in the header, and a new API token.
+ * dates back to the plugin's own format, the token taken in the address again as well as in the header,
+ * and a new API token.
  *
  * @since 0.9.4
  * @since 1.2.0 Returns the new token.
@@ -24,6 +25,7 @@ function exports_reports_reset() {
 	delete_option( 'exports_reports_export_formats' );
 	delete_option( 'exports_reports_count_cache' );
 	delete_option( 'exports_reports_token_header_only' );
+	delete_option( 'exports_reports_site_date_formats' );
 	exports_reports_forget_counts();
 
 	return exports_reports_generate_token();
@@ -44,7 +46,7 @@ function exports_reports_settings() {
 	$new_token = '';
 	$bad_token = '';
 
-	if ( isset( $_POST['cronjob_token'] ) || ! empty( $_POST['generate_token'] ) || ! empty( $_POST['disable_token'] ) || isset( $_POST['token_header_set'] ) || isset( $_POST['export_formats_set'] ) || isset( $_POST['count_cache'] ) || ! empty( $_POST['count_cache_forget'] ) || ! empty( $_POST['clear'] ) || ! empty( $_POST['reset'] ) ) {
+	if ( isset( $_POST['cronjob_token'] ) || ! empty( $_POST['generate_token'] ) || ! empty( $_POST['disable_token'] ) || isset( $_POST['token_header_set'] ) || isset( $_POST['export_formats_set'] ) || isset( $_POST['date_formats_set'] ) || isset( $_POST['count_cache'] ) || ! empty( $_POST['count_cache_forget'] ) || ! empty( $_POST['clear'] ) || ! empty( $_POST['reset'] ) ) {
 		check_admin_referer( 'exports-reports-settings' );
 
 		$saved = true;
@@ -82,6 +84,10 @@ function exports_reports_settings() {
 			update_option( 'exports_reports_token_header_only', empty( $_POST['token_header_only'] ) ? 0 : 1 );
 		}
 
+		if ( isset( $_POST['date_formats_set'] ) ) {
+			update_option( 'exports_reports_site_date_formats', empty( $_POST['site_date_formats'] ) ? 0 : 1 );
+		}
+
 		if ( isset( $_POST['export_formats_set'] ) ) {
 			// The boxes left unticked are the formats turned off; none ticked turns every export button off.
 			$chosen = isset( $_POST['export_formats'] ) ? array_map( 'sanitize_key', (array) wp_unslash( $_POST['export_formats'] ) ) : array();
@@ -114,6 +120,8 @@ function exports_reports_settings() {
 	$token        = '' !== $new_token ? $new_token : 'YOUR_TOKEN'; // In the example command.
 	$header_only  = (bool) get_option( 'exports_reports_token_header_only', false );
 	$site_formats = exports_reports_site_export_formats();
+	$site_dates   = (bool) get_option( 'exports_reports_site_date_formats', false );
+	$date_example = gmmktime( 14, 5, 9, 3, 7, (int) gmdate( 'Y' ) ); // The afternoon of the 7th of March: a day and a month that show their order, and a time that shows the clock.
 	$count_cache  = (int) get_option( 'exports_reports_count_cache', 5 );
 	$count_caches = array(
 		0  => __( 'Off', 'exports-and-reports' ),
@@ -204,6 +212,26 @@ function exports_reports_settings() {
 							<?php endforeach; ?>
 						</fieldset>
 						<p class="description"><?php esc_html_e( 'The formats the export buttons offer on every report; a report can narrow them further in its own settings. CSV, TSV and TXT are written row by row and suit very large reports; the other formats hold the whole report in memory while they are written.', 'exports-and-reports' ); ?></p>
+					</td>
+				</tr>
+				<tr valign="top">
+					<th scope="row"><?php esc_html_e( 'Dates', 'exports-and-reports' ); ?></th>
+					<td>
+						<input type="hidden" name="date_formats_set" value="1" />
+						<label><input type="checkbox" name="site_date_formats" value="1"<?php checked( $site_dates ); ?> /> <?php esc_html_e( 'Use the site\'s date and time formats', 'exports-and-reports' ); ?></label>
+						<p class="description">
+							<?php
+							echo wp_kses(
+								sprintf(
+									/* translators: 1: a date as the plugin writes it, 2: the same date in the site's formats. */
+									__( 'On the report pages and in PDF exports, date, time and date-and-time columns are written like %1$s. Ticked, they follow the formats of Settings > General, which now give %2$s. Dates are shown as they are stored; no time zone is applied. The other export formats keep the first form unless the person who exports picks a language from the Format menu beside the export buttons.', 'exports-and-reports' ),
+									'<code>' . esc_html( gmdate( 'Y/m/d g:i:s A', $date_example ) ) . '</code>',
+									'<code>' . esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $date_example, new DateTimeZone( 'UTC' ) ) ) . '</code>'
+								),
+								array( 'code' => array() )
+							);
+							?>
+						</p>
 					</td>
 				</tr>
 				<tr valign="top">
@@ -319,7 +347,7 @@ function exports_reports_settings() {
 						<p class="description">
 							<?php
 							/* translators: %s: the export directory, relative to the WordPress directory. */
-							echo esc_html( sprintf( __( 'This generates a new token, takes the token in the address again as well as in the header, puts every export format back on and the row count cache back to five minutes, clears the export log and removes the export files from your Exports directory - %s. Groups and reports are kept.', 'exports-and-reports' ), str_replace( ABSPATH, '', EXPORTS_REPORTS_EXPORT_DIR ) ) );
+							echo esc_html( sprintf( __( 'This generates a new token, takes the token in the address again as well as in the header, puts every export format back on, the dates back to the plugin\'s own format and the row count cache back to five minutes, clears the export log and removes the export files from your Exports directory - %s. Groups and reports are kept.', 'exports-and-reports' ), str_replace( ABSPATH, '', EXPORTS_REPORTS_EXPORT_DIR ) ) );
 							?>
 						</p>
 					</td>

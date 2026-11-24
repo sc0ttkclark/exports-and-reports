@@ -88,6 +88,7 @@ add_filter( 'site_status_tests', 'exports_reports_site_status_tests' );
 require_once EXPORTS_REPORTS_DIR . 'vendor/autoload.php';
 
 require_once EXPORTS_REPORTS_DIR . 'vendor/vendor-prefixed/autoload.php';
+require_once EXPORTS_REPORTS_DIR . 'includes/class-exports-reports-value-format.php';
 require_once EXPORTS_REPORTS_DIR . 'includes/capabilities.php';
 require_once EXPORTS_REPORTS_DIR . 'includes/install.php';
 require_once EXPORTS_REPORTS_DIR . 'includes/admin-menus.php';

@@ -97,6 +97,7 @@ function exports_reports_report_options( $report ) {
 
 	$options['export']         = ( 0 === (int) $report->disable_export );
 	$options['export_formats'] = exports_reports_report_export_formats( $report );
+	$options['export_locale']  = isset( $report->export_locale ) ? Exports_Reports_Value_Format::sanitize_locale( $report->export_locale ) : '';
 	$options['search']         = ( strlen( (string) $report->field_data ) > 0 ? true : false );
 	$options['default_none']   = ( 1 === (int) $report->default_none ? true : false );
 	$options['sql']            = trim( (string) $report->sql_query );

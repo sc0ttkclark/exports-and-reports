@@ -126,7 +126,7 @@ class Exports_Reports_Admin_UI_Export_PDF_Legacy extends ExportsReports__Prefixe
 
 		$headerfont = $this->getHeaderFont();
 		$this->SetFont( $headerfont[0], $headerfont[1], 8 );
-		$this->Cell( 0, 0, date_i18n( 'm/d/Y H:i:s' ), 0, 0, 'R' );
+		$this->Cell( 0, 0, $this->admin instanceof Exports_Reports_Admin_UI ? $this->admin->export_format( true )->stamp() : date_i18n( 'm/d/Y H:i:s' ), 0, 0, 'R' );
 		$this->SetX( $this->original_lMargin );
 		$this->Cell( 0, 0, 'Page ' . $pagenumtxt, 'T', 1, 'L' );
 	}
@@ -283,7 +283,8 @@ class Exports_Reports_Admin_UI_Export_PDF_Legacy extends ExportsReports__Prefixe
 	 * @return array<int, array<string, string>>
 	 */
 	protected static function cells( $admin, $columns ) {
-		$cells = array();
+		$cells  = array();
+		$format = $admin->export_format( true );
 
 		foreach ( (array) $admin->full_data as $row_data ) {
 			$row_data = (array) $row_data;
@@ -298,7 +299,7 @@ class Exports_Reports_Admin_UI_Export_PDF_Legacy extends ExportsReports__Prefixe
 					$row_data[ $column ] = $value;
 				}
 
-				$cell = (string) self::format_field( $attributes['type'], $value );
+				$cell = (string) self::format_field( $attributes['type'], $value, $format );
 
 				$row[ $column ] = $callback ? $cell : esc_html( wp_strip_all_tags( $cell ) );
 			}
@@ -364,23 +365,31 @@ class Exports_Reports_Admin_UI_Export_PDF_Legacy extends ExportsReports__Prefixe
 	/**
 	 * A value formatted for its column type.
 	 *
-	 * @param string $type     The column type.
-	 * @param mixed  $raw_data The value.
+	 * @since 1.3.0 The $format argument.
+	 *
+	 * @param string                            $type     The column type.
+	 * @param mixed                             $raw_data The value.
+	 * @param Exports_Reports_Value_Format|null $format   How numbers and dates are written: the screen's
+	 *                                                    format, or the one of the language the export is
+	 *                                                    written for (Exports_Reports_Admin_UI::export_format()).
+	 *                                                    Null for the screen's.
 	 *
 	 * @return string
 	 */
-	public static function format_field( $type, $raw_data ) {
-		if ( 'date' === $type ) {
-			return date_i18n( 'Y/m/d', strtotime( (string) $raw_data ) );
-		} elseif ( 'time' === $type ) {
-			return date_i18n( 'g:i:s A', strtotime( (string) $raw_data ) );
-		} elseif ( 'datetime' === $type ) {
-			return date_i18n( 'Y/m/d g:i:s A', strtotime( (string) $raw_data ) );
+	public static function format_field( $type, $raw_data, $format = null ) {
+		if ( ! $format instanceof Exports_Reports_Value_Format ) {
+			$format = Exports_Reports_Value_Format::screen();
+		}
+
+		if ( 'date' === $type || 'time' === $type || 'datetime' === $type ) {
+			return $format->date( $raw_data, $type );
 		} elseif ( 'bool' === $type ) {
 			return ( 1 === (int) $raw_data ? 'Yes' : 'No' );
-		} elseif ( 'number' === $type || 'decimal' === $type ) {
-			// As the screen formats it (Exports_Reports_Admin_UI::format_number()), a number column without thousands separators.
-			$raw_data = 'number' === $type ? Exports_Reports_Admin_UI::format_number( $raw_data, 0, '' ) : Exports_Reports_Admin_UI::format_number( $raw_data, 2 );
+		} elseif ( 'number' === $type ) {
+			// As the view screen writes it: a number column without thousands separators.
+			$raw_data = $format->number( $raw_data, 0, false );
+		} elseif ( 'decimal' === $type ) {
+			$raw_data = $format->number( $raw_data, 2 );
 		}
 
 		return is_scalar( $raw_data ) ? (string) $raw_data : '';

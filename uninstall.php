@@ -38,6 +38,10 @@ function exports_reports_uninstall_site() {
 	delete_option( 'exports_reports_count_cache_generation' );
 	delete_option( 'exports_reports_display_callbacks' );
 	delete_option( 'exports_reports_display_callbacks_notice' );
+	delete_option( 'exports_reports_site_date_formats' );
+
+	// The export format each user last chose for each report of this site.
+	delete_metadata( 'user', 0, $wpdb->get_blog_prefix() . 'exports_reports_export_locale', '', true );
 	delete_transient( 'exports_reports_export_dir_status' );
 
 	// The kept row counts (transients that would expire within the hour anyway).

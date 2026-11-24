@@ -71,6 +71,20 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
   text on the report page, in the title column and the others, and on the view screen (whose list of a
   related column's labels stays a list); the markup of a display function kept; the
   `exports_reports_html_values` filter opting one column back in, within the allowed tags.
+- `Tests_Value_Formats` (`test-value-formats.php`): how numbers and dates are written (issue #9). The
+  default CSV export byte for byte what it was, whatever the site's separators and the Settings box
+  say; an export for Italian with comma decimals, the day before the month and semicolons in the CSV
+  file, a negative number not wrapped as a formula; a thousands separator that is neither a comma nor a
+  period (French), digits grouped by two (Indian English), Western digits kept for Persian unless the
+  filter says otherwise; without intl, a language pack the test makes up formatting the export and a
+  language with no pack written as raw values; the screens and both PDF engines following the site's
+  separators and, with the Settings box, its date formats; an XLSX export for a language holding number
+  cells and date cells in the built-in date formats, whose serial numbers read back as the dates, and
+  keeping text in a typed column as text; a REST export raw unless the request names a locale, which a
+  malformed one is refused for; the Format menu in the export form, showing the report's default and
+  then the user's last choice for that report; the filters for the language and the delimiter; the
+  Settings box saved and reset; the upgrade adding the column. The cases that read what intl writes are
+  skipped when PHP runs without the extension.
 - `Tests_Export_Files` (`test-export-files.php`): `export()` needing the link nonce and `remove_export`
   leaving the protection files alone; the export directory carrying `.htaccess` and `index.php`; the
   download function streaming an export and refusing anything else; `.txt` exports served and the daily
