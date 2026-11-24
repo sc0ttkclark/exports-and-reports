@@ -12,8 +12,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Writes a spreadsheet with the column labels as a header row; cells are text unless the column is a number.
+ * Text stays text whatever it starts with (Exports_Reports_XLSX_Writer), unless the
+ * exports_reports_export_escape_formulas filter turns that off.
  *
  * @since 1.0.0 Out of Exports_Reports_Admin_UI::export().
+ * @since 1.2.9 A value that starts with "=" is a text cell, not a formula.
  */
 class Exports_Reports_Exporter_XLSX extends Exports_Reports_Exporter {
 
@@ -34,7 +37,9 @@ class Exports_Reports_Exporter_XLSX extends Exports_Reports_Exporter {
 			$header[ $attributes['label'] ] = 'string';
 		}
 
-		$writer = new ExportsReports__Prefixed__XLSXWriter();
+		$writer           = new Exports_Reports_XLSX_Writer();
+		$writer->formulas = ! $this->escapes_formulas();
+
 		$writer->writeSheetHeader(
 			'Sheet1',
 			$header,

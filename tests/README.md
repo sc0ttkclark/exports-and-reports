@@ -51,9 +51,11 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
   neutralised; TSV; streaming only with plain columns, a custom display column through the buffered
   path; ASCII file names for a report named outside ASCII; a streamed export with a search term over a
   column expression containing `%d` matching the buffered one.
-- `Tests_Writers` (`test-writers.php`): XLSX, XML and JSON exports checked for their labels and rows; a
-  two-page PDF with the default engine (tc-lib-pdf on PHP 8.2 and later, TCPDF below), the producer
-  string naming it, and the default engine following the PHP version.
+- `Tests_Writers` (`test-writers.php`): XLSX, XML and JSON exports checked for their labels and rows; the
+  XLSX worksheet holding no formula for the seeded formula-like title or for a value or label that starts
+  with `=`, `+`, `-` or `@`, and holding one when `exports_reports_export_escape_formulas` turns the
+  handling off; a two-page PDF with the default engine (tc-lib-pdf on PHP 8.2 and later, TCPDF below),
+  the producer string naming it, and the default engine following the PHP version.
 - `Tests_Export_Files` (`test-export-files.php`): `export()` needing the link nonce and `remove_export`
   leaving the protection files alone; the export directory carrying `.htaccess` and `index.php`; the
   download function streaming an export and refusing anything else; `.txt` exports served and the daily

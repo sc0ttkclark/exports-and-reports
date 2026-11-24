@@ -58,6 +58,96 @@ class Tests_Writers extends Exports_Reports_Test_Case {
 		$this->assertStringContainsString( '<t>gamma</t>', $sheet );
 	}
 
+	/**
+	 * Writes the XLSX export of a report definition and returns the XML of its worksheet; the file is removed.
+	 *
+	 * @param string $sql     The report SQL.
+	 * @param array  $options Options added to the defaults (columns).
+	 * @return string
+	 */
+	protected function xlsx_sheet( $sql, $options = array() ) {
+		list( $writer ) = $this->run_report( $sql, 'Writers XLSX', false, $options );
+
+		$writer->action      = 'export';
+		$writer->export_type = 'xlsx';
+
+		$this->export_from_link( $writer );
+
+		$file = (string) $writer->exported_file;
+
+		$this->assertNotSame( '', $file, 'a file was written' );
+
+		$path  = EXPORTS_REPORTS_EXPORT_DIR . '/' . $file;
+		$zip   = new ZipArchive();
+		$sheet = '';
+
+		if ( true === $zip->open( $path ) ) {
+			$sheet = (string) $zip->getFromName( 'xl/worksheets/sheet1.xml' );
+			$zip->close();
+		}
+
+		wp_delete_file( $path );
+
+		$this->assertNotSame( '', $sheet, 'the workbook has its worksheet' );
+
+		return $sheet;
+	}
+
+	/**
+	 * The seeded formula-like title (row 7) is a text cell: the worksheet holds no formula, and the text is
+	 * the title as stored.
+	 */
+	public function test_xlsx_export_writes_a_formula_like_value_as_text() {
+		$sheet = $this->xlsx_sheet( 'SELECT id, channel, title FROM ' . self::videos() . ' WHERE id = 7' );
+
+		$this->assertStringNotContainsString( '<f>', $sheet, 'no cell is a formula' );
+		$this->assertStringContainsString( 't="inlineStr"><is><t>=1+1</t></is>', $sheet, 'the title is text, as stored' );
+	}
+
+	/**
+	 * Every leading character a spreadsheet acts on stays text, in a value and in a label; a number column
+	 * keeps its value.
+	 */
+	public function test_xlsx_export_keeps_every_formula_trigger_as_text_and_numbers_as_numbers() {
+		$sheet = $this->xlsx_sheet(
+			"SELECT id, '=HYPERLINK(\"https://example.invalid\",\"x\")' AS equals, '+1+1' AS plus, '-1+1' AS minus, '@SUM(1,1)' AS at_sign FROM " . self::videos() . ' WHERE id = 7',
+			array(
+				'columns' => array(
+					'id'      => array(
+						'label' => 'Id',
+						'type'  => 'number',
+					),
+					'equals'  => array( 'label' => '=1+1' ),
+					'plus'    => array( 'label' => 'Plus' ),
+					'minus'   => array( 'label' => 'Minus' ),
+					'at_sign' => array( 'label' => 'At' ),
+				),
+			)
+		);
+
+		$this->assertStringNotContainsString( '<f>', $sheet, 'no cell is a formula' );
+		$this->assertStringContainsString( '<t>=1+1</t>', $sheet, 'a label that starts with = is text' );
+		$this->assertStringContainsString( '<t>=HYPERLINK(&quot;https://example.invalid&quot;,&quot;x&quot;)</t>', $sheet );
+		$this->assertStringContainsString( '<t>+1+1</t>', $sheet );
+		$this->assertStringContainsString( '<t>-1+1</t>', $sheet );
+		$this->assertStringContainsString( '<t>@SUM(1,1)</t>', $sheet );
+		$this->assertSame( 1, preg_match( '#<c r="A2"[^>]*>(?:<is><t>|<v>)7(?:</t></is>|</v>)</c>#', $sheet ), 'the number column keeps its value' );
+	}
+
+	/**
+	 * The filter that turns the formula handling of the delimited exports off turns it off here as well:
+	 * a site that writes formulas into its reports on purpose gets them.
+	 */
+	public function test_xlsx_export_writes_formulas_when_the_filter_turns_the_escaping_off() {
+		add_filter( 'exports_reports_export_escape_formulas', '__return_false' );
+
+		$sheet = $this->xlsx_sheet( 'SELECT id, channel, title FROM ' . self::videos() . ' WHERE id = 7' );
+
+		remove_filter( 'exports_reports_export_escape_formulas', '__return_false' );
+
+		$this->assertStringContainsString( '<f>1+1</f>', $sheet );
+	}
+
 	public function test_xml_export_writes_the_labels_and_the_rows() {
 		list( $path, $contents ) = $this->write_export( 'xml' );
 
