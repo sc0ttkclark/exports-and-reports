@@ -86,8 +86,8 @@ Before 1.0 the `exports_reports_*` and `wp_admin_ui_*` hooks of the report scree
 
 == Installation ==
 
-1. Download the plugin zip from the [GitHub releases](https://github.com/sc0ttkclark/exports-and-reports/releases) (the plugin is not listed on wordpress.org at the moment)
-1. Upload it through Plugins >> Add New >> Upload Plugin, or unpack it into your `wp-content/plugins/` folder
+1. In your site's admin, go to Plugins >> Add New, search for "Exports and Reports" and click Install Now
+1. Or download the zip from [wordpress.org](https://wordpress.org/plugins/exports-and-reports/) or the [GitHub releases](https://github.com/sc0ttkclark/exports-and-reports/releases), and upload it through Plugins >> Add New >> Upload Plugin or unpack it into your `wp-content/plugins/` folder
 1. Activate this plugin
 1. Create your Groups and Reports under Reports Admin; the Settings page shows the export directory and the API URLs
 
@@ -137,6 +137,9 @@ The plugin's bundled libraries (`vendor/`) are part of the zip and of the reposi
 8. Manage plugin settings and get useful URLs for API access
 
 == Changelog ==
+
+= 1.2.9 =
+* The installation steps install the plugin from wordpress.org, where it is listed; the release zip from GitHub stays as the alternative.
 
 = 1.2.8 =
 * The XML export stays parseable whatever the report returns: a value holding a CDATA terminator is split across two sections, and a column name XML does not allow becomes a valid element name.
