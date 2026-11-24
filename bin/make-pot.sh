@@ -18,7 +18,7 @@ pot=languages/exports-and-reports.pot
 if [ ! -f "$phar" ]; then
 	curl -sSL -o "$phar" "https://github.com/wp-cli/wp-cli/releases/download/v${version}/wp-cli-${version}.phar"
 fi
-if ! echo "$sha512  $phar" | sha512sum --check --status; then
+if [ "$(php -r "echo hash_file( 'sha512', '$phar' );")" != "$sha512" ]; then
 	echo "$phar is not WP-CLI $version; delete it and run the script again" >&2
 	exit 1
 fi
