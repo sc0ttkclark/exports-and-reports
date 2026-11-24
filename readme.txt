@@ -5,7 +5,7 @@ Tags: exporting, reporting, csv, pdf, xml
 Requires at least: 5.7
 Tested up to: 7.1
 Requires PHP: 7.2
-Stable tag: 1.2.7
+Stable tag: 1.2.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -137,6 +137,11 @@ The plugin's bundled libraries (`vendor/`) are part of the zip and of the reposi
 8. Manage plugin settings and get useful URLs for API access
 
 == Changelog ==
+
+= 1.2.8 =
+* The XML export stays parseable whatever the report returns: a value holding a CDATA terminator is split across two sections, and a column name XML does not allow becomes a valid element name.
+* The XML and JSON exports report a file that could not be written as an error instead of showing the success message.
+* The plugin header names both maintainers.
 
 = 1.2.7 =
 * The Manage Groups and Manage Reports lists sort as the Reports menu does, by weight and then by name, so groups or reports of equal weight no longer show in one order on the list and another in the menu.
