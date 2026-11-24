@@ -124,7 +124,7 @@ class PdfColor extends \ExportsReports\Prefixed\Com\Tecnick\Color\Pdf
 
         $match = [];
         $ok = \preg_match(
-            '/^spot\(\s*("(?:[^"\\\\]|\\\\.)*"|\'(?:[^\'\\\\]|\\\\.)*\'|[^,\)]+?)\s*(?:,\s*([^\)]+?)\s*)?\)$/i',
+            '/^spot\(\s*("(?:[^"\\\\]++|\\\\.)*+"|\'(?:[^\'\\\\]++|\\\\.)*+\'|[^,\)]+?)\s*(?:,\s*([^\)]+?)\s*)?\)$/i',
             $trimmed,
             $match,
         );

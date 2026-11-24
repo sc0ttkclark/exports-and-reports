@@ -131,7 +131,9 @@ class Tcpdf extends \ExportsReports\Prefixed\Com\Tecnick\Pdf\Output
      *                                       - allowedPaths (string[]): Trusted local path
      *                                         prefixes for file:// reads. Defaults are
      *                                         automatically computed from the package location
-     *                                         to cover bundled example assets.
+     *                                         to cover bundled example assets. The bundled sRGB
+     *                                         profile and the tc-lib-pdf-font package fonts are
+     *                                         read without this list.
      * @param ?ObjExtCache $cache Optional external cache reused by every cacheable sub-library
      *                            (font subsets, images, ...). Implement
      *                            ExportsReports\Prefixed\Com\Tecnick\Pdf\Cache\CacheInterface to bridge your own backend
@@ -162,6 +164,7 @@ class Tcpdf extends \ExportsReports\Prefixed\Com\Tecnick\Pdf\Output
         $this->docmodtime = $this->doctime;
         $seed = new \ExportsReports\Prefixed\Com\Tecnick\Pdf\Encrypt\Type\Seed();
         $this->fileid = \md5($seed->encrypt('TCPDF'));
+        $this->htmlTcpdfTagKey = \random_bytes(32);
         if ($objEncrypt instanceof ObjEncrypt) {
             $encData = $objEncrypt->getEncryptionData();
             if ($encData['encrypted'] && $encData['fileid'] !== '') {

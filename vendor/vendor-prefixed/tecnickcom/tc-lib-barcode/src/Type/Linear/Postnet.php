@@ -97,7 +97,7 @@ class Postnet extends \ExportsReports\Prefixed\Com\Tecnick\Barcode\Type\Linear
      */
     protected function formatCode(): void
     {
-        $code = \preg_replace('/[-\s]+/', '', $this->code);
+        $code = \preg_replace('/[-\t\n\x0B\f\r ]+/', '', $this->code);
         if ($code === null) {
             throw new BarcodeException('Code not valid');
         }

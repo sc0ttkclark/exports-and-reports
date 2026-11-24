@@ -405,7 +405,7 @@ class Web extends \ExportsReports\Prefixed\Com\Tecnick\Color\Css implements Colo
             return $this->getColorObjFromJs($color);
         }
 
-        $rex = '/^(t|g|rgba|rgb|hsla|hsl|cmyka|cmyk|lab)\s*[\(]/';
+        $rex = '/^(t|g|rgba|rgb|hsla|hsl|cmyka|cmyk|lab)[\t\n\x0B\f\r ]*[\(]/';
         $col = $this->tryMatchColor($rex, $color);
         if ($col !== []) {
             return $this->getColorObjFromCss($col[1] ?? '', $color);
