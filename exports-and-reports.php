@@ -10,7 +10,7 @@
  * Plugin Name:       Exports and Reports
  * Plugin URI:        https://github.com/sc0ttkclark/exports-and-reports
  * Description:       Turn any MySQL SELECT query into a report your users can search, filter and export to CSV, XLSX, PDF, JSON or XML.
- * Version:           1.2.9
+ * Version:           1.3.0
  * Author:            Scott Kingsley Clark, Daniel Caspi
  * Author URI:        https://www.element26.net/
  * Text Domain:       exports-and-reports
@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'EXPORTS_REPORTS_TBL', 'exportsreports_' );
-define( 'EXPORTS_REPORTS_VERSION', '1.2.9' );
+define( 'EXPORTS_REPORTS_VERSION', '1.3.0' );
 define( 'EXPORTS_REPORTS_URL', plugin_dir_url( __FILE__ ) );
 define( 'EXPORTS_REPORTS_DIR', plugin_dir_path( __FILE__ ) );
 

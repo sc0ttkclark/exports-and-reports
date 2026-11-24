@@ -5,7 +5,7 @@ Tags: export, reports, csv, excel, sql
 Requires at least: 5.7
 Tested up to: 7.1
 Requires PHP: 7.2
-Stable tag: 1.2.9
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -315,6 +315,9 @@ The plugin's bundled libraries (`vendor/`) are part of the zip and of the reposi
 The releases before 1.0.0 are in [changelog.txt](https://github.com/sc0ttkclark/exports-and-reports/blob/main/changelog.txt).
 
 == Upgrade Notice ==
+
+= 1.3.0 =
+On a network, only super admins edit groups and reports, unless a filter hands that back to the sites. Reports call only the Display functions the site lists; the ones in use are listed for you on the update. A typed API token needs 24 characters.
 
 = 1.2.9 =
 Security release: XLSX exports no longer write stored text as formulas, PDF exports on PHP below 8.2 print stored values as text, and the report page shows stored HTML as text. A column whose stored values are markup of your own is opted back in with the `exports_reports_html_values` filter.

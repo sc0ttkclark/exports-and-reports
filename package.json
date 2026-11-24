@@ -1,6 +1,6 @@
 {
   "name": "exports-and-reports",
-  "version": "1.2.9",
+  "version": "1.3.0",
   "description": "Turn any MySQL SELECT query into a report your users can search, filter and export to CSV, XLSX, PDF, JSON or XML.",
   "author": "Scott Kingsley Clark, Daniel Caspi",
   "homepage": "https://wordpress.org/plugins/exports-and-reports/",
