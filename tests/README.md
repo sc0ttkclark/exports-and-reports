@@ -74,7 +74,12 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
   download through the routes, the export logged; download authorisation following the log row and the
   access rules; a disabled report hidden; an empty token saved from the settings page turning token
   access off.
-- `Tests_Access` (`test-access.php`): administrators holding `exports_reports_full_access` through their
+- `Tests_Access` (`test-access.php`): the matrix of who reaches what. The rows are a subscriber, a user
+  whose role the group names, a user with `exports_reports_view`, one with `exports_reports_settings`, an
+  administrator and nobody; the columns are the report page, the REST data and export routes, the
+  admin-ajax export, the download, the removal, the Manage screens, Detect Fields and the Settings page.
+  An administrator whose role has lost the capabilities refused at every one on a single site, and a
+  fresh install putting them back; administrators holding `exports_reports_full_access` through their
   role, not user meta; display functions limited to plugin functions.
 - `Tests_Hooks` (`test-hooks.php`): the cases that attach callbacks to `exports_reports_*` hooks (their
   arguments one by one, the screen last) and to the `wp_admin_ui_*` names (the array form): a

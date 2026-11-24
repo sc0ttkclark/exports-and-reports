@@ -74,15 +74,30 @@ function exports_reports_capabilities() {
 }
 
 /**
+ * Whether the current user has full access: the exports_reports_full_access capability, or a network's
+ * super admin. On a single site WordPress calls every user who may delete users a super admin, which is
+ * every administrator: there the plugin's capabilities decide, so that a site which takes them from a
+ * role has taken the access with them.
+ *
+ * @since 1.3.0
+ *
+ * @return bool
+ */
+function exports_reports_current_user_has_full_access() {
+	return ( is_multisite() && is_super_admin() ) || exports_reports_current_user_can_any( 'exports_reports_full_access' );
+}
+
+/**
  * Whether the current user may manage the groups, the reports and the settings: full access (which a
  * network's super admins have) or the settings capability, the capabilities the Reports Admin menu asks for.
  *
  * @since 1.2.0
+ * @since 1.3.0 On a single site the capabilities alone decide; see exports_reports_current_user_has_full_access().
  *
  * @return bool
  */
 function exports_reports_current_user_can_manage() {
-	return is_super_admin() || exports_reports_current_user_can_any( array( 'exports_reports_full_access', 'exports_reports_settings' ) );
+	return exports_reports_current_user_has_full_access() || exports_reports_current_user_can_any( 'exports_reports_settings' );
 }
 
 /**
@@ -171,6 +186,7 @@ function exports_reports_has_role( $role ) {
  * Whether the current user may view a report: the rule the Reports menu and the report page apply.
  *
  * @since 0.9.5
+ * @since 1.3.0 A super admin has full access on a network only; on a single site the capabilities decide.
  *
  * @param object $report A row of the reports table.
  * @param object $group  The row of its group.
@@ -181,7 +197,7 @@ function exports_reports_user_can_view_report( $report, $group ) {
 		return false;
 	}
 
-	$has_full_access = is_super_admin() || exports_reports_current_user_can_any( 'exports_reports_full_access' );
+	$has_full_access = exports_reports_current_user_has_full_access();
 
 	if ( $has_full_access || exports_reports_current_user_can_any( 'exports_reports_view' ) || exports_reports_current_user_can_any( 'exports_reports_view_group_' . $group->id ) || exports_reports_current_user_can_any( 'exports_reports_view_report_' . $report->id ) ) {
 		return true;

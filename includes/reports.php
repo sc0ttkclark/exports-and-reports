@@ -236,7 +236,7 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 	wp_enqueue_style( 'exports-reports-admin' );
 
 	if ( null === $has_full_access ) {
-		$has_full_access = is_super_admin() || exports_reports_current_user_can_any( 'exports_reports_full_access' );
+		$has_full_access = exports_reports_current_user_has_full_access();
 	}
 
 	if ( 'exports-reports' !== $page && false !== strpos( $page, 'exports-reports-group-' ) ) {

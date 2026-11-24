@@ -14,9 +14,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * The Manage Reports page: an Exports_Reports_Admin_UI on the reports table, with the field editor on
  * the field_data column.
+ *
+ * @since 1.3.0 Checks the capability itself; the menu's registration is not the only thing between a user and the screen.
  */
 function exports_reports_reports() {
 	global $wpdb;
+
+	if ( ! exports_reports_current_user_can_manage() ) {
+		wp_die( esc_html__( 'Sorry, you are not allowed to manage reports.', 'exports-and-reports' ), 403 );
+	}
 
 	require_once EXPORTS_REPORTS_DIR . 'includes/class-exports-reports-admin-ui.php';
 

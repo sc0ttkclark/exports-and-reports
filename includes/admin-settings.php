@@ -32,7 +32,7 @@ function exports_reports_reset() {
  * Output the plugin settings page.
  */
 function exports_reports_settings() {
-	if ( ! current_user_can( 'manage_options' ) && ! exports_reports_current_user_can_any( array( 'exports_reports_full_access', 'exports_reports_settings' ) ) ) {
+	if ( ! exports_reports_current_user_can_manage() ) {
 		wp_die( esc_html__( 'Sorry, you are not allowed to manage the Exports and Reports settings.', 'exports-and-reports' ), 403 );
 	}
 

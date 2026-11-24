@@ -26,6 +26,12 @@ function exports_reports_tests_emphasis( $value ) {
 	return '<em>' . esc_html( (string) $value ) . '</em>';
 }
 
+/**
+ * Thrown in place of the exit an admin-ajax handler ends with, so a test gets what the handler printed.
+ */
+class Exports_Reports_Tests_Ajax_Stop extends Exception {
+}
+
 trait Exports_Reports_Test_Helpers {
 
 	/**
@@ -452,6 +458,122 @@ trait Exports_Reports_Test_Helpers {
 		ob_end_clean();
 
 		return $response;
+	}
+
+	/**
+	 * A group row.
+	 *
+	 * @param array $values Columns added to the defaults (name, role_access, disabled).
+	 * @return int The group's id.
+	 */
+	protected function insert_group( $values = array() ) {
+		global $wpdb;
+
+		$now = current_time( 'mysql' );
+
+		$wpdb->insert(
+			$wpdb->exports_reports_groups,
+			array_merge(
+				array(
+					'name'        => 'Test group',
+					'disabled'    => 0,
+					'role_access' => '',
+					'weight'      => 0,
+					'created'     => $now,
+					'updated'     => $now,
+				),
+				$values
+			)
+		);
+
+		return (int) $wpdb->insert_id;
+	}
+
+	/**
+	 * A report row on the seeded table.
+	 *
+	 * @param int   $group_id The report's group.
+	 * @param array $values   Columns added to the defaults (name, role_access, sql_query, field_data).
+	 * @return int The report's id.
+	 */
+	protected function insert_report( $group_id, $values = array() ) {
+		global $wpdb;
+
+		$now = current_time( 'mysql' );
+
+		$wpdb->insert(
+			$wpdb->exports_reports_reports,
+			array_merge(
+				array(
+					'name'             => 'Test report',
+					'group'            => $group_id,
+					'disabled'         => 0,
+					'disable_export'   => 0,
+					'export_formats'   => '',
+					'default_none'     => 0,
+					'role_access'      => '',
+					'sql_query'        => 'SELECT id, channel, title, revenue FROM ' . self::videos() . ' ORDER BY id LIMIT %%LIMIT%%',
+					'sql_query_count'  => '',
+					'page_orientation' => 'P',
+					'field_data'       => '',
+					'weight'           => 0,
+					'created'          => $now,
+					'updated'          => $now,
+				),
+				$values
+			)
+		);
+
+		return (int) $wpdb->insert_id;
+	}
+
+	/**
+	 * Runs an admin-ajax handler with a request and returns what it answered: the decoded JSON, or the
+	 * text when it is none (the -1 of a failed nonce check).
+	 *
+	 * @param callable $handler The handler.
+	 * @param array    $post    The posted variables.
+	 * @param array    $get     The query string's variables.
+	 * @return array|string
+	 */
+	protected function ajax( $handler, $post = array(), $get = array() ) {
+		$stop = static function () {
+			return static function ( $message ) {
+				if ( is_scalar( $message ) ) {
+					echo $message; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- what the handler answers, captured by the test.
+				}
+
+				throw new Exports_Reports_Tests_Ajax_Stop();
+			};
+		};
+
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $stop );
+
+		$_POST    = $post;
+		$_GET     = $get;
+		$_REQUEST = array_merge( $get, $post );
+
+		ob_start();
+
+		try {
+			call_user_func( $handler );
+		} catch ( Exports_Reports_Tests_Ajax_Stop $stopped ) {
+			unset( $stopped );
+		}
+
+		$answer = (string) ob_get_clean();
+
+		$_POST    = array();
+		$_GET     = array();
+		$_REQUEST = array();
+
+		remove_filter( 'wp_doing_ajax', '__return_true' );
+		remove_filter( 'wp_die_ajax_handler', $stop );
+
+		$json = json_decode( $answer, true );
+
+		return is_array( $json ) ? $json : $answer;
 	}
 
 	/**

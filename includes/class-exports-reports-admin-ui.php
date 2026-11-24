@@ -2439,7 +2439,7 @@ class Exports_Reports_Admin_UI {
 	 */
 	public function query_error_message( $in_full = null ) {
 		if ( null === $in_full ) {
-			$in_full = current_user_can( 'manage_options' ) || ( function_exists( 'exports_reports_current_user_can_any' ) && exports_reports_current_user_can_any( array( 'exports_reports_full_access', 'exports_reports_settings' ) ) );
+			$in_full = function_exists( 'exports_reports_current_user_can_manage' ) && exports_reports_current_user_can_manage();
 		}
 
 		if ( $in_full ) {

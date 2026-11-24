@@ -11,9 +11,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * The Manage Groups page: an Exports_Reports_Admin_UI on the groups table.
+ *
+ * @since 1.3.0 Checks the capability itself; the menu's registration is not the only thing between a user and the screen.
  */
 function exports_reports_groups() {
 	global $wpdb;
+
+	if ( ! exports_reports_current_user_can_manage() ) {
+		wp_die( esc_html__( 'Sorry, you are not allowed to manage report groups.', 'exports-and-reports' ), 403 );
+	}
 
 	require_once EXPORTS_REPORTS_DIR . 'includes/class-exports-reports-admin-ui.php';
 

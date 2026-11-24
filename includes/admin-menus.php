@@ -13,14 +13,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * The Reports Admin menu: Manage Groups, Manage Reports and Settings, for users with the settings
- * capability or full access (super admins count as full access).
+ * capability or full access (a network's super admins count as full access). The screens check the
+ * capability themselves as well.
  */
 function exports_reports_admin_menu() {
 	if ( defined( 'EXPORTS_REPORTS_DISABLE_MENU' ) ) {
 		return;
 	}
 
-	$has_full_access = is_super_admin() || exports_reports_current_user_can_any( 'exports_reports_full_access' );
+	$has_full_access = exports_reports_current_user_has_full_access();
 
 	$min_cap = exports_reports_current_user_can_which( exports_reports_capabilities() );
 
@@ -46,7 +47,7 @@ function exports_reports_menu() {
 		return;
 	}
 
-	$has_full_access = is_super_admin() || exports_reports_current_user_can_any( 'exports_reports_full_access' );
+	$has_full_access = exports_reports_current_user_has_full_access();
 
 	$init = false;
 
