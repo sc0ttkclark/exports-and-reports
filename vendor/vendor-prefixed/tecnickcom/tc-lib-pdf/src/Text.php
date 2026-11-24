@@ -19,6 +19,7 @@ declare(strict_types=1);
 namespace ExportsReports\Prefixed\Com\Tecnick\Pdf;
 
 use ExportsReports\Prefixed\Com\Tecnick\Pdf\Exception as PdfException;
+use ExportsReports\Prefixed\Com\Tecnick\Pdf\Font\Stack as ObjFont;
 use ExportsReports\Prefixed\Com\Tecnick\Pdf\Page\Settings as PageSettings;
 use ExportsReports\Prefixed\Com\Tecnick\Unicode\Bidi;
 use ExportsReports\Prefixed\Com\Tecnick\Unicode\Data\Constant as UnicodeConstant;
@@ -388,6 +389,12 @@ abstract class Text extends \ExportsReports\Prefixed\Com\Tecnick\Pdf\Cell
     protected bool $textOffsetFromLeft = false;
 
     /**
+     * If true, outTextLines() shortens the first line at its right side by the offset for
+     * any base direction. Set by callers whose offset is a right-to-left cursor position.
+     */
+    protected bool $textOffsetFromRight = false;
+
+    /**
      * Width (internal points) of the content that follows the last line of a centered
      * or right-aligned text with more than one line, on the same line. outTextLines()
      * aligns that last line together with it. Set by callers whose text is followed by
@@ -597,7 +604,7 @@ abstract class Text extends \ExportsReports\Prefixed\Com\Tecnick\Pdf\Cell
                 $txt_out = $fontout_prefix . $txt_out;
             }
 
-            $this->cellbbox = $this->getNextBBoxList($this->cellbbox, [
+            $this->pushCellBBox([
                 'x' => $this->toUnit($cell_pntx),
                 'y' => $this->toYUnit($cell_pnty),
                 'w' => $this->toUnit($cell_pwidth),
@@ -955,7 +962,7 @@ abstract class Text extends \ExportsReports\Prefixed\Com\Tecnick\Pdf\Cell
                 $txt_pnty = $this->textVPosFromCell($cell_pnty, $cell_pheight, $txt_pheight, $valign, $cell);
                 $line_posy = $this->toYUnit($txt_pnty);
 
-                $this->cellbbox = $this->getNextBBoxList($this->cellbbox, [
+                $this->pushCellBBox([
                     'x' => $this->toUnit($cell_pntx),
                     'y' => $this->toYUnit($cell_pnty),
                     'w' => $this->toUnit($cell_pwidth),
@@ -2481,7 +2488,9 @@ abstract class Text extends \ExportsReports\Prefixed\Com\Tecnick\Pdf\Cell
         // The offset shortens the first line at the side that line starts from:
         // the right one for an RTL paragraph, where the line box is trimmed
         // instead of being moved, unless the offset is a left-to-right cursor position.
-        $line_posx = $baseRtl && !$this->textOffsetFromLeft ? $posx : $posx + $offset;
+        // A right-to-left cursor position always trims the right side.
+        $trimright = $this->textOffsetFromRight || $baseRtl && !$this->textOffsetFromLeft;
+        $line_posx = $trimright ? $posx : $posx + $offset;
         $line_posy = $posy + $fontascent;
 
         $out = '';
@@ -2825,6 +2834,8 @@ abstract class Text extends \ExportsReports\Prefixed\Com\Tecnick\Pdf\Cell
 
         $out = '';
 
+        // @mago-expect analysis:redundant-comparison
+        // @mago-expect analysis:redundant-logical-operation
         if ($shadow !== null && $shadow !== []) {
             if ($shadow['xoffset'] < 0) {
                 $posx += $shadow['xoffset'];
@@ -3864,7 +3875,7 @@ abstract class Text extends \ExportsReports\Prefixed\Com\Tecnick\Pdf\Cell
     protected function getOutEscapedStr(array $ordarr): string
     {
         if ($this->font->isCurrentByteFont()) {
-            $latin = $this->uniconv->uniArrToLatinArr($ordarr);
+            $latin = $this->uniconv->uniArrToLatinArr($this->getOrdArrWithoutSelectors($ordarr));
             /** @var array<int<0, 255>> $latin */
             return $this->encrypt->escapeString($this->uniconv->latinArrToStr($latin));
         }
@@ -4224,7 +4235,23 @@ abstract class Text extends \ExportsReports\Prefixed\Com\Tecnick\Pdf\Cell
             return $this->font->ordArrToGidStr($this->getMappedOrdArr($ordarr));
         }
 
-        return $this->uniconv->toUTF16BE(\implode('', $this->uniconv->ordArrToChrArr($ordarr)));
+        return $this->uniconv->toUTF16BE(\implode(
+            '',
+            $this->uniconv->ordArrToChrArr($this->getOrdArrWithoutSelectors($ordarr)),
+        ));
+    }
+
+    /**
+     * Returns the given codepoints without the variation selectors, for the fonts that
+     * show no variation sequence: a selector takes no space and has no glyph of its own.
+     *
+     * @param array<int, int> $ordarr Array of UTF-8 codepoints (integer values).
+     *
+     * @return array<int, int>
+     */
+    protected function getOrdArrWithoutSelectors(array $ordarr): array
+    {
+        return \array_values(\array_filter($ordarr, static fn(int $ord): bool => !ObjFont::isVariationSelector($ord)));
     }
 
     /**
@@ -4250,7 +4277,8 @@ abstract class Text extends \ExportsReports\Prefixed\Com\Tecnick\Pdf\Cell
         $mapped = [];
         $dropped = [];
         foreach ($ordarr as $ord) {
-            if ($this->font->getGidForOrd($ord) === 0) {
+            // a variation selector selects the glyph of its base character
+            if ($this->font->getGidForOrd($ord) === 0 && !ObjFont::isVariationSelector($ord)) {
                 $dropped[] = \sprintf('U+%04X', $ord);
                 continue;
             }

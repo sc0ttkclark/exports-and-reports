@@ -4,7 +4,7 @@
     'name' => 'sc0ttkclark/exports-and-reports',
     'pretty_version' => 'dev-main',
     'version' => 'dev-main',
-    'reference' => '6819b50108e7d254439c95621c05323736fbb96a',
+    'reference' => 'be7010eba5cd4fcc71dcded3bf603c01f3a2af36',
     'type' => 'wordpress-plugin',
     'install_path' => __DIR__ . '/../',
     'aliases' => 
@@ -28,9 +28,9 @@
     ),
     'tecnickcom/tc-lib-barcode' => 
     array (
-      'pretty_version' => '2.17.2',
-      'version' => '2.17.2.0',
-      'reference' => 'b6c42dd1ca3cae0ddadfe29640d6018d48082054',
+      'pretty_version' => '2.17.6',
+      'version' => '2.17.6.0',
+      'reference' => '30a761b1b71f0d676483ede32afbb16626e915b0',
       'type' => 'library',
       'install_path' => __DIR__ . '/../tecnickcom/tc-lib-barcode',
       'aliases' => 
@@ -40,9 +40,9 @@
     ),
     'tecnickcom/tc-lib-color' => 
     array (
-      'pretty_version' => '3.0.13',
-      'version' => '3.0.13.0',
-      'reference' => '076424ab943b43c2830c2e278d5510c52b9ab904',
+      'pretty_version' => '3.1.1',
+      'version' => '3.1.1.0',
+      'reference' => 'eaab4b89011d941e27ee2c7a5cd54efadddabc59',
       'type' => 'library',
       'install_path' => __DIR__ . '/../tecnickcom/tc-lib-color',
       'aliases' => 
@@ -52,9 +52,9 @@
     ),
     'tecnickcom/tc-lib-file' => 
     array (
-      'pretty_version' => '3.9.9',
-      'version' => '3.9.9.0',
-      'reference' => '973e4b9b13dc3cd910f4f6aeb996ed92250f4218',
+      'pretty_version' => '3.9.13',
+      'version' => '3.9.13.0',
+      'reference' => 'fea34b0038b0154e33cddfda49e9afd8549cbd1a',
       'type' => 'library',
       'install_path' => __DIR__ . '/../tecnickcom/tc-lib-file',
       'aliases' => 
@@ -64,9 +64,9 @@
     ),
     'tecnickcom/tc-lib-pdf' => 
     array (
-      'pretty_version' => '8.82.2',
-      'version' => '8.82.2.0',
-      'reference' => '81d1ed0dd17f16fbfc3746d5cd2b2711ac1afbda',
+      'pretty_version' => '8.84.3',
+      'version' => '8.84.3.0',
+      'reference' => '9a0d65988a6512144a46d6285373b79e5239fe33',
       'type' => 'library',
       'install_path' => __DIR__ . '/../tecnickcom/tc-lib-pdf',
       'aliases' => 
@@ -76,9 +76,9 @@
     ),
     'tecnickcom/tc-lib-pdf-encrypt' => 
     array (
-      'pretty_version' => '2.12.1',
-      'version' => '2.12.1.0',
-      'reference' => '1aca6aab0dc4b34621c8b6256258e247a486a06b',
+      'pretty_version' => '2.12.4',
+      'version' => '2.12.4.0',
+      'reference' => 'd3fea61d6d14c5f162f4407ecd63e3c4629d82ce',
       'type' => 'library',
       'install_path' => __DIR__ . '/../tecnickcom/tc-lib-pdf-encrypt',
       'aliases' => 
@@ -88,9 +88,9 @@
     ),
     'tecnickcom/tc-lib-pdf-filter' => 
     array (
-      'pretty_version' => '2.11.8',
-      'version' => '2.11.8.0',
-      'reference' => '84e490e0590174930e86955372d753abe356850c',
+      'pretty_version' => '2.11.12',
+      'version' => '2.11.12.0',
+      'reference' => '90455dab65482c947523448dfcd2fa7c0cd61766',
       'type' => 'library',
       'install_path' => __DIR__ . '/../tecnickcom/tc-lib-pdf-filter',
       'aliases' => 
@@ -100,9 +100,9 @@
     ),
     'tecnickcom/tc-lib-pdf-font' => 
     array (
-      'pretty_version' => '4.6.2',
-      'version' => '4.6.2.0',
-      'reference' => '668d73e853c6027afd9cdaae8ea042957ba11e08',
+      'pretty_version' => '4.9.3',
+      'version' => '4.9.3.0',
+      'reference' => '7401f6bf6a525965060d6daf308eb350266d54c6',
       'type' => 'library',
       'install_path' => __DIR__ . '/../tecnickcom/tc-lib-pdf-font',
       'aliases' => 
@@ -112,9 +112,9 @@
     ),
     'tecnickcom/tc-lib-pdf-graph' => 
     array (
-      'pretty_version' => '2.18.6',
-      'version' => '2.18.6.0',
-      'reference' => '602d8593a4b368e744da430c7fc716eb25b4beaa',
+      'pretty_version' => '2.18.9',
+      'version' => '2.18.9.0',
+      'reference' => 'f108beac09b337c15f82d790395a79a52b08eecd',
       'type' => 'library',
       'install_path' => __DIR__ . '/../tecnickcom/tc-lib-pdf-graph',
       'aliases' => 
@@ -124,9 +124,9 @@
     ),
     'tecnickcom/tc-lib-pdf-image' => 
     array (
-      'pretty_version' => '3.15.2',
-      'version' => '3.15.2.0',
-      'reference' => 'da7d69e084a692cb55bbab3b27e66d31bf5edc50',
+      'pretty_version' => '3.15.5',
+      'version' => '3.15.5.0',
+      'reference' => '3f230ba06612fa9696c1361702a85004e950510f',
       'type' => 'library',
       'install_path' => __DIR__ . '/../tecnickcom/tc-lib-pdf-image',
       'aliases' => 
@@ -136,9 +136,9 @@
     ),
     'tecnickcom/tc-lib-pdf-page' => 
     array (
-      'pretty_version' => '4.18.0',
-      'version' => '4.18.0.0',
-      'reference' => '49b70ca9b909454ad7f83a8df1150be65fe1b5ef',
+      'pretty_version' => '4.18.3',
+      'version' => '4.18.3.0',
+      'reference' => '87bb94f0ee6bf51aa764d384c43adf9f9300bc2e',
       'type' => 'library',
       'install_path' => __DIR__ . '/../tecnickcom/tc-lib-pdf-page',
       'aliases' => 
@@ -148,9 +148,9 @@
     ),
     'tecnickcom/tc-lib-pdf-parser' => 
     array (
-      'pretty_version' => '3.16.6',
-      'version' => '3.16.6.0',
-      'reference' => '35f317cfca78bf986f6d9b5058b951de30b3413d',
+      'pretty_version' => '3.16.10',
+      'version' => '3.16.10.0',
+      'reference' => 'f4bb999d19d1a4dbabc04e7b42eacbf45dfecb52',
       'type' => 'library',
       'install_path' => __DIR__ . '/../tecnickcom/tc-lib-pdf-parser',
       'aliases' => 
@@ -160,9 +160,9 @@
     ),
     'tecnickcom/tc-lib-pdf-sign' => 
     array (
-      'pretty_version' => '2.0.9',
-      'version' => '2.0.9.0',
-      'reference' => '614c001b885b04045935cd18860bdd0e174eada0',
+      'pretty_version' => '2.0.13',
+      'version' => '2.0.13.0',
+      'reference' => '56bf69b90e9a370a4c7e73358040dd0494cb5f98',
       'type' => 'library',
       'install_path' => __DIR__ . '/../tecnickcom/tc-lib-pdf-sign',
       'aliases' => 
@@ -172,9 +172,9 @@
     ),
     'tecnickcom/tc-lib-unicode' => 
     array (
-      'pretty_version' => '3.2.2',
-      'version' => '3.2.2.0',
-      'reference' => 'fe78012e28bb6a6cc1e7401d8b0dd6b1be0706c9',
+      'pretty_version' => '3.3.1',
+      'version' => '3.3.1.0',
+      'reference' => '79f3795aa80c2c2c4971961d8dfc767b2d39ab17',
       'type' => 'library',
       'install_path' => __DIR__ . '/../tecnickcom/tc-lib-unicode',
       'aliases' => 
@@ -184,9 +184,9 @@
     ),
     'tecnickcom/tc-lib-unicode-data' => 
     array (
-      'pretty_version' => '3.1.2',
-      'version' => '3.1.2.0',
-      'reference' => 'b9b5b2fe8c9db2408b99f15d46b6e8031f73fb0d',
+      'pretty_version' => '3.1.5',
+      'version' => '3.1.5.0',
+      'reference' => 'a656f2124a1a00903193218dfd5afcd5e0c7ac43',
       'type' => 'library',
       'install_path' => __DIR__ . '/../tecnickcom/tc-lib-unicode-data',
       'aliases' => 

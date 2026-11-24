@@ -18,7 +18,6 @@ declare(strict_types=1);
 
 namespace ExportsReports\Prefixed\Com\Tecnick\Pdf\Font;
 
-use ExportsReports\Prefixed\Com\Tecnick\File\Dir;
 use ExportsReports\Prefixed\Com\Tecnick\File\File as ObjFile;
 use ExportsReports\Prefixed\Com\Tecnick\Pdf\Font\Exception as FontException;
 
@@ -133,6 +132,7 @@ use ExportsReports\Prefixed\Com\Tecnick\Pdf\Font\Exception as FontException;
  *        'file_n': int,
  *        'file_name': string,
  *        'gidenc': bool,
+ *        'gw': array<int, int>,
  *        'i': int,
  *        'ifile': string,
  *        'indexToLoc': array<int, int>,
@@ -168,8 +168,11 @@ use ExportsReports\Prefixed\Com\Tecnick\Pdf\Font\Exception as FontException;
  *        'unitsPerEm': int,
  *        'up': int,
  *        'urk': float,
+ *        'usedalias': array<int, int>,
  *        'usedgid': array<int, int>,
+ *        'usedseq': array<int, array<int, int>>,
  *        'ut': int,
+ *        'uvs': array<int, array<int, int>>,
  *        'weight': string,
  *    }
  */
@@ -279,6 +282,7 @@ abstract class Load
         'file_n' => 0,
         'file_name' => '',
         'gidenc' => false,
+        'gw' => [],
         'i' => 0,
         'ifile' => '',
         'indexToLoc' => [],
@@ -320,8 +324,11 @@ abstract class Load
         'unitsPerEm' => 0,
         'up' => 0,
         'urk' => 0.0,
+        'usedalias' => [],
         'usedgid' => [],
+        'usedseq' => [],
         'ut' => 0,
+        'uvs' => [],
         'weight' => '',
     ];
 
@@ -375,7 +382,7 @@ abstract class Load
         }
 
         // read the font definition file
-        $fdt = $this->fileHelper->getFileData($this->data['ifile']);
+        $fdt = FontPaths::readFontFile($this->fileHelper, $this->data['ifile'], true);
         if ($fdt === false) {
             throw new FontException('unable to read file: ' . $this->data['ifile']);
         }
@@ -403,27 +410,21 @@ abstract class Load
      */
     protected function findFontDirectories(): array
     {
-        $dir = new Dir();
         $dirs = [];
-        $kpathfonts = FontPaths::getConfigPath();
-        if ($kpathfonts !== '') {
-            $dirs[] = $kpathfonts;
-            $glb = \glob($kpathfonts . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR);
+        // K_PATH_FONTS first, so its fonts take precedence over the package fonts
+        foreach ([FontPaths::getConfigPath(), ...FontPaths::getPackagePaths()] as $root) {
+            if ($root === '') {
+                continue;
+            }
+
+            $dirs[] = $root;
+            $glb = \glob($root . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR);
             if ($glb !== false) {
                 $dirs = [...$dirs, ...$glb];
             }
         }
 
-        $parent_font_dir = \rtrim($dir->findParentDir('fonts', __DIR__), '/\\');
-        if ($parent_font_dir !== '') {
-            $dirs[] = $parent_font_dir;
-            $glb = \glob($parent_font_dir . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR);
-            if ($glb !== false) {
-                $dirs = \array_merge($dirs, $glb);
-            }
-        }
-
-        return \array_unique($dirs);
+        return \array_values(\array_unique($dirs));
     }
 
     /**
