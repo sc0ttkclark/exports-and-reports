@@ -1,6 +1,18 @@
 name: Plugin Check
+# On pull requests and on pushes to main. release.yml runs the same check on the tree it packages.
 on:
   pull_request:
+    paths:
+      - '*.php'
+      - 'includes/**'
+      - 'assets/**'
+      - 'vendor/**'
+      - 'readme.txt'
+      - '.gitattributes'
+      - '.github/workflows/plugin-check.yml'
+  push:
+    branches:
+      - main
     paths:
       - '*.php'
       - 'includes/**'
@@ -36,7 +48,8 @@ jobs:
       # ------------------------------------------------------------------------------
       # Errors fail the job and every finding is annotated on the pull request. vendor/
       # holds TCPDF and the prefixed XLSXWriter, third-party code outside the plugin's
-      # own standards.
+      # own standards. The action runs the static and the runtime checks. Warnings do
+      # not fail the job until strict: true is set (tests/README.md).
       # ------------------------------------------------------------------------------
       - name: Run Plugin Check
         uses: WordPress/plugin-check-action@10857da14b6c2246d15402b3e69f777edcf8c12e # v1.1.9

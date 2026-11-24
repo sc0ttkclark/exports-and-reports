@@ -126,6 +126,48 @@ address is answered with a 403 inside the suite, so no test reaches the network.
 of the test library in use (`setUp()`/`tearDown()` on WordPress 5.7 and 5.8, `set_up()`/`tear_down()` from
 5.9), and the test classes override `prepare()` and `clean()` instead.
 
+## Plugin Check
+
+`.github/workflows/plugin-check.yml` runs [Plugin Check](https://wordpress.org/plugins/plugin-check/), the
+tool wordpress.org applies to a submission, through `WordPress/plugin-check-action`: on every pull
+request that touches a shipped file, on every push to `main` that does, and by hand. It checks the tree
+`git archive` produces (what a release ships), without `vendor/`. `release.yml` runs the same action on
+the tree it has just packaged, before the zip is attached to a release. The action starts `wp-env`,
+activates the plugin and loads Plugin Check's `cli.php` with `--require`, so the runtime checks run as
+well as the static ones. Errors fail the job; warnings are annotated and do not, until the workflow sets
+`strict: true`.
+
+To run it locally, in a WordPress with Plugin Check and this plugin active:
+
+```sh
+wp plugin check exports-and-reports --exclude-directories=vendor \
+	--require=./wp-content/plugins/plugin-check/cli.php
+```
+
+Without `--require` only the static checks run. The static checks that are PHP_CodeSniffer rules can also
+be run alone, with the tools `composer install` brings and a checkout of Plugin Check beside them:
+
+```sh
+vendor/bin/phpcs --standard=/path/to/plugin-check/phpcs-rulesets/plugin-review.xml \
+	--runtime-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcsstandards/phpcsutils,vendor/phpcsstandards/phpcsextra,/path/to/plugin-check/phpcs-sniffs \
+	--extensions=php exports-and-reports.php uninstall.php includes
+```
+
+The code suppresses these findings, each on the line it applies to or at the top of its file, with the
+reason beside it. A new suppression carries its reason the same way.
+
+| Code | Where | Why |
+|------|-------|-----|
+| `PluginCheck.Security.DirectDB.UnescapedDBParameter`, `WordPress.DB.PreparedSQL.NotPrepared` | `Exports_Reports_Query::run_leading_statements()`, `rows()` and `execute()`; `exports_reports_detect_columns()`; the schema statements in `install.php` | The report's query is SQL an administrator wrote, run as written; that is what the plugin is for. The plugin's own clauses around it carry prepared values, and the schema file is the plugin's. |
+| `WordPress.DB.PreparedSQL.InterpolatedNotPrepared` | The character set conversion in `install.php` | The table is the plugin's own; the character set and collation are wpdb's. |
+| `WordPress.DB.DirectDatabaseQuery` | The files that query (disabled at the top of each) | The plugin runs report queries and keeps three tables of its own; there is nothing for the object cache to hold. |
+| `WordPress.DB.RestrictedFunctions.mysql_mysqli_*` | The delimited exporter; `exports_reports_detect_columns()` | An unbuffered result on wpdb's own connection, so that a large export holds one row in memory, and the column types of a result wpdb holds. wpdb offers neither. |
+| `WordPress.WP.AlternativeFunctions.file_system_operations_*` | The delimited exporter, the download, the export directory's check | Files written and read in chunks, or of a few bytes; `WP_Filesystem` would hold a whole export in memory. |
+| `WordPress.Security.NonceVerification.*` | The read accessors of the report screen, the chosen report, the nonce checks themselves | Navigation state from the address (the page, the sort, the search), from which nothing is written; every write verifies its nonce first. |
+| `WordPress.Security.ValidatedSanitizedInput.InputNotSanitized` | The query sent to Detect Fields, a field's related WHERE, a typed API token | SQL the administrator wrote, stored and run as typed like the report's query; a secret that is stored as typed or refused, never rewritten. |
+| `Squiz.PHP.DiscouragedFunctions.Discouraged` | `set_time_limit()` before an export | A large export outlives the request's default time limit. |
+| `WordPress.NamingConventions.*` | The PDF engines, the templates, the export directory's check | The libraries' own method, property and constant names; a template's variables are local to the method that includes it; core's `https_local_ssl_verify` filter, applied to a request the site sends itself as core applies it. |
+
 ## CI
 
 `.github/workflows/phpunit.yml` runs the suite on every pull request that touches PHP, the tests, the
