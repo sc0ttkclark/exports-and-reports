@@ -1,15 +1,15 @@
-# Copyright (C) 2026 Scott Kingsley Clark
+# Copyright (C) 2026 Scott Kingsley Clark, Daniel Caspi
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Exports and Reports 1.2.7\n"
+"Project-Id-Version: Exports and Reports 1.2.8\n"
 "Report-Msgid-Bugs-To: https://github.com/Element26-Inc/exports-and-reports/issues\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-04T04:11:12+00:00\n"
+"POT-Creation-Date: 2026-11-24T03:41:27+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: exports-and-reports\n"
@@ -31,12 +31,12 @@ msgstr ""
 
 #. Author of the plugin
 #: exports-and-reports.php
-msgid "Scott Kingsley Clark"
+msgid "Scott Kingsley Clark, Daniel Caspi"
 msgstr ""
 
 #. Author URI of the plugin
 #: exports-and-reports.php
-msgid "https://www.scottkclark.com/"
+msgid "https://www.element26.net/"
 msgstr ""
 
 #: includes/admin-groups.php:23
@@ -866,6 +866,11 @@ msgstr ""
 #: includes/exporters/class-exports-reports-exporter-delimited.php:136
 #: includes/exporters/class-exports-reports-exporter-delimited.php:203
 msgid "Error:"
+msgstr ""
+
+#: includes/exporters/class-exports-reports-exporter-json.php:50
+#: includes/exporters/class-exports-reports-exporter-xml.php:52
+msgid "<strong>Error:</strong> The export file could not be written."
 msgstr ""
 
 #: includes/exports.php:21
