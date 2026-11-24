@@ -58,7 +58,14 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           extensions: mysqli, mbstring, zip
-          tools: wp-cli
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install WP-CLI
+        run: |
+          curl -fsSLO https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+          chmod +x wp-cli.phar
+          sudo mv wp-cli.phar /usr/local/bin/wp
+          wp --version
       - name: Wait for the database
         run: |
           for i in $(seq 1 60); do
