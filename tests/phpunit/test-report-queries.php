@@ -597,4 +597,213 @@ class Tests_Report_Queries extends Exports_Reports_Test_Case {
 		$this->assertSame( -13.5, (float) $report->data[0]['Revenue'] );
 		$this->assertLessThanOrEqual( (float) $report->data[1]['Revenue'], (float) $report->data[0]['Revenue'] );
 	}
+
+	/**
+	 * The titles a search or a filter leaves on the page of a report, and the database's complaint.
+	 *
+	 * @param array  $request The query string's variables.
+	 * @param string $sql     The report SQL.
+	 * @param array  $columns The report's fields.
+	 * @param string $column  The column to read from the rows.
+	 * @param array  $options Options added to the defaults.
+	 * @return array{0: string[], 1: string, 2: Exports_Reports_Admin_UI}
+	 */
+	protected function found( array $request, $sql, array $columns, $column, $options = array() ) {
+		global $wpdb;
+
+		$this->db_errors  = array();
+		$wpdb->last_error = '';
+
+		$_GET = $request;
+
+		$report = $this->view(
+			$sql,
+			'Search',
+			array_merge(
+				array(
+					'search'  => true,
+					'columns' => $columns,
+				),
+				$options
+			)
+		);
+
+		$_GET = array();
+
+		return array( wp_list_pluck( $report->data, $column ), wp_strip_all_tags( $this->db_error() ), $report );
+	}
+
+	/**
+	 * Issue #31, as reported: a row of the second page is found by a search from the first.
+	 */
+	public function test_a_search_finds_a_row_of_a_later_page() {
+		list( $found, $error, $report ) = $this->found( array( 'search_query' => 'Video 42' ), 'SELECT id, title FROM ' . self::videos() . ' ORDER BY id', array( 'title' ), 'title' );
+
+		$this->assertSame( '', $error );
+		$this->assertSame( array( 'Video 42' ), $found );
+		$this->assertSame( 1, (int) $report->total );
+	}
+
+	/**
+	 * A searched column that is the alias of a column named with its table: each part of the name is
+	 * quoted on its own, whether the definition quotes them or not.
+	 */
+	public function test_a_search_on_the_alias_of_a_table_qualified_column() {
+		$queries = array(
+			'SELECT v.id, v.title AS name FROM ' . self::videos() . ' v ORDER BY v.id',
+			'SELECT `v`.`id`, `v`.`title` AS `name` FROM ' . self::videos() . ' AS `v` ORDER BY `v`.`id`',
+		);
+
+		foreach ( $queries as $sql ) {
+			list( $found, $error, $report ) = $this->found( array( 'search_query' => 'Video 42' ), $sql, array( 'name' ), 'name' );
+
+			$this->assertSame( '', $error, $sql );
+			$this->assertSame( array( 'Video 42' ), $found, $sql );
+
+			$statement = $report->query->statement();
+
+			$this->assertStringContainsString( '(`v`.`title` LIKE ', $statement['sql'], 'each part quoted on its own' );
+		}
+	}
+
+	/**
+	 * A searched column that is the alias of an expression: the expression itself is searched, commas and
+	 * all, in the report's query and in its totals query.
+	 */
+	public function test_a_search_on_the_alias_of_an_expression() {
+		global $wpdb;
+
+		$label = "CONCAT( channel, ': ', title )";
+		$want  = $wpdb->get_col( 'SELECT ' . $label . ' FROM ' . self::videos() . " WHERE title LIKE 'Video 4%' AND channel = 'beta' ORDER BY id" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- the test's own table.
+
+		list( $found, $error, $report ) = $this->found(
+			array( 'search_query' => 'beta: Video 4' ),
+			'SELECT id, ' . $label . ' AS label, revenue FROM ' . self::videos() . ' ORDER BY id',
+			array( 'label' ),
+			'label',
+			array( 'sql_count' => 'SELECT COUNT(*) AS id FROM ' . self::videos() . ' WHERE %%WHERE%% 1=1' )
+		);
+
+		$this->assertSame( '', $error );
+		$this->assertCount( 5, $want, 'videos 4, 40, 43, 46 and 49 are on the beta channel' );
+		$this->assertSame( $want, $found );
+		$this->assertSame( 5, (int) $report->sum_data[0]['id'], 'the totals query takes the same condition' );
+	}
+
+	/**
+	 * A searched column that is an aggregate cannot be named in WHERE: the search goes into HAVING, where
+	 * every column of the result is named by its own name, and a term that matches any of them finds the row.
+	 */
+	public function test_a_search_on_an_aggregate_goes_into_having() {
+		$sql     = 'SELECT channel, COUNT(*) AS videos, SUM(revenue) AS total FROM ' . self::videos() . ' GROUP BY channel ORDER BY channel';
+		$columns = array( 'channel', 'videos' );
+
+		list( $by_count, $error, $report ) = $this->found( array( 'search_query' => '20' ), $sql, $columns, 'channel' );
+
+		$statement = $report->query->statement();
+
+		$this->assertSame( '', $error );
+		$this->assertSame( array( 'alpha', 'beta', 'gamma' ), $by_count, 'each channel has twenty videos' );
+		$this->assertSame( '', $statement['where'] );
+		$this->assertStringContainsString( '`channel` LIKE ', $statement['having'] );
+		$this->assertStringContainsString( ' OR `videos` LIKE ', $statement['having'] );
+
+		list( $by_name, $error ) = $this->found( array( 'search_query' => 'alp' ), $sql, $columns, 'channel' );
+
+		$this->assertSame( '', $error );
+		$this->assertSame( array( 'alpha' ), $by_name, 'the other column of the search still finds its rows' );
+	}
+
+	/**
+	 * No condition can name the result of a window function, and a condition on an expression that sets a
+	 * session variable would run it twice for each row: the search leaves such columns out and still
+	 * searches the others. What a quoted string of an expression holds does not make it one of them.
+	 */
+	public function test_a_search_leaves_out_a_column_no_condition_can_name() {
+		$columns = array( 'title', 'position' );
+
+		foreach ( array( 'ROW_NUMBER() OVER ( ORDER BY id )', '( @exports_reports_tests_row := 1 )' ) as $unnamed ) {
+			$_GET = array( 'search_query' => 'Video 42' );
+
+			$statement = $this->report( 'SELECT id, title, ' . $unnamed . ' AS position FROM ' . self::videos() . ' ORDER BY id', 'Search', array( 'search' => true, 'columns' => $columns ) )->query->statement();
+
+			$this->assertStringContainsString( '(`title` LIKE ', $statement['where'], $unnamed );
+			$this->assertStringNotContainsString( 'position', $statement['where'], $unnamed );
+			$this->assertSame( '', $statement['having'], $unnamed );
+		}
+
+		list( $found, $error, $report ) = $this->found( array( 'search_query' => 'over (the' ), "SELECT id, CONCAT( title, ' over (the top)' ) AS label FROM " . self::videos() . ' ORDER BY id', array( 'label' ), 'label', array( 'limit' => 100 ) );
+
+		$this->assertSame( '', $error );
+		$this->assertCount( self::$video_rows, $found, 'the words of a quoted string are not the words of the expression' );
+		$this->assertStringContainsString( "((CONCAT( title, ' over (the top)' )) LIKE ", $report->query->statement()['where'] );
+	}
+
+	/**
+	 * The filters share the search's naming: a filter on an alias of a qualified column or of an
+	 * expression goes into WHERE, one on an aggregate into HAVING.
+	 */
+	public function test_filters_name_aliased_columns_like_the_search() {
+		$filter = static function ( $name ) {
+			return array(
+				$name => array(
+					'label'  => 'Filtered',
+					'filter' => true,
+				),
+			);
+		};
+
+		list( $qualified, $error ) = $this->found( array( 'filter_name' => 'Video 42' ), 'SELECT v.id, v.title AS name FROM ' . self::videos() . ' v ORDER BY v.id', $filter( 'name' ), 'name' );
+
+		$this->assertSame( '', $error );
+		$this->assertSame( array( 'Video 42' ), $qualified );
+
+		list( $expression, $error ) = $this->found( array( 'filter_label' => 'gamma: Video 5' ), "SELECT id, CONCAT( channel, ': ', title ) AS label FROM " . self::videos() . ' ORDER BY id', $filter( 'label' ), 'label' );
+
+		$this->assertSame( '', $error );
+		$this->assertSame( array( 'gamma: Video 5', 'gamma: Video 50', 'gamma: Video 53', 'gamma: Video 56', 'gamma: Video 59' ), $expression );
+
+		list( $aggregate, $error, $report ) = $this->found( array( 'filter_total' => '915' ), 'SELECT channel, SUM(revenue) AS total FROM ' . self::videos() . ' GROUP BY channel ORDER BY channel', $filter( 'total' ), 'channel' );
+
+		// A filter's value is read from the request when the statement is built.
+		$_GET      = array( 'filter_total' => '915' );
+		$statement = $report->query->statement();
+		$_GET      = array();
+
+		$this->assertSame( '', $error );
+		$this->assertStringContainsString( '`total` LIKE ', $statement['having'] );
+		$this->assertSame( '', $statement['where'] );
+		$this->assertCount( 1, $aggregate, 'one channel earned a total that holds 915: ' . implode( ', ', $aggregate ) );
+	}
+
+	/**
+	 * The select list is read item by item, at its top-level commas: a function call with commas is one
+	 * item, so the list still tells which columns the result has, and a sort column is checked against them.
+	 */
+	public function test_the_select_list_is_split_at_its_top_level_commas() {
+		$items = Exports_Reports_Query::select_items( " v.id, CONCAT( a, ', ', b ) AS `full name`, IF( x > 1, 'a,b', \"c,d\" ) AS pick, `t`.`plain`, COUNT(*) AS n, CAST( y AS CHAR ) " );
+
+		$this->assertSame( array( '', 'full name', 'pick', '', 'n', '' ), wp_list_pluck( $items, 'alias' ) );
+		$this->assertSame( array( 'id', '', '', 'plain', '', '' ), wp_list_pluck( $items, 'column' ) );
+		$this->assertSame( "CONCAT( a, ', ', b )", $items[1]['source'] );
+		$this->assertSame( 'CAST( y AS CHAR )', $items[5]['source'], 'the AS of a cast is not an alias' );
+
+		$distinct = Exports_Reports_Query::select_items( ' DISTINCT v.title AS name, channel ' );
+
+		$this->assertSame( array( 'v.title', 'channel' ), wp_list_pluck( $distinct, 'source' ), 'DISTINCT is not part of the first item' );
+		$this->assertSame( array( '', 'channel' ), wp_list_pluck( $distinct, 'column' ) );
+		$this->assertSame( '`v`.`title`', Exports_Reports_Query::qualified_name( 'v.title' ) );
+		$this->assertSame( '`db`.`v`.`my title`', Exports_Reports_Query::qualified_name( 'db . `v`.`my title`' ) );
+		$this->assertSame( '', Exports_Reports_Query::qualified_name( 'NULL' ) );
+		$this->assertSame( '', Exports_Reports_Query::qualified_name( 'a + b' ) );
+
+		$_GET = array( 'order' => 'no_such_column' );
+
+		$report = $this->view( "SELECT id, CONCAT( channel, ', ', title ) AS label, revenue FROM " . self::videos() . ' ORDER BY id', 'Sort check' );
+
+		$_GET = array();
+
+		$this->assertSame( '', $this->db_error(), 'a sort column the list does not have is not sent to the database' );
+		$this->assertFalse( $report->order_from_request );
+	}
 }

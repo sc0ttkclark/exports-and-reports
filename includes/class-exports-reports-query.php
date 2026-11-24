@@ -516,6 +516,194 @@ class Exports_Reports_Query {
 	}
 
 	/**
+	 * The items of a select list, split at its top-level commas: a comma inside parentheses (a function
+	 * call, a subquery) or inside a quoted string or identifier belongs to its item. The words that may stand
+	 * between SELECT and the list (DISTINCT, SQL_NO_CACHE and the like) are not part of the first item.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param string $select_list The text between a SELECT and its FROM.
+	 *
+	 * @return array<int, array{alias: string, source: string, column: string}> For each item: its alias when
+	 *               it is written with AS ('' otherwise), what it selects as written, and the column's own
+	 *               name when the item is a column and nothing else, with or without its table ('' otherwise).
+	 */
+	public static function select_items( $select_list ) {
+		$select_list = (string) preg_replace( '/^\s*(?:(?:ALL|DISTINCT|DISTINCTROW|HIGH_PRIORITY|STRAIGHT_JOIN|SQL_SMALL_RESULT|SQL_BIG_RESULT|SQL_BUFFER_RESULT|SQL_NO_CACHE|SQL_CACHE|SQL_CALC_FOUND_ROWS)\b\s*)+/i', '', (string) $select_list );
+		$length      = strlen( $select_list );
+		$items       = array();
+		$item        = '';
+		$quote       = '';
+		$depth       = 0;
+
+		for ( $i = 0; $i < $length; $i++ ) {
+			$char = $select_list[ $i ];
+
+			if ( '' !== $quote ) {
+				// Inside a quoted string or identifier; in a string, a backslash escapes the character after it.
+				if ( '\\' === $char && '`' !== $quote && $i + 1 < $length ) {
+					$item .= $char . $select_list[ $i + 1 ];
+					++$i;
+					continue;
+				}
+
+				if ( $char === $quote ) {
+					$quote = '';
+				}
+
+				$item .= $char;
+				continue;
+			}
+
+			if ( "'" === $char || '"' === $char || '`' === $char ) {
+				$quote = $char;
+			} elseif ( '(' === $char ) {
+				++$depth;
+			} elseif ( ')' === $char ) {
+				$depth = max( 0, $depth - 1 );
+			} elseif ( ',' === $char && 0 === $depth ) {
+				$items[] = $item;
+				$item    = '';
+				continue;
+			}
+
+			$item .= $char;
+		}
+
+		$items[] = $item;
+		$parsed  = array();
+
+		foreach ( $items as $item ) {
+			$item = trim( $item );
+
+			if ( '' === $item ) {
+				continue;
+			}
+
+			$alias  = '';
+			$source = $item;
+			$column = '';
+
+			// The last AS of the item, followed by a name alone: the AS inside CAST( x AS CHAR ) is followed by more.
+			if ( preg_match( '/^(.+)\s+AS\s+(`(?:[^`]|``)+`|[A-Za-z0-9_$]+)$/is', $item, $as ) ) {
+				$source = trim( $as[1] );
+				$alias  = '`' === $as[2][0] ? str_replace( '``', '`', substr( $as[2], 1, -1 ) ) : $as[2];
+			} elseif ( preg_match( '/^`?(?:[a-z0-9_]+`?\.`?)?([a-z0-9_]+)`?$/i', $item, $bare ) ) {
+				$column = $bare[1];
+			}
+
+			$parsed[] = array(
+				'alias'  => $alias,
+				'source' => $source,
+				'column' => $column,
+			);
+		}
+
+		return $parsed;
+	}
+
+	/**
+	 * What an alias stands for, as a quoted name, when it stands for a column: `column`, `table`.`column`
+	 * or `database`.`table`.`column`, each part quoted on its own whether the definition quoted it or not.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param string $source What the alias selects, as written.
+	 *
+	 * @return string '' when the source is anything but a column's name: an expression, a number, a keyword.
+	 */
+	public static function qualified_name( $source ) {
+		$source = trim( (string) $source );
+		$part   = '(?:`(?:[^`]|``)+`|[A-Za-z0-9_$]+)';
+
+		if ( 1 !== preg_match( '/^' . $part . '(?:\s*\.\s*' . $part . '){0,2}$/', $source ) ) {
+			return '';
+		}
+
+		// A word alone that is a number or a keyword of the language is a value, not a column.
+		if ( 1 === preg_match( '/^(?:[0-9]+|NULL|TRUE|FALSE|CURRENT_DATE|CURRENT_TIME|CURRENT_TIMESTAMP|CURRENT_USER)$/i', $source ) ) {
+			return '';
+		}
+
+		preg_match_all( '/`((?:[^`]|``)+)`|([A-Za-z0-9_$]+)/', $source, $parts, PREG_SET_ORDER );
+
+		$quoted = array();
+
+		foreach ( $parts as $found ) {
+			// A part the definition quoted keeps its doubled backticks as they are.
+			$quoted[] = '`' . ( '' !== $found[1] ? $found[1] : $found[2] ) . '`';
+		}
+
+		return implode( '.', $quoted );
+	}
+
+	/**
+	 * How a condition of the search or of a filter names a column of the report, and the clause it goes
+	 * into. The field's Real field, when the administrator gave one, as written. Otherwise the column's
+	 * own name, unless the SELECT list makes the name an alias: an alias of a column is that column, each
+	 * part of its name quoted; an alias of an expression is the expression, in WHERE, where the alias
+	 * itself cannot be named; an alias of an aggregate, or a field marked Filter with HAVING, is the alias
+	 * in HAVING, the one clause that can name it.
+	 *
+	 * @since 1.3.0 Out of statement(), which wrapped whatever an alias stood for in one pair of backticks.
+	 *
+	 * @param string                $column     The field's name: a column of the result.
+	 * @param array                 $attributes The field's attributes.
+	 * @param array<string, string> $sources    What each alias of the SELECT list stands for, as written.
+	 *
+	 * @return array{sql: string, having: bool}|null Null when no condition can name the column: a window
+	 *               function, whose result exists only once the rows are chosen, and an expression that sets
+	 *               a session variable, which a condition would run a second time for each row.
+	 */
+	protected function column_reference( $column, array $attributes, array $sources ) {
+		$having = false !== $attributes['group_related'];
+
+		if ( false !== $attributes['real_name'] ) {
+			return array(
+				'sql'    => (string) $attributes['real_name'],
+				'having' => $having,
+			);
+		}
+
+		$own = $this->backtick( $column );
+
+		if ( $having || ! isset( $sources[ $column ] ) ) {
+			return array(
+				'sql'    => $own,
+				'having' => $having,
+			);
+		}
+
+		$name = self::qualified_name( $sources[ $column ] );
+
+		if ( '' !== $name ) {
+			return array(
+				'sql'    => $name,
+				'having' => false,
+			);
+		}
+
+		// The expression's own words: what its quoted strings and quoted names hold is not looked at.
+		$words = (string) preg_replace( '/\'(?:[^\'\\\\]|\\\\.|\'\')*\'|"(?:[^"\\\\]|\\\\.|"")*"|`(?:[^`]|``)*`/s', "''", $sources[ $column ] );
+
+		if ( 1 === preg_match( '/\bOVER\b\s*(?:\(|[A-Za-z_])|:=/i', $words ) ) {
+			return null;
+		}
+
+		if ( 1 === preg_match( '/\b(?:COUNT|SUM|AVG|MIN|MAX|GROUP_CONCAT|STD|STDDEV|STDDEV_POP|STDDEV_SAMP|VAR_POP|VAR_SAMP|VARIANCE|BIT_AND|BIT_OR|BIT_XOR|JSON_ARRAYAGG|JSON_OBJECTAGG)\s*\(/i', $words ) ) {
+			return array(
+				'sql'    => $own,
+				'having' => true,
+			);
+		}
+
+		return array(
+			'sql'    => '(' . $sources[ $column ] . ')',
+			'having' => false,
+		);
+	}
+
+	/**
 	 * The WHERE or HAVING text the filters add to a statement. Where the author wrote the %%WHERE%% or
 	 * %%HAVING%% placeholder, the text fits that spot: the conditions and AND right after the clause's own
 	 * keyword, AND and the conditions further along a clause, the conditions alone after an AND or OR the
@@ -746,21 +934,17 @@ class Exports_Reports_Query {
 		// The columns the SELECT list names, for the sort check: its aliases and its bare column names. A list
 		// with a * or an unaliased expression names fewer columns than the result has, so it settles nothing.
 		$select_names = array();
+		// What each alias stands for, as written: the search and the filters name a column by it (column_reference()).
+		$sources      = array();
 		$select_known = isset( $selectmatches[1] ) && '' !== trim( $selectmatches[1] );
 		if ( $select_known ) {
-			$theselects = explode( ', ', $selectmatches[1] );
-			if ( 1 === count( $theselects ) ) {
-				$theselects = explode( ',', $selectmatches[1] );
-			}
-			foreach ( $theselects as $selected ) {
-				$selectfield = preg_split( '/ AS /i', $selected );
-				if ( count( $selectfield ) === 2 ) {
-					$field             = trim( trim( $selectfield[1] ), '`' );
-					$real_field        = trim( trim( $selectfield[0] ), '`' );
-					$selects[ $field ] = $real_field;
-					$select_names[]    = $field;
-				} elseif ( preg_match( '/^`?(?:[a-z0-9_]+`?\.`?)?([a-z0-9_]+)`?$/i', trim( $selected ), $bare ) ) {
-					$select_names[] = $bare[1];
+			foreach ( self::select_items( $selectmatches[1] ) as $selected ) {
+				if ( '' !== $selected['alias'] ) {
+					$selects[ $selected['alias'] ] = trim( $selected['source'], '`' );
+					$sources[ $selected['alias'] ] = $selected['source'];
+					$select_names[]                = $selected['alias'];
+				} elseif ( '' !== $selected['column'] ) {
+					$select_names[] = $selected['column'];
 				} else {
 					$select_known = false;
 				}
@@ -768,6 +952,12 @@ class Exports_Reports_Query {
 		}
 		if ( false !== $admin->search && ! empty( $admin->search_columns ) ) {
 			if ( false !== $admin->search_query && 0 < strlen( $admin->search_query ) ) {
+				// The search's condition on each column, as WHERE takes it where WHERE can name the column, and as
+				// HAVING takes it, where every column of the result goes by its own name.
+				$where_likes  = array();
+				$having_likes = array();
+				$needs_having = false;
+				$pattern      = $this->quote( '%' . $wpdb->esc_like( $admin->search_query ) . '%' );
 				foreach ( $admin->search_columns as $key => $column ) {
 					$attributes = $column;
 					if ( ! is_array( $attributes ) ) {
@@ -785,6 +975,11 @@ class Exports_Reports_Query {
 					if ( isset( $admin->filters[ $column ] ) ) {
 						continue;
 					}
+					$reference = $this->column_reference( $column, $attributes, $sources );
+					if ( null === $reference ) {
+						continue;
+					}
+					// The name a %%name%% placeholder of the definition carries for this column's condition.
 					$columnfield = '`' . $column . '`';
 					if ( isset( $selects[ $column ] ) ) {
 						$columnfield = '`' . $selects[ $column ] . '`';
@@ -794,37 +989,29 @@ class Exports_Reports_Query {
 					}
 
 					$filter_field_key = str_replace( '`', '', $columnfield );
-					$like             = $columnfield . ' LIKE ' . $this->quote( '%' . $wpdb->esc_like( $admin->search_query ) . '%' );
 
-					if ( false !== $attributes['group_related'] ) {
-						$having_sql[ $filter_field_key ] = $like;
+					if ( $reference['having'] ) {
+						$needs_having                      = true;
+						$having_likes[ $filter_field_key ] = $reference['sql'] . ' LIKE ' . $pattern;
 					} else {
-						$other_sql[ $filter_field_key ] = $like;
+						$where_likes[ $filter_field_key ]  = $reference['sql'] . ' LIKE ' . $pattern;
+						$having_likes[ $filter_field_key ] = $this->backtick( $column ) . ' LIKE ' . $pattern;
 					}
 				}
-				if ( ! empty( $other_sql ) ) {
-					foreach ( $other_sql as $key => $value ) {
-						if ( false !== stripos( $sql, '%%' . $key . '%%' ) ) {
-							$replace_variables[ $key ] = $value;
+				// The search finds a row when any of its columns matches, so its conditions stay together: in WHERE,
+				// unless one of the columns is an aggregate or is marked for HAVING, which takes them all there.
+				$conditions = $needs_having ? $having_likes : $where_likes;
+				foreach ( $conditions as $key => $value ) {
+					if ( false !== stripos( $sql, '%%' . $key . '%%' ) ) {
+						$replace_variables[ $key ] = $value;
 
-							unset( $other_sql[ $key ] );
-						}
+						unset( $conditions[ $key ] );
 					}
 				}
-				if ( ! empty( $other_sql ) ) {
-					$other_sql = array( '(' . implode( ' OR ', $other_sql ) . ')' );
-				}
-				if ( ! empty( $having_sql ) ) {
-					foreach ( $having_sql as $key => $value ) {
-						if ( false !== stripos( $sql, '%%' . $key . '%%' ) ) {
-							$replace_variables[ $key ] = $value;
-
-							unset( $having_sql[ $key ] );
-						}
-					}
-				}
-				if ( ! empty( $having_sql ) ) {
-					$having_sql = array( '(' . implode( ' OR ', $having_sql ) . ')' );
+				if ( ! empty( $conditions ) && $needs_having ) {
+					$having_sql = array( '(' . implode( ' OR ', $conditions ) . ')' );
+				} elseif ( ! empty( $conditions ) ) {
+					$other_sql = array( '(' . implode( ' OR ', $conditions ) . ')' );
 				}
 			}
 			foreach ( $admin->filters as $filter ) {
@@ -835,17 +1022,15 @@ class Exports_Reports_Query {
 				$filter_column = $admin->search_columns[ $filter ];
 				$filter_values = $admin->filter_values( 'filter_' . $filter, $filter_column['filter_default'] );
 
-				$filterfield         = '`' . $filter . '`';
+				$reference = $this->column_reference( $filter, $filter_column, $sources );
+				if ( null === $reference ) {
+					continue;
+				}
+
+				$filterfield         = $reference['sql'];
 				$filter_sql          = false;
 				$search_value        = false;
 				$related_filterfield = false;
-
-				if ( isset( $selects[ $filter ] ) ) {
-					$filterfield = '`' . $selects[ $filter ] . '`';
-				}
-				if ( false !== $filter_column['real_name'] ) {
-					$filterfield = $filter_column['real_name'];
-				}
 				if ( in_array( $filter_column['type'], array( 'date', 'datetime' ), true ) ) {
 					$start        = date_i18n( 'Y-m-d' ) . ( 'datetime' === $filter_column['type'] ? ' 00:00:00' : '' );
 					$end          = date_i18n( 'Y-m-d' ) . ( 'datetime' === $filter_column['type'] ? ' 23:59:59' : '' );
@@ -920,7 +1105,7 @@ class Exports_Reports_Query {
 
 					$filter_field_key = str_replace( '`', '', $filterfield );
 
-					if ( false !== $filter_column['group_related'] ) {
+					if ( $reference['having'] ) {
 						$having_sql[ $filter ] = $filter_sql;
 					} else {
 						$other_sql[ $filter ] = $filter_sql;

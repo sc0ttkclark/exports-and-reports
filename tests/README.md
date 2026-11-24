@@ -48,7 +48,10 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
   (`EXECUTE IMMEDIATE`) and a tab-indented definition, each with the `LIMIT %%LIMIT%%` placeholder; a
   search term's LIKE wildcards escaped; a paged view with a totals query counting every row; a search on
   an aliased column of a report with a totals query; an array filter value filtering on each value; a
-  sort column kept only when the report has it, matched whatever its case.
+  sort column kept only when the report has it, matched whatever its case; a search finding a row of a
+  later page; a search and a filter on the alias of a table-qualified column, of an expression (in the
+  totals query too) and of an aggregate, which takes the search into `HAVING`; a window function and a
+  session variable left out of the search; the select list split at its top-level commas.
 - `Tests_Delimited_Exports` (`test-delimited-exports.php`): CSV streamed from an unbuffered result and
   buffered byte for byte the same, every value quoted, the byte order mark first, formula-like text
   neutralised; TSV; streaming only with plain columns, a custom display column through the buffered
