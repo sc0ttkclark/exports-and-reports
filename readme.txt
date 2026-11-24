@@ -143,6 +143,7 @@ The plugin's bundled libraries (`vendor/`) are part of the zip and of the reposi
 * The plugin header no longer carries the `GitHub Plugin URI` and `Primary Branch` headers of Git Updater: updates come from wordpress.org.
 * The package metadata names both maintainers, and the translation template and the release workflow point at the repository the plugin lives in (sc0ttkclark/exports-and-reports); composer.json no longer suggests WP-CLI for another plugin's commands.
 * The repository has a README, the GPL's text in a LICENSE file, a security policy (SECURITY.md) and contributing notes (CONTRIBUTING.md); the license ships in the zip, the other three stay in the repository.
+* The wordpress.org listing has an icon and a banner (`.wordpress-org/`; their SVG sources are in `.github/artwork/`).
 
 = 1.2.8 =
 * The XML export stays parseable whatever the report returns: a value holding a CDATA terminator is split across two sections, and a column name XML does not allow becomes a valid element name.

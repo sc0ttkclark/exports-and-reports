@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1544 500" width="1544" height="500">
+<!-- The source of .wordpress-org/banner-*.png: rsvg-convert -w 1544 -h 500 banner.svg -o banner-1544x500.png (and 772x250). The text needs the Inter font installed. -->
+  <rect width="1544" height="500" fill="#17364D"/>
+  <g fill="#FFFFFF" fill-opacity=".045">
+    <rect x="1210" y="-30" width="420" height="64" rx="18"/>
+    <rect x="1210" y="52" width="190" height="34" rx="17"/>
+    <rect x="1420" y="52" width="210" height="34" rx="17"/>
+    <rect x="1210" y="408" width="190" height="34" rx="17"/>
+    <rect x="1420" y="408" width="210" height="34" rx="17"/>
+    <rect x="1210" y="462" width="190" height="34" rx="17"/>
+    <rect x="1420" y="462" width="210" height="34" rx="17"/>
+  </g>
+  <g transform="translate(108 62) scale(1.4)">
+  <rect x="40" y="44" width="148" height="160" rx="16" fill="#FFFFFF"/>
+  <path d="M40 60a16 16 0 0 1 16-16h116a16 16 0 0 1 16 16v20H40z" fill="#36B3A0"/>
+  <rect x="58" y="57" width="46" height="10" rx="5" fill="#FFFFFF" fill-opacity=".92"/>
+  <rect x="116" y="57" width="40" height="10" rx="5" fill="#FFFFFF" fill-opacity=".92"/>
+  <g fill="#C7D5E0">
+    <rect x="58" y="98" width="46" height="13" rx="6.5"/>
+    <rect x="116" y="98" width="56" height="13" rx="6.5"/>
+    <rect x="58" y="127" width="46" height="13" rx="6.5"/>
+    <rect x="116" y="127" width="44" height="13" rx="6.5"/>
+    <rect x="58" y="156" width="46" height="13" rx="6.5"/>
+    <rect x="58" y="185" width="34" height="13" rx="6.5"/>
+  </g>
+  <circle cx="182" cy="182" r="51" fill="#17364D"/>
+  <circle cx="182" cy="182" r="42" fill="#F4A62A"/>
+  <g fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M182 158v32"/>
+    <path d="M167 177l15 15 15-15"/>
+    <path d="M164 207h36"/>
+  </g>
+  </g>
+  <text x="520" y="216" font-family="Inter" font-weight="700" font-size="86" letter-spacing="-1.5" fill="#FFFFFF">Exports and Reports</text>
+  <text x="522" y="282" font-family="Inter" font-weight="400" font-size="33" fill="#B8CBD8">SQL reports your users can search, filter and export.</text>
+  <g font-family="Inter" font-weight="600" font-size="25" letter-spacing="1" fill="#DCE8EF">
+    <rect x="522" y="338" width="100" height="54" rx="27" fill="none" stroke="#36B3A0" stroke-width="3"/>
+    <text x="572" y="375" text-anchor="middle">CSV</text>
+    <rect x="638" y="338" width="112" height="54" rx="27" fill="none" stroke="#36B3A0" stroke-width="3"/>
+    <text x="694" y="375" text-anchor="middle">XLSX</text>
+    <rect x="766" y="338" width="100" height="54" rx="27" fill="none" stroke="#36B3A0" stroke-width="3"/>
+    <text x="816" y="375" text-anchor="middle">PDF</text>
+    <rect x="882" y="338" width="116" height="54" rx="27" fill="none" stroke="#36B3A0" stroke-width="3"/>
+    <text x="940" y="375" text-anchor="middle">JSON</text>
+    <rect x="1014" y="338" width="104" height="54" rx="27" fill="none" stroke="#36B3A0" stroke-width="3"/>
+    <text x="1066" y="375" text-anchor="middle">XML</text>
+  </g>
+</svg>

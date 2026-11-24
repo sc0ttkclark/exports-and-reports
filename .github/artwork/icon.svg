@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+<!-- The source of .wordpress-org/icon-*.png: rsvg-convert -w 256 -h 256 icon.svg -o icon-256x256.png (and 128). -->
+  <title>Exports and Reports</title>
+  <rect width="256" height="256" rx="52" fill="#17364D"/>
+  <g transform="translate(-8 -10)">
+    <rect x="40" y="44" width="148" height="160" rx="16" fill="#FFFFFF"/>
+    <path d="M40 60a16 16 0 0 1 16-16h116a16 16 0 0 1 16 16v20H40z" fill="#36B3A0"/>
+    <rect x="58" y="57" width="46" height="10" rx="5" fill="#FFFFFF" fill-opacity=".92"/>
+    <rect x="116" y="57" width="40" height="10" rx="5" fill="#FFFFFF" fill-opacity=".92"/>
+    <g fill="#C7D5E0">
+      <rect x="58" y="98" width="46" height="13" rx="6.5"/>
+      <rect x="116" y="98" width="56" height="13" rx="6.5"/>
+      <rect x="58" y="127" width="46" height="13" rx="6.5"/>
+      <rect x="116" y="127" width="44" height="13" rx="6.5"/>
+      <rect x="58" y="156" width="46" height="13" rx="6.5"/>
+      <rect x="58" y="185" width="34" height="13" rx="6.5"/>
+    </g>
+    <circle cx="182" cy="182" r="51" fill="#17364D"/>
+    <circle cx="182" cy="182" r="42" fill="#F4A62A"/>
+    <g fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M182 158v32"/>
+      <path d="M167 177l15 15 15-15"/>
+      <path d="M164 207h36"/>
+    </g>
+  </g>
+</svg>
