@@ -26,6 +26,6 @@
     "node": ">=22.22"
   },
   "devDependencies": {
-    "@wordpress/scripts": "^37.0.0"
+    "@wordpress/scripts": "^37.2.0"
   }
 }
