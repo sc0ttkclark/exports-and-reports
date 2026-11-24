@@ -87,6 +87,33 @@ class Tests_Writers extends Exports_Reports_Test_Case {
 	}
 
 	/**
+	 * A value holding a CDATA terminator and a column whose alias no XML name allows still parse: the
+	 * terminator is split across two sections and the element opens with an underscore.
+	 */
+	public function test_xml_export_survives_cdata_terminators_and_odd_column_names() {
+		list( $writer ) = $this->run_report( "SELECT id, CONCAT( title, ']]>', channel ) AS `2nd title` FROM " . self::videos() . ' WHERE id = 1', 'Writers CDATA' );
+
+		$writer->action      = 'export';
+		$writer->export_type = 'xml';
+
+		$this->export_from_link( $writer );
+
+		$file = (string) $writer->exported_file;
+
+		$this->assertNotSame( '', $file, 'a file was written' );
+
+		$path     = EXPORTS_REPORTS_EXPORT_DIR . '/' . $file;
+		$contents = (string) file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- a local file the test wrote
+
+		wp_delete_file( $path );
+
+		$xml = simplexml_load_string( $contents );
+
+		$this->assertInstanceOf( 'SimpleXMLElement', $xml );
+		$this->assertSame( 'Video 1]]>beta', (string) $xml->item[0]->{'_2nd_title'} );
+	}
+
+	/**
 	 * A file the viewer can open, with the pages the rows need: tc-lib-pdf on PHP 8.2 and later, TCPDF below.
 	 */
 	public function test_pdf_export_with_the_default_engine() {

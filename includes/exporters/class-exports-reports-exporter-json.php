@@ -20,7 +20,10 @@ class Exports_Reports_Exporter_JSON extends Exports_Reports_Exporter {
 	/**
 	 * Writes the file from the rows the screen loaded.
 	 *
-	 * @return string The file name.
+	 * @since 1.2.8 A write that fails, or rows JSON cannot encode, say so instead of reporting success.
+	 *
+	 * @return string|false The file name, or false when the file could not be written (the screen
+	 *                      shows the error).
 	 */
 	public function write() {
 		/** @var WP_Filesystem_Base $wp_filesystem */ global $wp_filesystem;
@@ -41,7 +44,13 @@ class Exports_Reports_Exporter_JSON extends Exports_Reports_Exporter {
 			),
 		);
 
-		$wp_filesystem->put_contents( $export_file_location, wp_json_encode( $data, JSON_PRETTY_PRINT ) );
+		$json = wp_json_encode( $data, JSON_PRETTY_PRINT );
+
+		if ( false === $json || ! $wp_filesystem->put_contents( $export_file_location, $json ) ) {
+			$this->admin->error( __( '<strong>Error:</strong> The export file could not be written.', 'exports-and-reports' ) );
+
+			return false;
+		}
 
 		return $export_file;
 	}
