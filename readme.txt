@@ -3,7 +3,7 @@ Contributors: sc0ttkclark, dxdc
 Donate link: https://github.com/sponsors/dxdc
 Tags: export, reports, csv, excel, sql
 Requires at least: 5.7
-Tested up to: 7.1
+Tested up to: 7.2
 Requires PHP: 7.2
 Stable tag: 1.3.0
 License: GPLv2 or later
