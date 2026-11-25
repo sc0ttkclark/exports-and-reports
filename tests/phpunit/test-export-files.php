@@ -60,7 +60,13 @@ class Tests_Export_Files extends Exports_Reports_Test_Case {
 		$path = EXPORTS_REPORTS_EXPORT_DIR . '/' . $file;
 
 		$this->assertNotSame( '', $file );
-		$this->assertStringContainsString( '<button type="submit" class="button-link exports-reports-remove-export" form="exports-reports-remove-export" name="remove_export" value="' . $file . '">', $output, 'the message carries the removal button, kept by the message filter' );
+		$this->assertSame( 1, preg_match( '/<button [^>]*exports-reports-remove-export[^>]*>/', $output, $button ), 'the message carries the removal button, kept by the message filter' );
+
+		// WordPress 7.2's wp_kses() writes a tag's attributes in alphabetical order.
+		foreach ( array( 'type="submit"', 'class="button-link exports-reports-remove-export"', 'form="exports-reports-remove-export"', 'name="remove_export"', 'value="' . $file . '"' ) as $attribute ) {
+			$this->assertStringContainsString( ' ' . $attribute, $button[0] );
+		}
+
 		$this->assertStringNotContainsString( 'remove_export=', $output, 'and no removal address' );
 
 		$_GET = array(
