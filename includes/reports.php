@@ -97,6 +97,7 @@ function exports_reports_report_options( $report ) {
 
 	$options['export']         = ( 0 === (int) $report->disable_export );
 	$options['export_formats'] = exports_reports_report_export_formats( $report );
+	$options['export_locale']  = isset( $report->export_locale ) ? Exports_Reports_Value_Format::sanitize_locale( $report->export_locale ) : '';
 	$options['search']         = ( strlen( (string) $report->field_data ) > 0 ? true : false );
 	$options['default_none']   = ( 1 === (int) $report->default_none ? true : false );
 	$options['sql']            = trim( (string) $report->sql_query );
@@ -236,7 +237,7 @@ function exports_reports_view( $group_id = false, $has_full_access = null ) {
 	wp_enqueue_style( 'exports-reports-admin' );
 
 	if ( null === $has_full_access ) {
-		$has_full_access = is_super_admin() || exports_reports_current_user_can_any( 'exports_reports_full_access' );
+		$has_full_access = exports_reports_current_user_has_full_access();
 	}
 
 	if ( 'exports-reports' !== $page && false !== strpos( $page, 'exports-reports-group-' ) ) {

@@ -32,6 +32,21 @@ class Exports_Reports_XLSX_Writer extends ExportsReports__Prefixed__XLSXWriter {
 	public $formulas = false;
 
 	/**
+	 * The date formats of the export formatted for a language, as the library keeps them (it escapes the
+	 * space), each with the number of the spreadsheet's built-in format that shows in the regional
+	 * format of whoever opens the file.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @var array<string, int>
+	 */
+	const BUILT_IN_FORMATS = array(
+		'm/d/yyyy'        => 14,
+		'm/d/yyyy\\ h:mm' => 22,
+		'h:mm:ss'         => 21,
+	);
+
+	/**
 	 * Writes one cell.
 	 *
 	 * @param ExportsReports__Prefixed__XLSXWriter_BuffererWriter $file            The worksheet's file.
@@ -48,6 +63,56 @@ class Exports_Reports_XLSX_Writer extends ExportsReports__Prefixed__XLSXWriter {
 			return;
 		}
 
+		// A column with a number or a date format: a number is a numeric cell, and text (N/A, a value the
+		// column's type cannot read) is a text cell, where the library would write it into a numeric one and
+		// leave a file the spreadsheet repairs. A date arrives as its serial number (see the XLSX exporter).
+		if ( in_array( $num_format_type, array( 'n_numeric', 'n_date', 'n_datetime' ), true ) && ( is_int( $value ) || is_float( $value ) || ( is_string( $value ) && '' !== $value ) ) ) {
+			$cell = self::xlsCell( $row_number, $column_number );
+
+			if ( is_float( $value ) ) {
+				// Digits and a point, whatever the locale PHP runs in and however small the number.
+				$value = rtrim( rtrim( number_format( $value, 10, '.', '' ), '0' ), '.' );
+			} elseif ( is_string( $value ) && ( 'n_numeric' !== $num_format_type || 1 !== preg_match( '/^-?(0|[1-9][0-9]*)(\.[0-9]+)?$/', $value ) ) ) {
+				$file->write( '<c r="' . $cell . '" s="' . $cell_style_idx . '" t="inlineStr"><is><t>' . self::xmlspecialchars( $value ) . '</t></is></c>' );
+
+				return;
+			}
+
+			$file->write( '<c r="' . $cell . '" s="' . $cell_style_idx . '" t="n"><v>' . self::xmlspecialchars( (string) $value ) . '</v></c>' );
+
+			return;
+		}
+
 		parent::writeCell( $file, $row_number, $column_number, $value, $num_format_type, $cell_style_idx );
+	}
+
+	/**
+	 * The styles of the workbook, with the date formats pointed at the spreadsheet's built-in ones. The
+	 * library writes every number format as a custom one, which shows the same in every country; the
+	 * built-in short date (14), date and time (22) and time (21) are the ones Excel, LibreOffice and
+	 * Google Sheets show in the regional format of whoever opens the file.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @return string The name of the temporary file that holds the styles.
+	 */
+	protected function writeStylesXML() {
+		$file = parent::writeStylesXML();
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- the library's own temporary file, which it writes and reads back with fopen() itself.
+		$styles = (string) file_get_contents( $file );
+
+		if ( preg_match_all( '/<numFmt numFmtId="(\d+)" formatCode="([^"]*)" \/>/', $styles, $formats, PREG_SET_ORDER ) ) {
+			foreach ( $formats as $format ) {
+				if ( isset( self::BUILT_IN_FORMATS[ $format[2] ] ) ) {
+					$styles = str_replace( 'numFmtId="' . $format[1] . '" xfId="0"', 'numFmtId="' . self::BUILT_IN_FORMATS[ $format[2] ] . '" xfId="0"', $styles );
+				}
+			}
+
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- the same temporary file.
+			file_put_contents( $file, $styles );
+		}
+
+		return $file;
 	}
 }

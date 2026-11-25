@@ -15,6 +15,9 @@ composer install
 composer test        # or vendor/bin/phpunit
 ```
 
+`WP_MULTISITE=1 composer test` runs the suite as a network, which the cases about a network's super admins
+need; they are skipped otherwise.
+
 `tests/phpunit/wp-tests-config.php` reads its settings from the environment, with these defaults:
 
 | Variable                   | Default                            | Meaning                                              |
@@ -45,12 +48,16 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
   (`EXECUTE IMMEDIATE`) and a tab-indented definition, each with the `LIMIT %%LIMIT%%` placeholder; a
   search term's LIKE wildcards escaped; a paged view with a totals query counting every row; a search on
   an aliased column of a report with a totals query; an array filter value filtering on each value; a
-  sort column kept only when the report has it, matched whatever its case.
+  sort column kept only when the report has it, matched whatever its case; a search finding a row of a
+  later page; a search and a filter on the alias of a table-qualified column, of an expression (in the
+  totals query too) and of an aggregate, which takes the search into `HAVING`; a window function and a
+  session variable left out of the search; the select list split at its top-level commas.
 - `Tests_Delimited_Exports` (`test-delimited-exports.php`): CSV streamed from an unbuffered result and
   buffered byte for byte the same, every value quoted, the byte order mark first, formula-like text
   neutralised; TSV; streaming only with plain columns, a custom display column through the buffered
-  path; ASCII file names for a report named outside ASCII; a streamed export with a search term over a
-  column expression containing `%d` matching the buffered one.
+  path; ASCII file names for a report named outside ASCII, ending in 24 random characters, a long name
+  cut; a streamed export with a search term over a column expression containing `%d` matching the
+  buffered one.
 - `Tests_Writers` (`test-writers.php`): XLSX, XML and JSON exports checked for their labels and rows; the
   XLSX worksheet holding no formula for the seeded formula-like title or for a value or label that starts
   with `=`, `+`, `-` or `@`, and holding one when `exports_reports_export_escape_formulas` turns the
@@ -64,18 +71,54 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
   text on the report page, in the title column and the others, and on the view screen (whose list of a
   related column's labels stays a list); the markup of a display function kept; the
   `exports_reports_html_values` filter opting one column back in, within the allowed tags.
+- `Tests_Value_Formats` (`test-value-formats.php`): how numbers and dates are written (issue #9). The
+  default CSV export byte for byte what it was, whatever the site's separators and the Settings box
+  say; an export for Italian with comma decimals, the day before the month and semicolons in the CSV
+  file, a negative number not wrapped as a formula; a thousands separator that is neither a comma nor a
+  period (French), digits grouped by two (Indian English), Western digits kept for Persian unless the
+  filter says otherwise; without intl, a language pack the test makes up formatting the export and a
+  language with no pack written as raw values; the screens and both PDF engines following the site's
+  separators and, with the Settings box, its date formats; an XLSX export for a language holding number
+  cells and date cells in the built-in date formats, whose serial numbers read back as the dates, and
+  keeping text in a typed column as text; a REST export raw unless the request names a locale, which a
+  malformed one is refused for; the Format menu in the export form, showing the report's default and
+  then the user's last choice for that report; the filters for the language and the delimiter; the
+  Settings box saved and reset; the upgrade adding the column. The cases that read what intl writes are
+  skipped when PHP runs without the extension.
 - `Tests_Export_Files` (`test-export-files.php`): `export()` needing the link nonce and `remove_export`
   leaving the protection files alone; the export directory carrying `.htaccess` and `index.php`; the
   download function streaming an export and refusing anything else; `.txt` exports served and the daily
   cleanup having a handler; deactivation clearing the cleanup event and the next admin request putting
-  it back; Clear Now removing export files only.
+  it back; Clear Now removing export files only; an export removed only from the screen of its own report,
+  by its log row; the log written in UTC and the cleanup counting the day in UTC under a site time zone
+  ten hours from it, with the rows of an earlier version converted; an error about the directory naming
+  its path to a user who manages reports only; no robots.txt line; the directory's check telling a served
+  directory from a protected one, an unreachable site and a directory outside the web root, and Site
+  Health and the Settings page reporting what it finds.
 - `Tests_REST_API` (`test-rest-api.php`): the report refused without the token or a user; full and paged
   data with the token parameter and the bearer token; the report access rules for users; export and
   download through the routes, the export logged; download authorisation following the log row and the
-  access rules; a disabled report hidden; an empty token saved from the settings page turning token
-  access off.
-- `Tests_Access` (`test-access.php`): administrators holding `exports_reports_full_access` through their
-  role, not user meta; display functions limited to plugin functions.
+  access rules; a disabled report hidden; the Settings page turning token access off and generating a
+  token; a typed token stored as typed, and one that is short or would be rewritten refused with the
+  reason; the token limited to the Authorization header by the Settings page's box; the page's examples
+  sending the header; ten wrong tokens from one address answered with 429 until the count runs out,
+  another address and a logged-in user not held up.
+- `Tests_Access` (`test-access.php`): the matrix of who reaches what. The rows are a subscriber, a user
+  whose role the group names, a user with `exports_reports_view`, one with `exports_reports_settings`, an
+  administrator and nobody; the columns are the report page, the REST data and export routes, the
+  admin-ajax export, the download, the removal, the Manage screens, Detect Fields and the Settings page.
+  An administrator whose role has lost the capabilities refused at every one on a single site, and a
+  fresh install putting them back; on a network (skipped on a single site) a super admin reaching
+  everything, a site's administrator getting the Manage screens as lists, with no form, no save and no
+  Detect Fields, and the `exports_reports_site_admins_edit_reports` filter handing the reports back to
+  the sites; administrators holding `exports_reports_full_access` through their
+  role, not user meta.
+- `Tests_Display_Functions` (`test-display-functions.php`): a Display function, and the helper of a
+  `{@field,helper}` tag, called only when the site lists it through `exports_reports_display_callbacks`
+  (not a function of another plugin, of WordPress or of PHP, listed or not); the functions the stored
+  definitions name recorded once, when the list is first asked for, and none after; the notice naming
+  them to a user who manages reports until one dismisses it with its nonce; the field editor flagging a
+  Display function that is not listed.
 - `Tests_Hooks` (`test-hooks.php`): the cases that attach callbacks to `exports_reports_*` hooks (their
   arguments one by one, the screen last) and to the `wp_admin_ui_*` names (the array form): a
   multi-statement definition prepared through `exports_reports_get_data_sql`, the count query through
@@ -85,7 +128,8 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
   filter value, `exports_reports_export_escape_formulas` turning the formula wrapping off, and
   `exports_reports_export_pdf_engine` selecting TCPDF.
 - `Tests_Request_Handling` (`test-request-handling.php`): the report field editor rendering the saved
-  fields and saving the posted rows in order, unslashed and sanitized; `save()`, `reorder()` and the
+  fields and saving the posted rows in order, unslashed and sanitized; the report form showing the group
+  a report is in as the chosen one; `save()`, `reorder()` and the
   settings form carrying and verifying their nonces; request values unslashed and sanitized on the way in;
   a page size that is not offered (0, 7, 100000000) falling back before the query runs, the sizes of the
   `exports_reports_limit` filter and the screen's own size taken; 85 rows at 10 a page as 9 pages with
@@ -94,17 +138,64 @@ or MySQL 8; the `EXECUTE IMMEDIATE` case is MariaDB only and is skipped elsewher
 
 `tests/phpunit/includes/` holds the base class and the helpers the classes share: the seeded table
 (created before each class, dropped after it), a report definition set up the way `exports_reports_view()`
-sets it up, the export files and the REST requests. The base class is declared for the fixture methods
+sets it up, group and report rows, the export files, the REST requests and the admin-ajax handlers, and
+the listing of the suite's own display functions. A request for a file of the export directory by its
+address is answered with a 403 inside the suite, so no test reaches the network. The base class is declared for the fixture methods
 of the test library in use (`setUp()`/`tearDown()` on WordPress 5.7 and 5.8, `set_up()`/`tear_down()` from
 5.9), and the test classes override `prepare()` and `clean()` instead.
 
+## Plugin Check
+
+`.github/workflows/plugin-check.yml` runs [Plugin Check](https://wordpress.org/plugins/plugin-check/), the
+tool wordpress.org applies to a submission, through `WordPress/plugin-check-action`: on every pull
+request that touches a shipped file, on every push to `main` that does, and by hand. It checks the tree
+`git archive` produces (what a release ships), without `vendor/`. `release.yml` runs the same action on
+the tree it has just packaged, before the zip is attached to a release. The action starts `wp-env`,
+activates the plugin and loads Plugin Check's `cli.php` with `--require`, so the runtime checks run as
+well as the static ones. Errors fail the job; warnings are annotated and do not, until the workflow sets
+`strict: true`.
+
+To run it locally, in a WordPress with Plugin Check and this plugin active:
+
+```sh
+wp plugin check exports-and-reports --exclude-directories=vendor \
+	--require=./wp-content/plugins/plugin-check/cli.php
+```
+
+Without `--require` only the static checks run. The static checks that are PHP_CodeSniffer rules can also
+be run alone, with the tools `composer install` brings and a checkout of Plugin Check beside them:
+
+```sh
+vendor/bin/phpcs --standard=/path/to/plugin-check/phpcs-rulesets/plugin-review.xml \
+	--runtime-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcsstandards/phpcsutils,vendor/phpcsstandards/phpcsextra,/path/to/plugin-check/phpcs-sniffs \
+	--extensions=php exports-and-reports.php uninstall.php includes
+```
+
+The code suppresses these findings, each on the line it applies to or at the top of its file, with the
+reason beside it. A new suppression carries its reason the same way.
+
+| Code | Where | Why |
+|------|-------|-----|
+| `PluginCheck.Security.DirectDB.UnescapedDBParameter`, `WordPress.DB.PreparedSQL.NotPrepared` | `Exports_Reports_Query::run_leading_statements()`, `rows()` and `execute()`; `exports_reports_detect_columns()`; the schema statements in `install.php` | The report's query is SQL an administrator wrote, run as written; that is what the plugin is for. The plugin's own clauses around it carry prepared values, and the schema file is the plugin's. |
+| `WordPress.DB.PreparedSQL.InterpolatedNotPrepared` | The character set conversion in `install.php` | The table is the plugin's own; the character set and collation are wpdb's. |
+| `WordPress.DB.DirectDatabaseQuery` | The files that query (disabled at the top of each) | The plugin runs report queries and keeps three tables of its own; there is nothing for the object cache to hold. |
+| `WordPress.DB.RestrictedFunctions.mysql_mysqli_*` | The delimited exporter; `exports_reports_detect_columns()` | An unbuffered result on wpdb's own connection, so that a large export holds one row in memory, and the column types of a result wpdb holds. wpdb offers neither. |
+| `WordPress.WP.AlternativeFunctions.file_system_operations_*` | The delimited exporter, the download, the export directory's check | Files written and read in chunks, or of a few bytes; `WP_Filesystem` would hold a whole export in memory. |
+| `WordPress.Security.NonceVerification.*` | The read accessors of the report screen, the chosen report, the nonce checks themselves | Navigation state from the address (the page, the sort, the search), from which nothing is written; every write verifies its nonce first. |
+| `WordPress.Security.ValidatedSanitizedInput.InputNotSanitized` | The query sent to Detect Fields, a field's related WHERE, a typed API token | SQL the administrator wrote, stored and run as typed like the report's query; a secret that is stored as typed or refused, never rewritten. |
+| `Squiz.PHP.DiscouragedFunctions.Discouraged` | `set_time_limit()` before an export | A large export outlives the request's default time limit. |
+| `WordPress.NamingConventions.*` | The PDF engines, the templates, the export directory's check | The libraries' own method, property and constant names; a template's variables are local to the method that includes it; core's `https_local_ssl_verify` filter, applied to a request the site sends itself as core applies it. |
+
 ## CI
 
-`.github/workflows/phpunit.yml` runs the suite on every pull request that touches PHP, the tests, the
-vendor tree or the fonts, on a matrix of four jobs: WordPress 5.7 on PHP 7.2 with MariaDB 10.11 and
+`.github/workflows/phpunit.yml` runs the suite on every pull request, and every push to `main`, that
+touches PHP, the tests, the vendor tree or the fonts, on a matrix of six jobs: WordPress 5.7 on PHP 7.2 with MariaDB 10.11 and
 WordPress 5.8 on PHP 7.3 with MySQL 8.0 (the plugin's floors, with PHPUnit 7.5 and the matching
-`wp-phpunit` version), and the current WordPress on PHP 8.3 with MariaDB 11.4 and with MySQL 8.4 (PHPUnit
-9.6, the `wp-phpunit` version of the downloaded core). Each job downloads WordPress with WP-CLI, installs
+`wp-phpunit` version), the current WordPress on PHP 8.3 with MariaDB 11.4 and with MySQL 8.4 (PHPUnit
+9.6, the `wp-phpunit` version of the downloaded core), the MariaDB 11.4 job once more as a network
+(`WP_MULTISITE=1`), and once more on PHP 8.6. The WordPress test library runs on PHP 8.6 from WordPress
+7.2 (`wordpress-min` in the matrix): while the current WordPress is older, that job stops after the
+download and leaves a notice that nothing was tested. Each job downloads WordPress with WP-CLI, installs
 PHPUnit, the Polyfills and the library in a Composer project of their own (the plugin's dev dependencies
 need PHP 8.2, and its runtime vendor tree is committed) and runs `phpunit.xml.dist` with the variables
 above pointing at the service database.

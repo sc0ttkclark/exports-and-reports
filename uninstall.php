@@ -30,14 +30,25 @@ function exports_reports_uninstall_site() {
 	delete_option( 'exports_reports_version' );
 	delete_option( 'exports_reports_token' );
 	delete_option( 'exports_reports_token_hash' );
+	delete_option( 'exports_reports_token_header_only' );
 	delete_option( 'exports_reports_charset_errors' );
 	delete_option( 'exports_reports_export_formats_off' );
 	delete_option( 'exports_reports_export_formats' );
 	delete_option( 'exports_reports_count_cache' );
 	delete_option( 'exports_reports_count_cache_generation' );
+	delete_option( 'exports_reports_display_callbacks' );
+	delete_option( 'exports_reports_display_callbacks_notice' );
+	delete_option( 'exports_reports_site_date_formats' );
+
+	// The export format each user last chose for each report of this site.
+	delete_metadata( 'user', 0, $wpdb->get_blog_prefix() . 'exports_reports_export_locale', '', true );
+	delete_transient( 'exports_reports_export_dir_status' );
 
 	// The kept row counts (transients that would expire within the hour anyway).
 	$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_exports_reports_count_%' OR option_name LIKE '_transient_timeout_exports_reports_count_%'" );
+
+	// The counts of wrong tokens by address (transients of a quarter of an hour).
+	$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_exports_reports_token_fails_%' OR option_name LIKE '_transient_timeout_exports_reports_token_fails_%'" );
 
 	wp_clear_scheduled_hook( 'exports_reports_cleanup' );
 

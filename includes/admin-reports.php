@@ -14,9 +14,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * The Manage Reports page: an Exports_Reports_Admin_UI on the reports table, with the field editor on
  * the field_data column.
+ *
+ * @since 1.3.0 Checks the capability itself; the menu's registration is not the only thing between a user and the screen.
+ *              A list alone for a user who may not write the reports (a site's administrator on a network).
  */
 function exports_reports_reports() {
 	global $wpdb;
+
+	if ( ! exports_reports_current_user_can_manage() ) {
+		wp_die( esc_html__( 'Sorry, you are not allowed to manage reports.', 'exports-and-reports' ), 403 );
+	}
 
 	require_once EXPORTS_REPORTS_DIR . 'includes/class-exports-reports-admin-ui.php';
 
@@ -66,6 +73,13 @@ function exports_reports_reports() {
 		'related'          => exports_reports_export_formats(),
 		'related_multiple' => true,
 		'comments'         => __( 'Leave every box empty to offer the formats enabled in Settings. A format turned off in Settings is not offered even when checked here. CSV, TSV and TXT are written row by row and suit very large reports; the other formats hold the whole report in memory while they are written.', 'exports-and-reports' ),
+	);
+
+	$form_columns['export_locale'] = array(
+		'label'    => __( 'Default Export Format', 'exports-and-reports' ),
+		'type'     => 'related',
+		'related'  => array( '' => __( 'Raw values', 'exports-and-reports' ) ) + Exports_Reports_Value_Format::locales(),
+		'comments' => __( 'What the Format menu beside the export buttons shows until a user chooses another: the raw values, as every version has written them, or the numbers and dates of a language. Exports through the REST API hold the raw values unless the request names a locale.', 'exports-and-reports' ),
 	);
 
 	$form_columns['default_none'] = array(
@@ -129,6 +143,10 @@ function exports_reports_reports() {
 		'duplicate'     => true,
 	);
 
+	if ( ! exports_reports_current_user_can_edit_reports() ) {
+		$admin_ui = array_merge( $admin_ui, exports_reports_list_only_options() );
+	}
+
 	$admin = new Exports_Reports_Admin_UI( $admin_ui );
 
 	$admin->go();
@@ -146,6 +164,16 @@ function exports_reports_report_field( $column, $attributes, $obj ) {
 	$field_data = json_decode( isset( $obj->row[ $column ] ) ? (string) $obj->row[ $column ] : '', true );
 	$fields     = is_array( $field_data ) ? array_values( $field_data ) : array();
 	$types      = exports_reports_field_types();
+	$unlisted   = array();
+
+	// A Display function the site does not list is not called; the editor says which.
+	foreach ( $fields as $field ) {
+		$callback = is_array( $field ) && isset( $field['custom_display'] ) ? trim( (string) $field['custom_display'] ) : '';
+
+		if ( '' !== $callback && ! $obj->is_allowed_callback( $callback ) ) {
+			$unlisted[ $callback ] = '<code>' . esc_html( $callback ) . '</code>';
+		}
+	}
 	?>
 	<div
 		class="er-fields"
@@ -159,6 +187,21 @@ function exports_reports_report_field( $column, $attributes, $obj ) {
 		data-detect-failed="<?php esc_attr_e( 'The request did not get through. Save the report and try again.', 'exports-and-reports' ); ?>"
 	>
 		<p class="description"><?php esc_html_e( 'Leave this empty to show every column the query returns. Drag a field by its handle to change the order. Detect Fields runs the query above for one row and adds a field for each column of the result that is not listed yet, with the data type that fits the column.', 'exports-and-reports' ); ?></p>
+		<?php if ( array() !== $unlisted ) { ?>
+			<div class="notice notice-warning inline er-fields__unlisted"><p>
+				<?php
+				echo wp_kses(
+					sprintf(
+						/* translators: 1: a list of function names, 2: the name of a filter. */
+						esc_html__( 'Not called, because the site does not list them as Display functions: %1$s. A plugin or a theme lists a function through the %2$s filter (see the plugin\'s readme).', 'exports-and-reports' ),
+						implode( ', ', $unlisted ),
+						'<code>exports_reports_display_callbacks</code>'
+					),
+					array( 'code' => array() )
+				);
+				?>
+			</p></div>
+		<?php } ?>
 		<div class="er-fields__list">
 			<?php
 			foreach ( $fields as $index => $field ) {
@@ -183,11 +226,13 @@ function exports_reports_report_field( $column, $attributes, $obj ) {
  * data type that fits each (exports_reports_detect_columns()).
  *
  * @since 1.2.0
+ * @since 1.3.0 For a user who may write reports: on a network, its super admins.
  */
 function exports_reports_ajax_detect_columns() {
 	check_ajax_referer( 'exports-reports-detect-columns' );
 
-	if ( ! exports_reports_current_user_can_manage() ) {
+	// The button runs the SQL it is sent: for whoever may write a report's SQL.
+	if ( ! exports_reports_current_user_can_edit_reports() ) {
 		wp_send_json_error( array( 'message' => __( 'You are not allowed to edit reports.', 'exports-and-reports' ) ), 403 );
 	}
 
@@ -402,7 +447,7 @@ function exports_reports_report_field_row( $index, $field, $types ) {
 			<div class="er-field__grid">
 				<?php
 				$text( 'field_real_name', __( 'Real field', 'exports-and-reports' ), __( 'when the name is an alias', 'exports-and-reports' ) );
-				$text( 'field_custom_display', __( 'Display function', 'exports-and-reports' ), __( 'a function a plugin or theme defines', 'exports-and-reports' ) );
+				$text( 'field_custom_display', __( 'Display function', 'exports-and-reports' ), __( 'a function your code has listed', 'exports-and-reports' ) );
 				$text( 'width', __( 'Width', 'exports-and-reports' ), __( 'relative, for the PDF export', 'exports-and-reports' ) );
 				$text( 'field_filter_label', __( 'Filter label', 'exports-and-reports' ) );
 				$text( 'field_filter_default', __( 'Default filter value', 'exports-and-reports' ) );

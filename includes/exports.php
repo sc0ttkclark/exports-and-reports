@@ -1,6 +1,6 @@
 <?php
 /**
- * Export files: the download, the log, the daily cleanup and the robots.txt rule.
+ * Export files: the download, the log and the daily cleanup.
  *
  * @package Exports_And_Reports
  */
@@ -138,9 +138,11 @@ function exports_reports_user_can_download_export( $filename ) {
 }
 
 /**
- * Logs a written export file against its report (the exports_reports_post_export action).
+ * Logs a written export file against its report (the exports_reports_post_export action), at the time in
+ * UTC: the daily cleanup compares it with the time in UTC.
  *
  * @since 1.0.0 Takes the file name and the screen, as the action passes them.
+ * @since 1.3.0 The time in UTC; it was the site's local time.
  *
  * @param string                  $filename The file name.
  * @param Exports_Reports_Admin_UI $admin    The report screen that wrote it.
@@ -153,7 +155,7 @@ function exports_reports_log( $filename, $admin ) {
 		array(
 			'report_id' => $admin->report_id,
 			'filename'  => $filename,
-			'created'   => date_i18n( 'Y-m-d H:i:s' ),
+			'created'   => gmdate( 'Y-m-d H:i:s' ),
 		),
 		array(
 			'%d',
@@ -234,8 +236,32 @@ function exports_reports_delete_dir_files( $directory ) {
 }
 
 /**
+ * Moves the times of the export log from the site's local time, as the versions before 1.3.0 wrote them,
+ * to UTC, as the log keeps them since. Runs on the upgrade to 1.3.0, so the exports written on the day of
+ * the update are removed when they are a day old, not earlier or later by the site's distance from UTC.
+ *
+ * @since 1.3.0
+ */
+function exports_reports_log_to_utc() {
+	/** @var wpdb $wpdb */ global $wpdb;
+
+	$offset = (int) round( (float) get_option( 'gmt_offset', 0 ) * HOUR_IN_SECONDS );
+
+	if ( 0 < $offset ) {
+		// East of Greenwich the local time is ahead of UTC.
+		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->exports_reports_log} SET `created` = DATE_SUB( `created`, INTERVAL %d SECOND )", $offset ) );
+	} elseif ( 0 > $offset ) {
+		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->exports_reports_log} SET `created` = DATE_ADD( `created`, INTERVAL %d SECOND )", -$offset ) );
+	}
+}
+
+/**
  * The daily cleanup: removes the export files older than a day and their log rows. With $full every
- * export file and the whole log go (the Clear Now button).
+ * export file and the whole log go (the Clear Now button). The age is counted in UTC on both sides: the
+ * log keeps UTC, and the day before now is worked out here, not by the database's clock, which may be
+ * set to another zone than the site.
+ *
+ * @since 1.3.0 Compares UTC with UTC; it compared the site's local time with the database's NOW().
  *
  * @param bool $full Whether to remove everything.
  *
@@ -251,7 +277,7 @@ function exports_reports_cleanup( $full = false ) {
 	} else {
 		$purge_age = 1; // day(s) in age to purge
 
-		$cleanup = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->exports_reports_log} WHERE `created` < DATE_ADD( NOW(), INTERVAL -%d DAY )", $purge_age ) );
+		$cleanup = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->exports_reports_log} WHERE `created` < %s", gmdate( 'Y-m-d H:i:s', time() - $purge_age * DAY_IN_SECONDS ) ) );
 
 		if ( ! empty( $cleanup ) ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -275,25 +301,6 @@ function exports_reports_cleanup( $full = false ) {
 	}
 
 	return false;
-}
-
-/**
- * Filter the robots.txt contents and add the export directory to the list of disallowed folders.
- *
- * @since 0.9.0
- *
- * @param string $robots_txt The robots.txt contents.
- *
- * @return string The robots.txt contents.
- */
-function exports_reports_robots_txt( $robots_txt ) {
-	$exclude_path = trim( (string) wp_parse_url( EXPORTS_REPORTS_EXPORT_URL, PHP_URL_PATH ), '/' );
-
-	if ( '' === $exclude_path ) {
-		return $robots_txt;
-	}
-
-	return $robots_txt . "\nDisallow: /" . $exclude_path . '/';
 }
 
 /**

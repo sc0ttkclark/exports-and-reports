@@ -26,6 +26,22 @@ function exports_reports_tests_emphasis( $value ) {
 	return '<em>' . esc_html( (string) $value ) . '</em>';
 }
 
+/**
+ * A function a plugin defines and the site has not listed as a display function.
+ *
+ * @param mixed $value The value.
+ * @return string
+ */
+function exports_reports_tests_unlisted( $value ) {
+	return 'unlisted:' . $value;
+}
+
+/**
+ * Thrown in place of the exit an admin-ajax handler ends with, so a test gets what the handler printed.
+ */
+class Exports_Reports_Tests_Ajax_Stop extends Exception {
+}
+
 trait Exports_Reports_Test_Helpers {
 
 	/**
@@ -86,8 +102,48 @@ trait Exports_Reports_Test_Helpers {
 		$wpdb->last_error = '';
 
 		add_filter( 'query', array( $this, 'record_db_error' ) );
+		add_filter( 'exports_reports_display_callbacks', array( $this, 'list_display_functions' ) );
+		add_filter( 'pre_http_request', array( $this, 'refuse_export_dir_request' ), 5, 3 );
 
 		wp_mkdir_p( EXPORTS_REPORTS_EXPORT_DIR );
+	}
+
+	/**
+	 * Answers a request for a file of the export directory by its address as a server that protects the
+	 * directory does, with a 403: the suite sends no request over the network, and the check of the
+	 * directory (exports_reports_probe_export_dir()) finds it protected unless a test answers otherwise.
+	 *
+	 * @param false|array|WP_Error $response The answer so far.
+	 * @param array                $args     The request's arguments.
+	 * @param string               $url      The address.
+	 * @return false|array|WP_Error
+	 */
+	public function refuse_export_dir_request( $response, $args, $url ) {
+		if ( false !== $response || 0 !== strpos( (string) $url, EXPORTS_REPORTS_EXPORT_URL ) ) {
+			return $response;
+		}
+
+		return array(
+			'headers'  => array(),
+			'body'     => 'Forbidden',
+			'response' => array(
+				'code'    => 403,
+				'message' => 'Forbidden',
+			),
+			'cookies'  => array(),
+			'filename' => null,
+		);
+	}
+
+	/**
+	 * Lists the suite's display functions, as a site's code lists its own (the
+	 * exports_reports_display_callbacks filter).
+	 *
+	 * @param string[] $callbacks The functions listed so far.
+	 * @return string[]
+	 */
+	public function list_display_functions( $callbacks ) {
+		return array_merge( (array) $callbacks, array( 'exports_reports_tests_shout', 'exports_reports_tests_emphasis' ) );
 	}
 
 	/**
@@ -95,6 +151,8 @@ trait Exports_Reports_Test_Helpers {
 	 */
 	protected function clean() {
 		remove_filter( 'query', array( $this, 'record_db_error' ) );
+		remove_filter( 'exports_reports_display_callbacks', array( $this, 'list_display_functions' ) );
+		remove_filter( 'pre_http_request', array( $this, 'refuse_export_dir_request' ), 5 );
 
 		$_REQUEST = array();
 	}
@@ -452,6 +510,122 @@ trait Exports_Reports_Test_Helpers {
 		ob_end_clean();
 
 		return $response;
+	}
+
+	/**
+	 * A group row.
+	 *
+	 * @param array $values Columns added to the defaults (name, role_access, disabled).
+	 * @return int The group's id.
+	 */
+	protected function insert_group( $values = array() ) {
+		global $wpdb;
+
+		$now = current_time( 'mysql' );
+
+		$wpdb->insert(
+			$wpdb->exports_reports_groups,
+			array_merge(
+				array(
+					'name'        => 'Test group',
+					'disabled'    => 0,
+					'role_access' => '',
+					'weight'      => 0,
+					'created'     => $now,
+					'updated'     => $now,
+				),
+				$values
+			)
+		);
+
+		return (int) $wpdb->insert_id;
+	}
+
+	/**
+	 * A report row on the seeded table.
+	 *
+	 * @param int   $group_id The report's group.
+	 * @param array $values   Columns added to the defaults (name, role_access, sql_query, field_data).
+	 * @return int The report's id.
+	 */
+	protected function insert_report( $group_id, $values = array() ) {
+		global $wpdb;
+
+		$now = current_time( 'mysql' );
+
+		$wpdb->insert(
+			$wpdb->exports_reports_reports,
+			array_merge(
+				array(
+					'name'             => 'Test report',
+					'group'            => $group_id,
+					'disabled'         => 0,
+					'disable_export'   => 0,
+					'export_formats'   => '',
+					'default_none'     => 0,
+					'role_access'      => '',
+					'sql_query'        => 'SELECT id, channel, title, revenue FROM ' . self::videos() . ' ORDER BY id LIMIT %%LIMIT%%',
+					'sql_query_count'  => '',
+					'page_orientation' => 'P',
+					'field_data'       => '',
+					'weight'           => 0,
+					'created'          => $now,
+					'updated'          => $now,
+				),
+				$values
+			)
+		);
+
+		return (int) $wpdb->insert_id;
+	}
+
+	/**
+	 * Runs an admin-ajax handler with a request and returns what it answered: the decoded JSON, or the
+	 * text when it is none (the -1 of a failed nonce check).
+	 *
+	 * @param callable $handler The handler.
+	 * @param array    $post    The posted variables.
+	 * @param array    $get     The query string's variables.
+	 * @return array|string
+	 */
+	protected function ajax( $handler, $post = array(), $get = array() ) {
+		$stop = static function () {
+			return static function ( $message ) {
+				if ( is_scalar( $message ) ) {
+					echo $message; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- what the handler answers, captured by the test.
+				}
+
+				throw new Exports_Reports_Tests_Ajax_Stop();
+			};
+		};
+
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $stop );
+
+		$_POST    = $post;
+		$_GET     = $get;
+		$_REQUEST = array_merge( $get, $post );
+
+		ob_start();
+
+		try {
+			call_user_func( $handler );
+		} catch ( Exports_Reports_Tests_Ajax_Stop $stopped ) {
+			unset( $stopped );
+		}
+
+		$answer = (string) ob_get_clean();
+
+		$_POST    = array();
+		$_GET     = array();
+		$_REQUEST = array();
+
+		remove_filter( 'wp_doing_ajax', '__return_true' );
+		remove_filter( 'wp_die_ajax_handler', $stop );
+
+		$json = json_decode( $answer, true );
+
+		return is_array( $json ) ? $json : $answer;
 	}
 
 	/**

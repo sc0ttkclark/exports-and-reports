@@ -94,12 +94,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 						$choices[ (string) $option_id ] = (string) $option;
 					}
 				}
+				// The stored value against each choice, both as text: PHP has made integers of the keys that are numbers.
 				$selected_options = array_map( 'strval', explode( ',', (string) $this->row[ $column ] ) );
 				if ( false !== $attributes['related_multiple'] ) {
 					?>
 					<fieldset class="er-choices" id="admin_ui_<?php echo esc_attr( $column ); ?>">
 						<?php foreach ( $choices as $option_id => $option ) { ?>
-							<label><input type="checkbox" name="<?php echo esc_attr( $column ); ?>[]" value="<?php echo esc_attr( $option_id ); ?>"<?php checked( in_array( $option_id, $selected_options, true ) ); ?> /> <?php echo esc_html( $option ); ?></label>
+							<label><input type="checkbox" name="<?php echo esc_attr( $column ); ?>[]" value="<?php echo esc_attr( $option_id ); ?>"<?php checked( in_array( (string) $option_id, $selected_options, true ) ); ?> /> <?php echo esc_html( $option ); ?></label>
 						<?php } ?>
 					</fieldset>
 					<?php
@@ -107,7 +108,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					?>
 					<select name="<?php echo esc_attr( $column ); ?>" id="admin_ui_<?php echo esc_attr( $column ); ?>">
 						<?php foreach ( $choices as $option_id => $option ) { ?>
-							<option value="<?php echo esc_attr( $option_id ); ?>"<?php selected( in_array( $option_id, $selected_options, true ) ); ?>><?php echo esc_html( $option ); ?></option>
+							<option value="<?php echo esc_attr( $option_id ); ?>"<?php selected( in_array( (string) $option_id, $selected_options, true ) ); ?>><?php echo esc_html( $option ); ?></option>
 						<?php } ?>
 					</select>
 					<?php

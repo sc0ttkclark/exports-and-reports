@@ -4,8 +4,9 @@
  *
  * Routes under exports-reports/v1, answered either for a logged-in user who may view the report
  * (cookie and nonce, or an application password) or for the API token from the Settings page, sent
- * as "Authorization: Bearer <token>" or as the token query parameter. The token is stored as a hash,
- * like a password (exports_reports_token_hash()).
+ * as "Authorization: Bearer <token>" or, unless the Settings page says the header only, as the token
+ * query parameter. The token is stored as a hash, like a password (exports_reports_token_hash()), and
+ * an address that keeps sending a wrong one is refused for a while (exports_reports_token_locked()).
  *
  *   GET  /reports/<id>/data?full=1|pg=N&limit=N   the rows (paged, or all of them)
  *   POST /reports/<id>/export?type=csv[&download=1]   write an export; with download=1 the file is the response
@@ -79,6 +80,13 @@ function exports_reports_rest_routes() {
 					'type'    => 'boolean',
 					'default' => false,
 				),
+				// The language the export's numbers and dates are written for; without it, the values as the
+				// plugin has always written them, whatever the report's own default and the site's language.
+				'locale'   => array(
+					'type'    => 'string',
+					'default' => '',
+					'pattern' => '^([a-z]{2,3}(_[A-Za-z0-9]{2,12}){0,3})?$',
+				),
 			),
 		)
 	);
@@ -112,10 +120,28 @@ function exports_reports_rest_routes() {
  * @return true|WP_Error
  */
 function exports_reports_rest_permission( $request ) {
-	$token_matches = exports_reports_rest_token_matches( $request );
+	$given = exports_reports_rest_token( $request );
+
+	// An address that has sent a wrong token too often waits, whatever it sends now.
+	if ( '' !== $given && exports_reports_token_locked() ) {
+		return new WP_Error( 'exports_reports_too_many_attempts', __( 'Too many requests with a wrong token from this address. Try again in a quarter of an hour.', 'exports-and-reports' ), array( 'status' => 429 ) );
+	}
+
+	$token_matches = exports_reports_token_matches( $given );
+
+	// A wrong token counts against its address for a quarter of an hour from now.
+	if ( '' !== $given && ! $token_matches ) {
+		$failures = exports_reports_token_failures_key();
+
+		set_transient( $failures, (int) get_transient( $failures ) + 1, 15 * MINUTE_IN_SECONDS );
+	}
 
 	// A caller without a credential learns nothing about which ids exist.
 	if ( ! $token_matches && ! is_user_logged_in() ) {
+		if ( '' === $given && exports_reports_token_header_only() && null !== $request->get_param( 'token' ) ) {
+			return new WP_Error( 'exports_reports_unauthorized', __( 'This site takes the token in the Authorization header only, not in the address.', 'exports-and-reports' ), array( 'status' => 401 ) );
+		}
+
 		return new WP_Error( 'exports_reports_unauthorized', __( 'Send the token or log in to read reports.', 'exports-and-reports' ), array( 'status' => 401 ) );
 	}
 
@@ -134,6 +160,31 @@ function exports_reports_rest_permission( $request ) {
 }
 
 /**
+ * The token a request carries: the bearer token of its Authorization header, or its token parameter
+ * where the site still takes one in the address (exports_reports_token_header_only()).
+ *
+ * @since 1.3.0
+ *
+ * @param WP_REST_Request $request The request.
+ * @return string '' when it carries none.
+ */
+function exports_reports_rest_token( $request ) {
+	$auth = (string) $request->get_header( 'authorization' );
+
+	if ( 0 === stripos( $auth, 'Bearer ' ) ) {
+		return trim( substr( $auth, 7 ) );
+	}
+
+	if ( exports_reports_token_header_only() ) {
+		return '';
+	}
+
+	$param = $request->get_param( 'token' );
+
+	return is_scalar( $param ) ? (string) $param : '';
+}
+
+/**
  * Whether the request carries the API token, in the Authorization header or the token parameter.
  *
  * @since 0.9.5
@@ -143,19 +194,32 @@ function exports_reports_rest_permission( $request ) {
  * @return bool
  */
 function exports_reports_rest_token_matches( $request ) {
-	$given = (string) $request->get_param( 'token' );
-	$auth  = (string) $request->get_header( 'authorization' );
+	return exports_reports_token_matches( exports_reports_rest_token( $request ) );
+}
 
-	if ( 0 === stripos( $auth, 'Bearer ' ) ) {
-		$given = trim( substr( $auth, 7 ) );
-	}
-
-	return exports_reports_token_matches( $given );
+/**
+ * Whether the site takes the API token in the Authorization header only: the Settings page's choice.
+ * A token in the address ends up in server logs, proxies and histories; the routes still take one there
+ * unless this is on, for the scripts that send it that way.
+ *
+ * @since 1.3.0
+ *
+ * @return bool
+ */
+function exports_reports_token_header_only() {
+	/**
+	 * Filters whether the API token is taken in the Authorization header only.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param bool $header_only The Settings page's choice; off unless changed there.
+	 */
+	return (bool) apply_filters( 'exports_reports_token_header_only', (bool) get_option( 'exports_reports_token_header_only', false ) );
 }
 
 /**
  * Whether a token is the site's API token: checked against the stored hash, the way core checks a
- * password.
+ * password. The answer for a token is kept for the rest of the request, which asks more than once.
  *
  * @since 1.2.0
  *
@@ -163,13 +227,91 @@ function exports_reports_rest_token_matches( $request ) {
  * @return bool False when token access is off.
  */
 function exports_reports_token_matches( $given ) {
+	static $checked = array();
+
 	$hash = exports_reports_token_hash();
 
 	if ( '' === $hash || '' === $given ) {
 		return false;
 	}
 
-	return wp_check_password( $given, $hash );
+	$key = md5( $hash . '|' . $given );
+
+	if ( ! isset( $checked[ $key ] ) ) {
+		$checked[ $key ] = wp_check_password( $given, $hash );
+	}
+
+	return $checked[ $key ];
+}
+
+/**
+ * What is wrong with a token an administrator typed, if anything: too short to resist guessing, or made
+ * of characters a header or an address would not carry as typed. The token is stored as typed or not at
+ * all: the versions before 1.3.0 turned it into a slug, lower case and all, and showed the result.
+ *
+ * @since 1.3.0
+ *
+ * @param string $token The token as typed.
+ * @return string The message for the Settings page, or '' when the token will do.
+ */
+function exports_reports_token_problem( $token ) {
+	$token = (string) $token;
+
+	if ( 1 !== preg_match( '/^[\x21-\x7E]+$/', $token ) || sanitize_text_field( $token ) !== $token ) {
+		return __( 'The token was not saved: use letters, digits and punctuation marks, without spaces.', 'exports-and-reports' );
+	}
+
+	if ( strlen( $token ) < EXPORTS_REPORTS_TOKEN_MIN_LENGTH ) {
+		/* translators: %d: a number of characters. */
+		return sprintf( __( 'The token was not saved: a token of your own needs at least %d characters. Type a longer one, or generate one.', 'exports-and-reports' ), EXPORTS_REPORTS_TOKEN_MIN_LENGTH );
+	}
+
+	return '';
+}
+
+/**
+ * The transient that counts the wrong tokens an address has sent.
+ *
+ * @since 1.3.0
+ *
+ * @return string
+ */
+function exports_reports_token_failures_key() {
+	$address = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+
+	/**
+	 * Filters the address wrong tokens are counted for. Behind a reverse proxy REMOTE_ADDR is the
+	 * proxy's, and every caller shares one count; a site that trusts its proxy's header returns the
+	 * client's address from it here.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param string $address REMOTE_ADDR.
+	 */
+	$address = (string) apply_filters( 'exports_reports_token_client_address', $address );
+
+	return 'exports_reports_token_fails_' . md5( $address );
+}
+
+/**
+ * Whether the requesting address has sent too many wrong tokens and waits: ten within a quarter of an
+ * hour, unless the exports_reports_token_failure_limit filter says otherwise.
+ *
+ * @since 1.3.0
+ *
+ * @return bool
+ */
+function exports_reports_token_locked() {
+	/**
+	 * Filters how many wrong tokens an address may send within a quarter of an hour; 0 sets no limit.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param int $limit Ten.
+	 */
+	$limit = max( 0, (int) apply_filters( 'exports_reports_token_failure_limit', 10 ) );
+
+	return 0 < $limit && (int) get_transient( exports_reports_token_failures_key() ) >= $limit;
 }
 
 /**
@@ -336,6 +478,9 @@ function exports_reports_rest_export( $request ) {
 	$admin->action      = 'export';
 	$admin->export_type = (string) $request['type'];
 
+	// A script reads what it asked for: the report's own default format does not apply to it.
+	$admin->export_locale = Exports_Reports_Value_Format::sanitize_locale( $request['locale'] );
+
 	ob_start();
 	$admin->export();
 	$error = exports_reports_rest_ui_error( (string) ob_get_clean() );
@@ -351,6 +496,8 @@ function exports_reports_rest_export( $request ) {
 			'report'   => (int) $report->id,
 			'name'     => $report->name,
 			'type'     => (string) $request['type'],
+			// XML and JSON hold the values as the plugin has always written them, whatever was asked for.
+			'locale'   => in_array( (string) $request['type'], array( 'xml', 'json' ), true ) ? '' : $admin->export_format( 'pdf' === (string) $request['type'] )->language(),
 			'file'     => $file,
 			'url'      => rest_url( sprintf( 'exports-reports/v1/reports/%d/exports/%s', (int) $report->id, rawurlencode( $file ) ) ),
 			'download' => (bool) $request['download'],

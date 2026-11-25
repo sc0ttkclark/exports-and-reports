@@ -52,18 +52,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 			}
 			// The row's value is text; the list a related column builds below is the screen's own markup.
 			$as_html = $this->shows_html( $column, $attributes );
-			if ( 'date' === $attributes['type'] ) {
-				$this->row[ $column ] = date_i18n( 'Y/m/d', strtotime( $this->row[ $column ] ) );
-			} elseif ( 'time' === $attributes['type'] ) {
-				$this->row[ $column ] = date_i18n( 'g:i:s A', strtotime( $this->row[ $column ] ) );
-			} elseif ( 'datetime' === $attributes['type'] ) {
-				$this->row[ $column ] = date_i18n( 'Y/m/d g:i:s A', strtotime( $this->row[ $column ] ) );
+			if ( in_array( $attributes['type'], array( 'date', 'time', 'datetime' ), true ) ) {
+				$this->row[ $column ] = $this->screen_format()->date( $this->row[ $column ], $attributes['type'] );
 			} elseif ( 'bool' === $attributes['type'] ) {
 				$this->row[ $column ] = ( 1 === (int) $this->row[ $column ] ? __( 'Yes', 'exports-and-reports' ) : __( 'No', 'exports-and-reports' ) );
 			} elseif ( 'number' === $attributes['type'] ) {
-				$this->row[ $column ] = self::format_number( $this->row[ $column ], 0, '' );
+				$this->row[ $column ] = $this->screen_format()->number( $this->row[ $column ], 0, false );
 			} elseif ( 'decimal' === $attributes['type'] ) {
-				$this->row[ $column ] = self::format_number( $this->row[ $column ], 2 );
+				$this->row[ $column ] = $this->screen_format()->number( $this->row[ $column ], 2 );
 			} elseif ( 'related' === $attributes['type'] && false !== $attributes['related'] ) {
 				$old_value            = $this->row[ $column ];
 				$this->row[ $column ] = '';

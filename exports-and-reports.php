@@ -10,7 +10,7 @@
  * Plugin Name:       Exports and Reports
  * Plugin URI:        https://github.com/sc0ttkclark/exports-and-reports
  * Description:       Turn any MySQL SELECT query into a report your users can search, filter and export to CSV, XLSX, PDF, JSON or XML.
- * Version:           1.2.9
+ * Version:           1.3.0
  * Author:            Scott Kingsley Clark, Daniel Caspi
  * Author URI:        https://www.element26.net/
  * Text Domain:       exports-and-reports
@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'EXPORTS_REPORTS_TBL', 'exportsreports_' );
-define( 'EXPORTS_REPORTS_VERSION', '1.2.9' );
+define( 'EXPORTS_REPORTS_VERSION', '1.3.0' );
 define( 'EXPORTS_REPORTS_URL', plugin_dir_url( __FILE__ ) );
 define( 'EXPORTS_REPORTS_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -43,6 +43,9 @@ if ( ! defined( 'EXPORTS_REPORTS_EXPORT_URL' ) ) {
 // The admin-ajax action that serves an export file, and the nonce action of its link.
 define( 'EXPORTS_REPORTS_EXPORT_ACTION', 'exports_reports_export' );
 define( 'EXPORTS_REPORTS_EXPORT_NONCE', 'exports-reports-export' );
+
+// The fewest characters a token typed into the Settings page may have; a generated one has 32.
+define( 'EXPORTS_REPORTS_TOKEN_MIN_LENGTH', 24 );
 
 /**
  * The plugin's tables as properties of $wpdb ($wpdb->exports_reports_groups, $wpdb->exports_reports_reports and
@@ -76,13 +79,16 @@ add_action( 'exports_reports_cleanup', 'exports_reports_cleanup_event' );
 add_action( 'admin_enqueue_scripts', 'exports_reports_assets' );
 add_action( 'in_admin_header', 'exports_reports_flush_admin_header' );
 add_action( 'admin_notices', 'exports_reports_charset_errors_notice' );
+add_action( 'admin_notices', 'exports_reports_display_callbacks_notice' );
+add_action( 'admin_init', 'exports_reports_dismiss_notice' );
 add_action( 'exports_reports_post_export', 'exports_reports_log', 10, 2 );
 add_action( 'exports_reports_post_remove_export', 'exports_reports_delete_log', 10, 4 );
-add_filter( 'robots_txt', 'exports_reports_robots_txt' );
+add_filter( 'site_status_tests', 'exports_reports_site_status_tests' );
 
 require_once EXPORTS_REPORTS_DIR . 'vendor/autoload.php';
 
 require_once EXPORTS_REPORTS_DIR . 'vendor/vendor-prefixed/autoload.php';
+require_once EXPORTS_REPORTS_DIR . 'includes/class-exports-reports-value-format.php';
 require_once EXPORTS_REPORTS_DIR . 'includes/capabilities.php';
 require_once EXPORTS_REPORTS_DIR . 'includes/install.php';
 require_once EXPORTS_REPORTS_DIR . 'includes/admin-menus.php';
@@ -90,5 +96,7 @@ require_once EXPORTS_REPORTS_DIR . 'includes/admin-settings.php';
 require_once EXPORTS_REPORTS_DIR . 'includes/admin-groups.php';
 require_once EXPORTS_REPORTS_DIR . 'includes/admin-reports.php';
 require_once EXPORTS_REPORTS_DIR . 'includes/reports.php';
+require_once EXPORTS_REPORTS_DIR . 'includes/display-functions.php';
 require_once EXPORTS_REPORTS_DIR . 'includes/exports.php';
+require_once EXPORTS_REPORTS_DIR . 'includes/export-dir-check.php';
 require_once EXPORTS_REPORTS_DIR . 'includes/rest-api.php';

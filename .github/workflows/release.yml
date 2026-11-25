@@ -11,6 +11,10 @@ name: Release zip
 #                                                                          # an older commit, by its sha or tag
 #   gh workflow run release.yml --ref main -f tag=1.2.3 -f ref=1.2.3 -f notes_ref=main
 #                                                                          # a draft's notes rewritten from main's readme
+#   gh workflow run release.yml --ref main -f tag=0.9.5 -f ref=0.9.5 -f skip_plugin_check=true
+#                                                                          # an older commit today's Plugin Check refuses
+#
+# Plugin Check runs on the packaged tree before the zip is uploaded.
 #
 # The run creates the tag on the commit it built when there is none. GitHub refuses the workflow's token
 # a tag on a commit whose workflow files differ from the branch the run was started on; such a tag is
@@ -41,6 +45,11 @@ on:
         required: false
         type: string
         default: ''
+      skip_plugin_check:
+        description: 'Skip Plugin Check (only to rebuild an older commit that the current checks refuse)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -112,6 +121,14 @@ jobs:
           if [ -n "$lint" ]; then echo "$lint"; echo "::error::a packaged PHP file the plugin loads on 7.2 does not parse there"; exit 1; fi
           php -r 'require "vendor/autoload.php"; require "vendor/vendor-prefixed/autoload.php"; exit( class_exists( "ExportsReports__Prefixed__XLSXWriter" ) && class_exists( "ExportsReports__Prefixed__TCPDF" ) ? 0 : 1 );' || { echo "::error::the packaged autoloaders do not resolve the libraries the plugin uses on PHP 7.2"; exit 1; }
           echo "packaged tree ok on PHP $(php -r 'echo PHP_VERSION;')"
+
+      # The same checks as plugin-check.yml; an error stops the run before the upload.
+      - name: Run Plugin Check on the packaged tree
+        if: ${{ ! inputs.skip_plugin_check }}
+        uses: WordPress/plugin-check-action@10857da14b6c2246d15402b3e69f777edcf8c12e # v1.1.9
+        with:
+          build-dir: ./build/exports-and-reports
+          exclude-directories: vendor
 
       - name: Upload the zip as a workflow artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
