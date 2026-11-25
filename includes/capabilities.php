@@ -74,17 +74,18 @@ function exports_reports_capabilities() {
 }
 
 /**
- * Whether the current user has full access: the exports_reports_full_access capability, or a network's
- * super admin. On a single site WordPress calls every user who may delete users a super admin, which is
- * every administrator: there the plugin's capabilities decide, so that a site which takes them from a
- * role has taken the access with them.
+ * Whether the current user has full access: the exports_reports_full_access capability. Nothing here
+ * asks whether the user is a super admin. On a network WordPress gives its super admins every
+ * capability, this one with them (WP_User::has_cap()). On a single site WordPress calls every user who
+ * may delete users a super admin, which is every administrator: there the capability decides, so that a
+ * site which takes it from a role has taken the access with it.
  *
  * @since 1.3.0
  *
  * @return bool
  */
 function exports_reports_current_user_has_full_access() {
-	return ( is_multisite() && is_super_admin() ) || exports_reports_current_user_can_any( 'exports_reports_full_access' );
+	return exports_reports_current_user_can_any( 'exports_reports_full_access' );
 }
 
 /**
@@ -157,7 +158,8 @@ function exports_reports_list_only_options() {
 }
 
 /**
- * Whether the current user has any of the capabilities, or full access.
+ * Whether the current user has the capability, or any of several. With several, full access counts as
+ * one of them; a caller that asks about one capability asks about full access itself where it matters.
  *
  * @param string|string[] $caps One capability or several.
  *
