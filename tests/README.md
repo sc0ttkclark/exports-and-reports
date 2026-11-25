@@ -189,11 +189,13 @@ reason beside it. A new suppression carries its reason the same way.
 ## CI
 
 `.github/workflows/phpunit.yml` runs the suite on every pull request, and every push to `main`, that
-touches PHP, the tests, the vendor tree or the fonts, on a matrix of five jobs: WordPress 5.7 on PHP 7.2 with MariaDB 10.11 and
+touches PHP, the tests, the vendor tree or the fonts, on a matrix of six jobs: WordPress 5.7 on PHP 7.2 with MariaDB 10.11 and
 WordPress 5.8 on PHP 7.3 with MySQL 8.0 (the plugin's floors, with PHPUnit 7.5 and the matching
 `wp-phpunit` version), the current WordPress on PHP 8.3 with MariaDB 11.4 and with MySQL 8.4 (PHPUnit
-9.6, the `wp-phpunit` version of the downloaded core), and the MariaDB 11.4 job once more as a network
-(`WP_MULTISITE=1`). Each job downloads WordPress with WP-CLI, installs
+9.6, the `wp-phpunit` version of the downloaded core), the MariaDB 11.4 job once more as a network
+(`WP_MULTISITE=1`), and once more on PHP 8.6. The WordPress test library runs on PHP 8.6 from WordPress
+7.2 (`wordpress-min` in the matrix): while the current WordPress is older, that job stops after the
+download and leaves a notice that nothing was tested. Each job downloads WordPress with WP-CLI, installs
 PHPUnit, the Polyfills and the library in a Composer project of their own (the plugin's dev dependencies
 need PHP 8.2, and its runtime vendor tree is committed) and runs `phpunit.xml.dist` with the variables
 above pointing at the service database.

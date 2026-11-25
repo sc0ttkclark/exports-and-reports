@@ -29,7 +29,7 @@ permissions:
 jobs:
   phpunit:
     # The oldest WordPress and PHP the plugin declares, one job on MariaDB and one on MySQL, and the current
-    # WordPress on a current PHP, on the current MariaDB and MySQL, and once more as a network (multisite).
+    # WordPress on a current PHP, on the current MariaDB and MySQL, once more as a network (multisite), and on PHP 8.6.
     strategy:
       fail-fast: false
       matrix:
@@ -60,6 +60,13 @@ jobs:
             phpunit: '^9.6'
             wp-phpunit: ''
             multisite: '1'
+          - wordpress: latest
+            php: '8.6'
+            db: 'mariadb:11.4'
+            phpunit: '^9.6'
+            wp-phpunit: ''
+            # The first WordPress whose test library runs on PHP 8.6.
+            wordpress-min: '7.2'
     name: PHPUnit on WordPress ${{ matrix.wordpress }}, PHP ${{ matrix.php }}, ${{ matrix.db }}${{ matrix.multisite == '1' && ', as a network' || '' }}
     runs-on: ubuntu-24.04
     services:
@@ -107,6 +114,7 @@ jobs:
       - name: Choose the test library version
         id: wp
         # The library tracks the WordPress version: the matrix names it for the floors, the downloaded core's major.minor for latest.
+        # A job stops here while the WordPress it downloaded is older than its wordpress-min.
         run: |
           version="$(wp core version --path="$RUNNER_TEMP/wp")"
           constraint='${{ matrix.wp-phpunit }}'
@@ -114,11 +122,18 @@ jobs:
             constraint="~$(echo "$version" | cut -d. -f1,2).0"
           fi
           echo "wp-phpunit=$constraint" >> "$GITHUB_OUTPUT"
+          minimum='${{ matrix.wordpress-min }}'
+          if [ -n "$minimum" ] && [ "$(printf '%s\n%s\n' "$minimum" "$version" | sort -V | head -n 1)" != "$minimum" ]; then
+            echo "::notice::Nothing was tested: the WordPress test library runs on PHP ${{ matrix.php }} from WordPress $minimum, and the current WordPress is $version."
+            echo "waits=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Get Composer Cache Directory
         id: composer-cache
+        if: steps.wp.outputs.waits != 'true'
         run: |
           echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: steps.wp.outputs.waits != 'true'
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-tools-php${{ matrix.php }}-wp${{ matrix.wordpress }}-${{ steps.wp.outputs.wp-phpunit }}
@@ -128,6 +143,7 @@ jobs:
         # A project of its own: the plugin's dev dependencies need PHP 8.2, and its runtime vendor tree is committed.
         # Composer 2.11 refuses a package with a security advisory, which PHPUnit 7 carries; the WordPress 5.7 and
         # 5.8 test libraries run on nothing newer, and a test runner never runs on a server.
+        if: steps.wp.outputs.waits != 'true'
         run: |
           mkdir -p "$RUNNER_TEMP/tools"
           cat > "$RUNNER_TEMP/tools/composer.json" <<'EOF'
@@ -150,6 +166,7 @@ jobs:
           EOF
           composer update --working-dir="$RUNNER_TEMP/tools" --no-interaction --no-progress
       - name: Run the test suite
+        if: steps.wp.outputs.waits != 'true'
         env:
           WP_PHPUNIT__DIR: ${{ runner.temp }}/tools/vendor/wp-phpunit/wp-phpunit
           WP_PHPUNIT__TESTS_CONFIG: ${{ github.workspace }}/tests/phpunit/wp-tests-config.php
