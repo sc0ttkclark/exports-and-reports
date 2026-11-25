@@ -132,7 +132,7 @@ function exports_reports_export_dir_advice() {
 	return wp_kses(
 		sprintf(
 			/* translators: 1: the nginx location rule, 2: the EXPORTS_REPORTS_EXPORT_DIR constant. */
-			__( 'Add %1$s to the server block (nginx ignores the plugin\'s .htaccess), or define %2$s in wp-config.php with a writable directory outside the web root, which works on any server.', 'exports-and-reports' ),
+			esc_html__( 'Add %1$s to the server block (nginx ignores the plugin\'s .htaccess), or define %2$s in wp-config.php with a writable directory outside the web root, which works on any server.', 'exports-and-reports' ),
 			'<code>location ~* ' . esc_html( trailingslashit( (string) wp_parse_url( EXPORTS_REPORTS_EXPORT_URL, PHP_URL_PATH ) ) ) . ' { deny all; }</code>',
 			'<code>EXPORTS_REPORTS_EXPORT_DIR</code>'
 		),

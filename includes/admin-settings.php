@@ -224,7 +224,7 @@ function exports_reports_settings() {
 							echo wp_kses(
 								sprintf(
 									/* translators: 1: a date as the plugin writes it, 2: the same date in the site's formats. */
-									__( 'On the report pages and in PDF exports, date, time and date-and-time columns are written like %1$s. Ticked, they follow the formats of Settings > General, which now give %2$s. Dates are shown as they are stored; no time zone is applied. The other export formats keep the first form unless the person who exports picks a language from the Format menu beside the export buttons.', 'exports-and-reports' ),
+									esc_html__( 'On the report pages and in PDF exports, date, time and date-and-time columns are written like %1$s. Ticked, they follow the formats of Settings > General, which now give %2$s. Dates are shown as they are stored; no time zone is applied. The other export formats keep the first form unless the person who exports picks a language from the Format menu beside the export buttons.', 'exports-and-reports' ),
 									'<code>' . esc_html( gmdate( 'Y/m/d g:i:s A', $date_example ) ) . '</code>',
 									'<code>' . esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $date_example, new DateTimeZone( 'UTC' ) ) ) . '</code>'
 								),
@@ -264,7 +264,7 @@ function exports_reports_settings() {
 							echo wp_kses(
 								sprintf(
 									/* translators: 1: the nginx location rule, 2: the EXPORTS_REPORTS_EXPORT_DIR constant. */
-									__( 'nginx ignores .htaccess; add %1$s to the server block, or define %2$s in wp-config.php with a directory outside the web root, which works on any server.', 'exports-and-reports' ),
+									esc_html__( 'nginx ignores .htaccess; add %1$s to the server block, or define %2$s in wp-config.php with a directory outside the web root, which works on any server.', 'exports-and-reports' ),
 									'<code>location ~* ' . esc_html( trailingslashit( (string) wp_parse_url( EXPORTS_REPORTS_EXPORT_URL, PHP_URL_PATH ) ) ) . ' { deny all; }</code>',
 									'<code>EXPORTS_REPORTS_EXPORT_DIR</code>'
 								),
@@ -302,7 +302,7 @@ function exports_reports_settings() {
 							echo wp_kses(
 								sprintf(
 									/* translators: %s: the Authorization header, as code. */
-									__( 'Keep the token secret: it lets a script or a cronjob run and download exports and read report data through the REST API, without a logged-in user. Send it with each request as the header %s:', 'exports-and-reports' ),
+									esc_html__( 'Keep the token secret: it lets a script or a cronjob run and download exports and read report data through the REST API, without a logged-in user. Send it with each request as the header %s:', 'exports-and-reports' ),
 									'<code>Authorization: Bearer TOKEN</code>'
 								),
 								array( 'code' => array() )
@@ -318,7 +318,7 @@ function exports_reports_settings() {
 							echo wp_kses(
 								sprintf(
 									/* translators: %s: the token query parameter, as code. */
-									__( 'A token in the address ends up in server logs, proxies and histories. Until this box is ticked the routes still take it there, as %s at the end of an address, for the scripts that send it that way; tick the box once yours send the header. Ten wrong tokens from one address within a quarter of an hour make the routes refuse that address\'s tokens for as long.', 'exports-and-reports' ),
+									esc_html__( 'A token in the address ends up in server logs, proxies and histories. Until this box is ticked the routes still take it there, as %s at the end of an address, for the scripts that send it that way; tick the box once yours send the header. Ten wrong tokens from one address within a quarter of an hour make the routes refuse that address\'s tokens for as long.', 'exports-and-reports' ),
 									'<code>&amp;token=TOKEN</code>'
 								),
 								array( 'code' => array() )

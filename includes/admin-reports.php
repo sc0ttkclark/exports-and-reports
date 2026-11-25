@@ -193,7 +193,7 @@ function exports_reports_report_field( $column, $attributes, $obj ) {
 				echo wp_kses(
 					sprintf(
 						/* translators: 1: a list of function names, 2: the name of a filter. */
-						__( 'Not called, because the site does not list them as Display functions: %1$s. A plugin or a theme lists a function through the %2$s filter (see the plugin\'s readme).', 'exports-and-reports' ),
+						esc_html__( 'Not called, because the site does not list them as Display functions: %1$s. A plugin or a theme lists a function through the %2$s filter (see the plugin\'s readme).', 'exports-and-reports' ),
 						implode( ', ', $unlisted ),
 						'<code>exports_reports_display_callbacks</code>'
 					),
